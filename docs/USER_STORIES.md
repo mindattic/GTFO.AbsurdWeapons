@@ -1,7 +1,7 @@
 ---
 codex: 1
 project: GTFO.Weapons
-code: GTF
+code: GWP
 layer: stories
 status: living
 updated: 2026-10-15
@@ -21,5 +21,5 @@ _Nothing recorded yet._
 
 | ID | Date | Type | Status | Summary | Ref |
 |---|---|---|---|---|---|
-| GTF-T1 | 2026-10-15 | docs | closed | Start the permanent ticket log in the workflow database | — |
-| GTF-T2 | 2026-10-15 | feature | closed | Glaive v1: new selectable melee weapon - IsoCo Stinger (Spear_02) model swung overhead with the sledgehammer's animation/SFX sets. GameDataInit.Initialize postfix registers MeleeArchetype/GearCategory/PlayerOfflineGear blocks at fixed id 1001 via AddBlock (cloned from Spear/MeleeSpear/Spear_02; hammer damage, stagger, hit width and third-person movement; spear reach and cleave; hold-thrust off). Compatible with GTFO.EZ (its melee tuning keys by name). Builds clean; loadout appearance, hand placement and hit detection still need an in-game check | src/GTFO.Glaive/GlaiveInjector.cs |
+| GWP-T1 | 2026-10-15 | docs | closed | Start the permanent ticket log in the workflow database | — |
+| GWP-T2 | 2026-10-15 | feature | closed | Glaive v1: new selectable melee weapon - IsoCo Stinger (Spear_02) model swung overhead with the sledgehammer's animation/SFX sets. GameDataInit.Initialize postfix registers MeleeArchetype/GearCategory/PlayerOfflineGear blocks at fixed id 1001 via AddBlock (cloned from Spear/MeleeSpear/Spear_02; hammer damage, stagger, hit width and third-person movement; spear reach and cleave; hold-thrust off). Compatible with GTFO.EZ (its melee tuning keys by name). Builds clean; loadout appearance, hand placement and hit detection still need an in-game check | src/GTFO.Glaive/GlaiveInjector.cs |
