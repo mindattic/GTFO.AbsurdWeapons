@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+    Which mod manager profile to build against and deploy into - same layout as GTFO.EZ.
+    Thunderstore Mod Manager stores profiles under
+    "Thunderstore Mod Manager\DataFolder\<Game>\profiles\<Game> - <Profile>". If you're on the
+    older r2modman app instead, override BepInEx directly, e.g.:
+      dotnet build -p:BepInEx="%AppData%\r2modmanPlus-local\GTFO\profiles\Default\BepInEx"
+    -->
+    <GameName>GTFO</GameName>
+    <Profile>Easy Mode DEV</Profile>
+
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <DebugType>none</DebugType>
+    <AssemblyName>GTFO.Glaive</AssemblyName>
+    <RootNamespace>GTFO.Glaive</RootNamespace>
+
+    <BepInEx>$(AppData)\Thunderstore Mod Manager\DataFolder\$(GameName)\profiles\$(GameName) - $(Profile)\BepInEx</BepInEx>
+    <OutputPath>$(BepInEx)\plugins\GTFO.Glaive\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
+    <Delete Files="$(OutputPath)$(AssemblyName).deps.json" />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="$(BepInEx)\core\0Harmony.dll" Private="false" />
+    <Reference Include="$(BepInEx)\core\BepInEx.Core.dll" Private="false" />
+    <Reference Include="$(BepInEx)\core\BepInEx.Unity.IL2CPP.dll" Private="false" />
+    <Reference Include="$(BepInEx)\core\Il2CppInterop.Common.dll" Private="false" />
+    <Reference Include="$(BepInEx)\core\Il2CppInterop.Runtime.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(BepInEx)\interop\*.dll" Private="false" />
+    <Reference Remove="$(BepInEx)\interop\netstandard.dll" />
+  </ItemGroup>
+
+</Project>

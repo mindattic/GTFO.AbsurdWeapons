@@ -1,0 +1,9 @@
+{
+  "name": "GtfoGlaive",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/mindattic/GTFO.Glaive",
+  "description": "Adds the Glaive: a new melee weapon - a razor-edged spear blade swung overhead like a sledgehammer. Long reach, cleaves through crowds. Everyone in the lobby needs it.",
+  "dependencies": [
+    "BepInEx-BepInExPack_GTFO-3.2.3"
+  ]
+}
