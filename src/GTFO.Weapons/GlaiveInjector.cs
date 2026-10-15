@@ -5,13 +5,14 @@ using GameData;
 using HarmonyLib;
 using Localization;
 
-namespace GTFO.Glaive;
+namespace GTFO.Weapons;
 
 /// <summary>
-/// Adds the Glaive - the IsoCo Stinger spear, swung overhead like the sledgehammer - as a new
-/// selectable melee weapon by registering three new datablocks right after the game loads its own:
-/// a melee archetype (stats + which animation/sound set to use), a gear category pointing at it,
-/// and an offline-gear entry (what appears in the loadout screen). Nothing vanilla is modified.
+/// Adds the Glaive - the knife's fixed-blade model, swung overhead with the sledgehammer's full
+/// weight and reach (a hammer with a blade) - as a new selectable melee weapon by registering
+/// three new datablocks right after the game loads its own: a melee archetype (stats + which
+/// animation/sound set to use), a gear category pointing at it, and an offline-gear entry (what
+/// appears in the loadout screen). Nothing vanilla is modified.
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
 internal static class GlaiveInjector
@@ -33,7 +34,7 @@ internal static class GlaiveInjector
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Glaive failed to add the Glaive: {e}");
+            Plugin.Logger.LogError($"GTFO.Weapons failed to add the Glaive: {e}");
         }
     }
 
@@ -43,52 +44,40 @@ internal static class GlaiveInjector
             || GameDataBlockBase<GearCategoryDataBlock>.HasBlock(CategoryId)
             || GameDataBlockBase<PlayerOfflineGearDataBlock>.HasBlock(OfflineGearId))
         {
-            Plugin.Logger.LogError($"GTFO.Glaive: id {ArchetypeId} is already taken by another mod's datablock - not adding the Glaive.");
+            Plugin.Logger.LogError($"GTFO.Weapons: id {ArchetypeId} is already taken by another mod's datablock - not adding the Glaive.");
             return;
         }
 
-        var spear = Lookup<MeleeArchetypeDataBlock>("Spear");
         var hammer = Lookup<MeleeArchetypeDataBlock>("Hammer");
-        var spearCategory = Lookup<GearCategoryDataBlock>("MeleeSpear");
         var hammerCategory = Lookup<GearCategoryDataBlock>("MeleeSledgehammer");
-        var stinger = Lookup<PlayerOfflineGearDataBlock>("Spear_02"); // IsoCo Stinger
+        var knifeCategory = Lookup<GearCategoryDataBlock>("MeleeKnife");
+        var knifeGear = Lookup<PlayerOfflineGearDataBlock>("Knife"); // Mastaba Fixed Blade
 
-        // Stats: the spear's reach and cleave, the hammer's swing, sounds and weight of blow.
-        var archetype = Clone(spear);
+        // Stats and swing: the hammer's, wholesale (damage, stagger, reach, overhead swing
+        // animation/SFX) - the knife model is just a reskin onto the hammer's archetype/category.
+        var archetype = Clone(hammer);
         archetype.persistentID = ArchetypeId;
         archetype.name = GlaiveName;
         archetype.PublicName = GlaiveName;
-        archetype.MeleeAnimationSet = hammer.MeleeAnimationSet;
-        archetype.MeleeSFXSet = hammer.MeleeSFXSet;
-        archetype.LightAttackDamage = hammer.LightAttackDamage;
-        archetype.ChargedAttackDamage = hammer.ChargedAttackDamage;
-        archetype.ChargedStaggerMulti = hammer.ChargedStaggerMulti;
-        archetype.LightEnvironmentMulti = hammer.LightEnvironmentMulti;
-        archetype.AttackSphereRadius = hammer.AttackSphereRadius;
-        archetype.PlayerRunSpeedMultiWhileCharging = hammer.PlayerRunSpeedMultiWhileCharging;
-        archetype.CameraDamageRayLength = spear.CameraDamageRayLength;
-        archetype.CanHitMultipleEnemies = true;
-        // The spear's hold-to-thrust charge has no matching motion in the hammer's animation set.
-        archetype.EvaluateHoldBeforeAttack = false;
+        archetype.CanHitMultipleEnemies = true; // the hammer's own is single-target; the Glaive cleaves
 
-        var category = Clone(spearCategory);
+        var category = Clone(hammerCategory);
         category.persistentID = CategoryId;
         category.name = "MeleeGlaive";
         category.MeleeArchetype = ArchetypeId;
-        category.ThirdPersonFullbodyMovement = hammerCategory.ThirdPersonFullbodyMovement; // teammates see the overhead swing
-        // Fresh instances: the cloned PublicName/Description still point at the Spear's, and
-        // editing those would rename the Spear too.
+        // Fresh instances: the cloned PublicName/Description still point at the Sledgehammer's, and
+        // editing those would rename the Sledgehammer too.
         category.PublicName = new LocalizedText { Id = 0, UntranslatedText = GlaiveName };
-        category.Description = new LocalizedText { Id = 0, UntranslatedText = "A long razor-edged blade on a spear shaft, brought down overhead like a splitting maul. Reaches far and cleaves through a crowd." };
+        category.Description = new LocalizedText { Id = 0, UntranslatedText = "A fixed blade swung overhead with a hammer's full weight and reach. Hits like a sledgehammer and cleaves through a crowd." };
 
-        var gearJson = RewriteGearJson(stinger.GearJSON, spearCategory.persistentID, CategoryId, GlaiveName);
+        var gearJson = RewriteGearJson(knifeGear.GearJSON, knifeCategory.persistentID, CategoryId, GlaiveName);
         if (gearJson == null)
         {
-            Plugin.Logger.LogError("GTFO.Glaive: couldn't find the Spear category in the IsoCo Stinger's gear JSON - not adding the Glaive.");
+            Plugin.Logger.LogError("GTFO.Weapons: couldn't find the Knife category in the Mastaba Fixed Blade's gear JSON - not adding the Glaive.");
             return;
         }
 
-        var gear = Clone(stinger);
+        var gear = Clone(knifeGear);
         gear.persistentID = OfflineGearId;
         gear.name = GlaiveName;
         gear.GearJSON = gearJson;
@@ -97,7 +86,7 @@ internal static class GlaiveInjector
         GameDataBlockBase<GearCategoryDataBlock>.AddBlock(category, -1);
         GameDataBlockBase<PlayerOfflineGearDataBlock>.AddBlock(gear, -1);
 
-        Plugin.Logger.LogInfo($"GTFO.Glaive added the Glaive (archetype {ArchetypeId}, category {CategoryId}, gear {OfflineGearId}).");
+        Plugin.Logger.LogInfo($"GTFO.Weapons added the Glaive (archetype {ArchetypeId}, category {CategoryId}, gear {OfflineGearId}).");
     }
 
     private static T Lookup<T>(string name) where T : GameDataBlockBase<T>

@@ -1,6 +1,6 @@
-# GTFO.Glaive
+# GTFO.Weapons
 
-Dev repo for **GTFO.Glaive**, a BepInEx IL2CPP plugin for GTFO that adds a new melee weapon, the
+Dev repo for **GTFO.Weapons**, a BepInEx IL2CPP plugin for GTFO that adds a new melee weapon, the
 Glaive: the IsoCo Stinger spear model swung overhead with the sledgehammer's animation set. See
 `package/README.md` for the player-facing description.
 
@@ -22,9 +22,9 @@ build-34855 datablock dump (github.com/igobyjama/devile, `Devile/BepInEx/GameDat
 ## Layout
 
 ```
-src/GTFO.Glaive/   the plugin project (needs the game + a BepInEx profile to build)
+src/GTFO.Weapons/  the plugin project (needs the game + a BepInEx profile to build)
 package/           exactly what ships to Thunderstore
-build.ps1          builds into the "GTFO - Easy Mode DEV" profile and zips dist/GTFO.Glaive-<version>.zip
+build.ps1          builds into the "GTFO - Easy Mode DEV" profile and zips dist/GTFO.Weapons-<version>.zip
 ```
 
 ## Building

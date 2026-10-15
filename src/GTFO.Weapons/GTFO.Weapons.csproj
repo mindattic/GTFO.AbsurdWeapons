@@ -16,11 +16,11 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <DebugType>none</DebugType>
-    <AssemblyName>GTFO.Glaive</AssemblyName>
-    <RootNamespace>GTFO.Glaive</RootNamespace>
+    <AssemblyName>GTFO.Weapons</AssemblyName>
+    <RootNamespace>GTFO.Weapons</RootNamespace>
 
     <BepInEx>$(AppData)\Thunderstore Mod Manager\DataFolder\$(GameName)\profiles\$(GameName) - $(Profile)\BepInEx</BepInEx>
-    <OutputPath>$(BepInEx)\plugins\GTFO.Glaive\</OutputPath>
+    <OutputPath>$(BepInEx)\plugins\GTFO.Weapons\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 

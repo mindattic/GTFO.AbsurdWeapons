@@ -1,6 +1,6 @@
-# GTFO.Glaive
+# GTFO.Weapons
 
-*(Listed on Thunderstore as `GtfoGlaive` — package names there can't contain a period.)*
+*(Listed on Thunderstore as `GtfoWeapons` — package names there can't contain a period.)*
 
 Adds the **Glaive**: a long razor-edged blade on a spear shaft, brought down overhead like a
 splitting maul. Pick it in the melee slot of the loadout screen like any other melee weapon.
