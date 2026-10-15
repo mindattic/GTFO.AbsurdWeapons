@@ -1,6 +1,6 @@
 ---
 codex: 1
-project: GTFO.Glaive
+project: GTFO.Weapons
 code: GTF
 layer: stories
 status: living
@@ -8,7 +8,7 @@ updated: 2026-10-15
 ---
 <!-- GENERATED from MindAttic.Workflow/data/workflow.db by `workflow db render`. Do not edit: this file is rewritten from the database; change stories and tickets with the workflow CLI. -->
 
-# GTFO.Glaive — User Stories
+# GTFO.Weapons — User Stories
 > ✅ done (shipped & tested) · 🟡 partial · ⬜ planned. Every ✅ cites the test.
 
 ## Priority backlog
