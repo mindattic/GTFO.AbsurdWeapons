@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Agents;
 using AssetShards;
+using BepInEx.Configuration;
 using Feedback;
 using FX_EffectSystem;
 using Gear;
@@ -28,8 +29,17 @@ internal sealed record LaserKind(byte Id, uint GunId, float Range, float Width);
 [HarmonyPatch]
 internal static class LaserGuns
 {
-    internal static readonly LaserKind Pistol = new(1, GunInjector.LaserPistolId, Range: 70f, Width: 0.025f);
-    internal static readonly LaserKind Rifle = new(2, GunInjector.LaserRifleId, Range: 70f, Width: 0.025f);
+    internal static ConfigEntry<float> BeamRange = null!;
+    internal static ConfigEntry<float> BeamWidth = null!;
+
+    internal static void Bind(ConfigFile config)
+    {
+        BeamRange = config.Bind("Laser Guns", "BeamRange", 70f, "Metres the beam reaches.");
+        BeamWidth = config.Bind("Laser Guns", "BeamWidth", 0.025f, "The beam's visual width.");
+    }
+
+    internal static readonly LaserKind Pistol = new(1, GunInjector.LaserPistolId, Range: BeamRange.Value, Width: BeamWidth.Value);
+    internal static readonly LaserKind Rifle = new(2, GunInjector.LaserRifleId, Range: BeamRange.Value, Width: BeamWidth.Value);
 
     internal static LaserKind? ForGun(uint id) => id == Pistol.GunId ? Pistol : id == Rifle.GunId ? Rifle : null;
     private static LaserKind? ForId(byte id) => id == Pistol.Id ? Pistol : id == Rifle.Id ? Rifle : null;

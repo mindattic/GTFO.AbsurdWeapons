@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
@@ -18,8 +19,11 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class Railgun
 {
-    internal const float Range = 200f;
+    internal static ConfigEntry<float> Range = null!;
     private const string ShotEvent = "MindAttic.GTFO.AbsurdWeapons.RailShot";
+
+    internal static void Bind(ConfigFile config) =>
+        Range = config.Bind("Railgun", "PenetrationRange", 200f, "Metres the piercing slug reaches.");
 
     internal static void Init()
     {
@@ -37,7 +41,7 @@ internal static class Railgun
         float precisionMulti, uint gearCategoryId)
     {
         // Every enemy on the line, nearest limb first - walls don't stop it.
-        var hits = new List<RaycastHit>(Physics.RaycastAll(eye, aim, Range, LayerManager.MASK_ENEMY_DAMAGABLE));
+        var hits = new List<RaycastHit>(Physics.RaycastAll(eye, aim, Range.Value, LayerManager.MASK_ENEMY_DAMAGABLE));
         hits.Sort((a, b) => a.distance.CompareTo(b.distance));
         var struck = new HashSet<IntPtr>();
         foreach (var hit in hits)
@@ -50,7 +54,7 @@ internal static class Railgun
         }
 
         var start = LaserGuns.ScreenStart(eye, aim);
-        var end = eye + aim * Range;
+        var end = eye + aim * Range.Value;
         RailBeam.Spawn(start, end);
         WallSparks(eye, end);
         NetworkAPI.InvokeEvent(ShotEvent, new ShotMessage(start, end, eye));

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using Enemies;
 using FX_EffectSystem;
 using GTFO.API;
@@ -19,13 +20,25 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class ChainLightning
 {
+    // Fixed, not config: the network message below has exactly 7 point fields (X0..X6) sized for
+    // this many jumps plus the start and first strike - raising it needs a bigger message, too.
     internal const int MaxJumps = 5;
-    private const float Range = 40f;
-    private const float AssistConeDegrees = 6f; // a near miss still finds its first target
-    private const float JumpRange = 8f;
-    private const float JumpFalloff = 0.75f;    // each jump does this share of the one before
-    private const float StaggerMulti = 2f;
+
+    private static ConfigEntry<float> Range = null!;
+    private static ConfigEntry<float> AssistConeDegrees = null!; // a near miss still finds its first target
+    private static ConfigEntry<float> JumpRange = null!;
+    private static ConfigEntry<float> JumpFalloff = null!;       // each jump does this share of the one before
+    private static ConfigEntry<float> StaggerMulti = null!;
     private const string BoltEvent = "MindAttic.GTFO.AbsurdWeapons.ChainLightning";
+
+    internal static void Bind(ConfigFile config)
+    {
+        Range = config.Bind("Chain Lightning Gun", "Range", 40f, "Metres the first strike reaches.");
+        AssistConeDegrees = config.Bind("Chain Lightning Gun", "AssistConeDegrees", 6f, "A near-miss within this cone still finds a first target.");
+        JumpRange = config.Bind("Chain Lightning Gun", "JumpRange", 8f, "Metres each jump can reach the next enemy.");
+        JumpFalloff = config.Bind("Chain Lightning Gun", "JumpFalloff", 0.75f, "Share of the previous strike's damage each jump does.");
+        StaggerMulti = config.Bind("Chain Lightning Gun", "StaggerMulti", 2f, "Stagger multiplier per strike.");
+    }
 
     internal static void Init()
     {
@@ -41,8 +54,8 @@ internal static class ChainLightning
         // The first target: whatever enemy the shot hits, else the enemy nearest the aim.
         EnemyAgent? current = null;
         Dam_EnemyDamageLimb? limb = null;
-        var point = eye + aim * Range;
-        if (Physics.Raycast(eye, aim, out var hit, Range, LayerManager.MASK_BULLETWEAPON_RAY))
+        var point = eye + aim * Range.Value;
+        if (Physics.Raycast(eye, aim, out var hit, Range.Value, LayerManager.MASK_BULLETWEAPON_RAY))
         {
             point = hit.point;
             limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
@@ -50,7 +63,7 @@ internal static class ChainLightning
         }
         if (current == null)
         {
-            var locks = SeekerGuns.FindLocks(eye, aim, AssistConeDegrees, Range);
+            var locks = SeekerGuns.FindLocks(eye, aim, AssistConeDegrees.Value, Range.Value);
             if (locks.Count > 0)
             {
                 current = locks[0];
@@ -74,10 +87,10 @@ internal static class ChainLightning
             var from = path[path.Count - 1];
             var direction = (point - from).sqrMagnitude > 0.0001f ? (point - from).normalized : aim;
             limb.BulletDamage(strike, owner.Cast<Agent>(), point, direction, -direction,
-                allowDirectionalBonus: false, StaggerMulti, 1f, gearCategoryId);
+                allowDirectionalBonus: false, StaggerMulti.Value, 1f, gearCategoryId);
             path.Add(point);
 
-            strike *= JumpFalloff;
+            strike *= JumpFalloff.Value;
             current = NextTarget(point, struck);
             if (current == null) break;
             point = current.AimTarget.position;
@@ -104,9 +117,9 @@ internal static class ChainLightning
             struck.Add(current.Pointer);
             var direction = (point - path[path.Count - 1]).normalized;
             limb.BulletDamage(strike, owner.Cast<Agent>(), point, direction, -direction,
-                allowDirectionalBonus: false, StaggerMulti, 1f, gearCategoryId);
+                allowDirectionalBonus: false, StaggerMulti.Value, 1f, gearCategoryId);
             path.Add(point);
-            strike *= JumpFalloff;
+            strike *= JumpFalloff.Value;
             current = NextTarget(point, struck);
         }
         Send(path);
@@ -120,11 +133,12 @@ internal static class ChainLightning
     }
 
     // The nearest living enemy within jump range of `from` that hasn't been struck, in sight.
-    private static EnemyAgent? NextTarget(Vector3 from, HashSet<IntPtr> struck, float range = JumpRange)
+    private static EnemyAgent? NextTarget(Vector3 from, HashSet<IntPtr> struck, float? range = null)
     {
+        var searchRange = range ?? JumpRange.Value;
         EnemyAgent? best = null;
         var bestDistance = float.MaxValue;
-        foreach (var collider in Physics.OverlapSphere(from, range, LayerManager.MASK_ENEMY_DAMAGABLE))
+        foreach (var collider in Physics.OverlapSphere(from, searchRange, LayerManager.MASK_ENEMY_DAMAGABLE))
         {
             var enemy = collider.GetComponent<Dam_EnemyDamageLimb>()?.m_base?.Owner;
             if (enemy == null || !enemy.Alive || struck.Contains(enemy.Pointer)) continue;

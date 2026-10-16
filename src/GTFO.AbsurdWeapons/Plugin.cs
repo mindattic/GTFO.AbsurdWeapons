@@ -34,6 +34,11 @@ public class Plugin : BasePlugin
         Knockback.Bind(Config);
         MjolnirThrow.Bind(Config);
         GunInjector.Bind(Config);
+        SeekerKind.Bind(Config);
+        LaserGuns.Bind(Config);
+        Railgun.Bind(Config);
+        ChainLightning.Bind(Config);
+        TentacleCannon.Bind(Config);
         FlameThrower.Bind(Config);
         FlakCannon.Bind(Config);
         VictoryBanner.Bind(Config);

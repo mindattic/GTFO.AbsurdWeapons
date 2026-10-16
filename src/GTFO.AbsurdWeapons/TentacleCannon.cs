@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using Enemies;
 using GTFO.API;
 using Il2CppInterop.Runtime;
@@ -25,17 +26,33 @@ internal static class TentacleCannon
     // The guns that fire tentacles: the Tentacle Pistol and the Tentacle Rifle.
     internal static bool IsTentacleGun(uint id) => id is GunInjector.TentacleRifleId or GunInjector.TentaclePistolId;
 
-    private const float LockConeDegrees = 15f; // around each tentacle's own line
-    private const float EngageConeDegrees = 60f; // any enemy this close to the aim (and in range) draws every tentacle
-    private const float FanSideDegrees = 30f;  // each tentacle leaves up to this far left or right of the aim...
-    private const float FanUpDownDegrees = 5f; // ...but stays close to the aim's height: a wide, level fan
+    private static ConfigEntry<float> LockConeDegrees = null!; // around each tentacle's own line
+    private static ConfigEntry<float> EngageConeDegrees = null!; // any enemy this close to the aim (and in range) draws every tentacle
+    private static ConfigEntry<float> FanSideDegrees = null!;  // each tentacle leaves up to this far left or right of the aim...
+    private static ConfigEntry<float> FanUpDownDegrees = null!; // ...but stays close to the aim's height: a wide, level fan
     private const float SpawnBehind = 0.05f;   // a touch behind the muzzle point, so they emerge from inside the barrel
-    private const float StaggerMulti = 5f;
+    internal static ConfigEntry<float> StaggerMulti = null!;
 
     // How far a tentacle reaches - the strikers' own (EAB_MovingEnemeyTentacle's
     // m_absoluteMaxDistanceToHitTarget), read off the first striker found in the level. Lock range,
     // a miss's reach and a grab's reach are all this, so a lash is never drawn longer than a real one.
-    private const float FallbackReach = 25f; // until a striker has been found
+    private static ConfigEntry<float> FallbackReach = null!; // until a striker has been found
+    private static ConfigEntry<float> GrabSideDegrees = null!;
+    private static ConfigEntry<float> GrabUpDownDegrees = null!;
+    private static ConfigEntry<int> GrabProbes = null!;
+
+    internal static void Bind(ConfigFile config)
+    {
+        LockConeDegrees = config.Bind("Tentacle Guns", "LockConeDegrees", 15f, "Cone around each tentacle's own line that counts as a lock.");
+        EngageConeDegrees = config.Bind("Tentacle Guns", "EngageConeDegrees", 60f, "Any enemy this close to the aim (and in reach) draws every tentacle.");
+        FanSideDegrees = config.Bind("Tentacle Guns", "FanSideDegrees", 30f, "How far left/right of the aim a tentacle can leave the barrel.");
+        FanUpDownDegrees = config.Bind("Tentacle Guns", "FanUpDownDegrees", 5f, "How far above/below the aim a tentacle can leave the barrel.");
+        StaggerMulti = config.Bind("Tentacle Guns", "StaggerMulti", 5f, "Stagger multiplier per bite.");
+        FallbackReach = config.Bind("Tentacle Guns", "FallbackReach", 25f, "Reach used until a real striker's is found in the level.");
+        GrabSideDegrees = config.Bind("Tentacle Guns", "GrabSideDegrees", 35f, "Surface-grab fan: how far sideways the probes fan out.");
+        GrabUpDownDegrees = config.Bind("Tentacle Guns", "GrabUpDownDegrees", 8f, "Surface-grab fan: how far up/down the probes fan out.");
+        GrabProbes = config.Bind("Tentacle Guns", "GrabProbes", 10, "How many surface-grab probes are cast when nothing's in reach.");
+    }
     private static float reach;
     private static float nextReachLookup;
 
@@ -44,7 +61,7 @@ internal static class TentacleCannon
         get
         {
             if (reach <= 0f && Time.time >= nextReachLookup) LookUpReach();
-            return reach > 0f ? reach : FallbackReach;
+            return reach > 0f ? reach : FallbackReach.Value;
         }
     }
 
@@ -96,11 +113,11 @@ internal static class TentacleCannon
 
         // Fan out: every tentacle takes its own random line within a wide, flat fan around the aim.
         var aim = pellet;
-        pellet = Fan(pellet, FanSideDegrees, FanUpDownDegrees);
+        pellet = Fan(pellet, FanSideDegrees.Value, FanUpDownDegrees.Value);
         var start = muzzle != null ? BarrelOnScreen(owner, muzzle, SpawnBehind) : eye + aim * 0.5f;
         EnemyAgent? target = null;
         var range = Reach;
-        foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees, range))
+        foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees.Value, range))
         {
             if (!claimed.Add(enemy.Pointer)) continue;
             target = enemy;
@@ -112,7 +129,7 @@ internal static class TentacleCannon
         // view already has a tentacle this frame, they double up.
         if (target == null)
         {
-            var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees, range);
+            var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees.Value, range);
             foreach (var enemy in nearby)
             {
                 if (!claimed.Add(enemy.Pointer)) continue;
@@ -130,7 +147,7 @@ internal static class TentacleCannon
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Rifle pellet: muzzle {(muzzle != null ? "found" : "missing")} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
         }
 
-        TentacleLash.Spawn(start, muzzle, end, target, owner, damage, StaggerMulti, gearCategoryId, SpawnBehind);
+        TentacleLash.Spawn(start, muzzle, end, target, owner, damage, StaggerMulti.Value, gearCategoryId, SpawnBehind);
         NetworkAPI.InvokeEvent(LashEvent, new LashMessage(start, end));
     }
 
@@ -138,17 +155,13 @@ internal static class TentacleCannon
     // line - a flat fan, wide sideways but close to the aim's height - and latches onto the nearest
     // surface it finds: a crate, a box, a railing, a wall. With nothing in reach it flails out along
     // its line.
-    private const float GrabSideDegrees = 35f; // the probes fan out sideways...
-    private const float GrabUpDownDegrees = 8f; // ...but stay near the aim's height
-    private const int GrabProbes = 10;
-
     private static Vector3 SomethingToGrab(Vector3 eye, Vector3 line, float range)
     {
         var best = eye + line * range;
         var bestDistance = float.MaxValue;
-        for (var i = 0; i < GrabProbes; i++)
+        for (var i = 0; i < GrabProbes.Value; i++)
         {
-            var probe = i == 0 ? line : Fan(line, GrabSideDegrees, GrabUpDownDegrees);
+            var probe = i == 0 ? line : Fan(line, GrabSideDegrees.Value, GrabUpDownDegrees.Value);
             if (Physics.Raycast(eye, probe, out var hit, range, LayerManager.MASK_BULLETWEAPON_RAY) && hit.distance < bestDistance)
             {
                 bestDistance = hit.distance;

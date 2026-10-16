@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BepInEx.Configuration;
 using Enemies;
 using Gear;
 using GTFO.API;
@@ -58,6 +59,29 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
 
     private static readonly Color ElectricBlue = new(0.45f, 0.75f, 1f); // Mjolnir's thunderclap
 
+    // Config for Plasma's and Hive's numbers (lazily read when these records are first built - after
+    // Plugin.Load - since nothing touches them before an actual shot is fired).
+    private static ConfigEntry<float> PlasmaSpeed = null!, PlasmaBlastRadius = null!, PlasmaBlastDamage = null!, PlasmaBlastStagger = null!;
+    private static ConfigEntry<int> PlasmaDamageDie = null!;
+    private static ConfigEntry<float> PlasmaDamageScale = null!;
+    private static ConfigEntry<float> HiveSpeed = null!, HiveTurnDegreesPerSecond = null!, HiveLockConeDegrees = null!, HiveLockRange = null!;
+    private static ConfigEntry<int> HiveMaxLocks = null!;
+
+    internal static void Bind(ConfigFile config)
+    {
+        PlasmaSpeed = config.Bind("Plasma Guns", "BallSpeed", 28.6f, "Plasma ball speed, m/s.");
+        PlasmaDamageDie = config.Bind("Plasma Guns", "DamageDie", 8, "Each hit rolls DamageScale x 1dDamageDie.");
+        PlasmaDamageScale = config.Bind("Plasma Guns", "DamageScale", 5f, "Each hit rolls DamageScale x 1dDamageDie.");
+        PlasmaBlastRadius = config.Bind("Plasma Guns", "BlastRadius", 1.25f, "Metres of the small shock on impact.");
+        PlasmaBlastDamage = config.Bind("Plasma Guns", "BlastDamage", 6f, "Damage at the shock's center.");
+        PlasmaBlastStagger = config.Bind("Plasma Guns", "BlastStagger", 3f, "Shock stagger multiplier.");
+        HiveSpeed = config.Bind("Hive Guns", "RoundSpeed", 45f, "Round speed, m/s.");
+        HiveTurnDegreesPerSecond = config.Bind("Hive Guns", "TurnRate", 1500f, "How fast a homing round can turn, degrees/second.");
+        HiveLockConeDegrees = config.Bind("Hive Guns", "LockConeDegrees", 35f, "Cone around the crosshair that locks count as nearby.");
+        HiveLockRange = config.Bind("Hive Guns", "LockRange", 60f, "Metres a lock can be picked up from.");
+        HiveMaxLocks = config.Bind("Hive Guns", "MaxLocks", 6, "How many enemies it cycles locks between.");
+    }
+
     // Split shards: quick, short-lived, a smaller shock, no further splits. (Nothing splits into
     // them right now; kept for a weapon that wants them.)
     internal static readonly SeekerKind Shard = new(3, ProjectileType.SemiTargetingQuick)
@@ -74,10 +98,10 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
     // Mjolnir's (blue flash, falloff to 40%, x3 stagger) - Doom 2016's plasma rifle splashes too.
     internal static readonly SeekerKind Plasma = new(1, ProjectileType.TargetingSmall)
     {
-        Speed = 28.6f, Homing = false, Lifetime = 6f,
-        DamageDie = 8, DamageScale = 5f,
+        Speed = PlasmaSpeed.Value, Homing = false, Lifetime = 6f,
+        DamageDie = PlasmaDamageDie.Value, DamageScale = PlasmaDamageScale.Value,
         Tint = new Color(0.3f, 0.55f, 1f),
-        BlastRadius = 1.25f, BlastDamage = 6f, BlastStagger = 3f,
+        BlastRadius = PlasmaBlastRadius.Value, BlastDamage = PlasmaBlastDamage.Value, BlastStagger = PlasmaBlastStagger.Value,
         FlashColor = ElectricBlue, FlashRange = 2f,
     };
 
@@ -87,9 +111,9 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
     // target dies mid-flight - hunts down the nearest enemy instead.
     internal static readonly SeekerKind Hive = new(2, ProjectileType.SemiTargetingQuick)
     {
-        Speed = 45f, Lifetime = 3f,
-        TurnDegreesPerSecond = 1500f, SearchRange = 50f, SearchConeDegrees = 120f,
-        SmartLock = true, LockConeDegrees = 35f, LockRange = 60f, MaxLocks = 6, CurveBend = 0.4f,
+        Speed = HiveSpeed.Value, Lifetime = 3f,
+        TurnDegreesPerSecond = HiveTurnDegreesPerSecond.Value, SearchRange = 50f, SearchConeDegrees = 120f,
+        SmartLock = true, LockConeDegrees = HiveLockConeDegrees.Value, LockRange = HiveLockRange.Value, MaxLocks = HiveMaxLocks.Value, CurveBend = 0.4f,
         FlashColor = new Color(1f, 0.55f, 0.25f), FlashRange = 3f,
     };
 

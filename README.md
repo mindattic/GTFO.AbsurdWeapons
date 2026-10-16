@@ -536,8 +536,12 @@ bursts - Mjolnir's thunderclap, the Warhammer's shockwave and the Gravity Hammer
 (`[Mjolnir] Thunderclap...`, `[Warhammer] Shockwave...`, `[Gravity Hammer] Blast...`) - Mjolnir's
 throw (`[Mjolnir] Throw...`) and the shared physical-knockback tuning (`[Knockback]`). The ten original guns' damage, rate of fire and clip size are config too (`[Plasma Guns]`,
 `[Hive Guns]`, `[Laser Guns]`, `[Railgun]`, `[Chain Lightning Gun]`, `[Tentacle Guns]` - one section
-covers both the pistol and rifle of a pair, since they share stats); their other runtime numbers
-(seeker kinds, beam range, chain jumps, the tentacle fan) are tracked separately (G.AWPN-T20). For
+covers both the pistol and rifle of a pair, since they share stats); their other runtime numbers are config too: the Plasma/Hive seeker kinds' speed, damage and lock
+range (`[Plasma Guns]`/`[Hive Guns]`, alongside the gun stats above), the laser beam's
+range/width (`[Laser Guns]`), the Railgun's penetration range (`[Railgun]`), Chain Lightning's
+range/jump range/falloff/stagger (`[Chain Lightning Gun]` - jump *count* stays fixed at 5: the
+network message has exactly enough fields for that many), and the Tentacle guns' fan/lock/grab
+cones and stagger (`[Tentacle Guns]`). For
 the Flamethrower, Flak Cannon and Victory Banner, every one of their numbers - gun stats
 (damage, rate of fire, clip, pellet count/spread) included - is its own config entry
 (`[Flamethrower]`, `[Flak Cannon]`, `[Victory Banner]`), read once at `GameDataInit.Initialize` for
