@@ -135,8 +135,8 @@ internal static class MeleeInjector
         var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
 
         var archetype = Clone(knife);
-        archetype.LightAttackDamage = 2f;
-        archetype.ChargedAttackDamage = 6f;
+        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Tanto.LightAttackDamage, 2f);
+        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Tanto.ChargedAttackDamage, 6f);
         archetype.CameraDamageRayLength = 1.6f; // knife 1.75
         archetype.name = "Tanto";
         WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
@@ -153,8 +153,8 @@ internal static class MeleeInjector
         var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
 
         var archetype = Clone(knife);
-        archetype.LightAttackDamage = 3f;
-        archetype.ChargedAttackDamage = 9f;
+        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Wakizashi.LightAttackDamage, 3f);
+        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Wakizashi.ChargedAttackDamage, 9f);
         archetype.CameraDamageRayLength = 2.0f;
         archetype.name = "Wakizashi";
         WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
@@ -173,8 +173,8 @@ internal static class MeleeInjector
         var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
 
         var archetype = Clone(bat);
-        archetype.LightAttackDamage = 4f;       // bat 3
-        archetype.ChargedAttackDamage = 14f;    // bat 12
+        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Katana.LightAttackDamage, 4f);       // bat 3
+        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Katana.ChargedAttackDamage, 14f);  // bat 12
         archetype.CameraDamageRayLength = 2.3f; // bat 1.75
         archetype.CanHitMultipleEnemies = true;
 
@@ -192,12 +192,12 @@ internal static class MeleeInjector
         var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
 
         var archetype = Clone(hammer);
-        archetype.LightAttackDamage = 6f;       // hammer 3
-        archetype.ChargedAttackDamage = 9999f;  // a full charge kills anything it reaches (hammer 20)
+        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Odachi.LightAttackDamage, 6f);          // hammer 3
+        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Odachi.ChargedAttackDamage, 9999f);   // a full charge kills anything it reaches (hammer 20)
         archetype.CanHitMultipleEnemies = true;
-        archetype.AttackSphereRadius = 0.4f;    // hammer 0.3
+        archetype.AttackSphereRadius = WeaponSettings.Or(WeaponSettings.Odachi.AttackSphereRadius, 0.4f);      // hammer 0.3
         archetype.CameraDamageRayLength = 3.5f; // hammer 1.8
-        archetype.PlayerRunSpeedMultiWhileCharging = 0.7f;
+        archetype.PlayerRunSpeedMultiWhileCharging = WeaponSettings.Or(WeaponSettings.Odachi.ChargeSpeedMulti, 0.7f);
         archetype.name = "Odachi";
         WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
 
@@ -226,17 +226,17 @@ internal static class MeleeInjector
         // The hammer's own swing and charge (full damage at 1.8 s). A fully charged blow kills
         // almost anything short of a tank; taps stay hammer-light.
         var archetype = Clone(hammer);
-        archetype.ChargedAttackDamage = 500f; // vanilla hammer 20
-        archetype.LightAttackDamage = 6f; // vanilla hammer 3
+        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Warhammer.ChargedAttackDamage, 500f); // vanilla hammer 20
+        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Warhammer.LightAttackDamage, 6f); // vanilla hammer 3
         // Stagger makes an enemy reel: x55 charged (vanilla 1.3), x11 light (vanilla 1). The actual
         // shove - sliding enemies back - is runtime (ImpactBursts.Shockwave / Knockback).
-        archetype.ChargedStaggerMulti = 55f;
-        archetype.LightStaggerMulti = 11f;
+        archetype.ChargedStaggerMulti = WeaponSettings.Or(WeaponSettings.Warhammer.ChargedStaggerMulti, 55f);
+        archetype.LightStaggerMulti = WeaponSettings.Or(WeaponSettings.Warhammer.LightStaggerMulti, 11f);
         archetype.ChargedEnvironmentMulti = 10f; // doors and locks too
         archetype.CanHitMultipleEnemies = true; // the head is big enough to catch a crowd
-        archetype.AttackSphereRadius = 0.6f; // vanilla hammer 0.3
+        archetype.AttackSphereRadius = WeaponSettings.Or(WeaponSettings.Warhammer.AttackSphereRadius, 0.6f); // vanilla hammer 0.3
         archetype.CameraDamageRayLength = 2.4f; // vanilla hammer 1.8 - the giant head reaches further
-        archetype.PlayerRunSpeedMultiWhileCharging = 0.5f; // lugging it at the ready slows you down
+        archetype.PlayerRunSpeedMultiWhileCharging = WeaponSettings.Or(WeaponSettings.Warhammer.ChargeSpeedMulti, 0.5f); // lugging it at the ready slows you down
 
         Register(name, id, archetype, Clone(hammerCategory), hammerCategory.persistentID, sledgehammer,
             "A sledgehammer with a head the size of a crate. Every hit sends enemies reeling, and a full charge leaves nothing standing.");
@@ -278,13 +278,13 @@ internal static class MeleeInjector
 
         var archetype = Clone(hammer);
         archetype.MeleeAnimationSet = id;
-        archetype.LightAttackDamage = 4f;         // hammer 3
-        archetype.ChargedAttackDamage = 30f;      // hammer 20
-        archetype.ChargedStaggerMulti = 20f;      // hammer 1.3
+        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.GravityHammer.LightAttackDamage, 4f);         // hammer 3
+        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.GravityHammer.ChargedAttackDamage, 30f);    // hammer 20
+        archetype.ChargedStaggerMulti = WeaponSettings.Or(WeaponSettings.GravityHammer.ChargedStaggerMulti, 20f);    // hammer 1.3
         archetype.CanHitMultipleEnemies = true;
-        archetype.AttackSphereRadius = 0.5f;      // hammer 0.3
+        archetype.AttackSphereRadius = WeaponSettings.Or(WeaponSettings.GravityHammer.AttackSphereRadius, 0.5f);     // hammer 0.3
         archetype.CameraDamageRayLength = 2.2f;   // hammer 1.8
-        archetype.PlayerRunSpeedMultiWhileCharging = 0.6f; // anchored while it pulls
+        archetype.PlayerRunSpeedMultiWhileCharging = WeaponSettings.Or(WeaponSettings.GravityHammer.ChargeSpeedMulti, 0.6f); // anchored while it pulls
 
         Register(name, id, archetype, Clone(hammerCategory), hammerCategory.persistentID, maul,
             "Hold the charge as long as you like and it drags every enemy in sight toward you. Let go of a full charge and it throws them all back out.");

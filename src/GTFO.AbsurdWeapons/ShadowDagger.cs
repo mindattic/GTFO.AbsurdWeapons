@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using Enemies;
 using Gear;
 using GTFO.API;
@@ -24,14 +25,25 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class Stealth
 {
-    internal const float Seconds = 6f;
-    internal const float StabSpeed = 2.5f;
+    internal const float StabSpeed = 2.5f; // the fallback for WeaponSettings.ShadowDagger.LightAttackSpeed
+
+    internal static ConfigEntry<float> Seconds = null!;
+    internal static ConfigEntry<float> BonusPerKill = null!;
+    internal static ConfigEntry<float> MaxBonus = null!;
+
     // A charged hit counts as full when it deals at least this share of the full charged damage.
     private const float FullChargeShare = 0.95f;
     private const string StealthEvent = "MindAttic.GTFO.AbsurdWeapons.Stealth";
 
     // Keyed by the player's Steam id (SNet_Player.Lookup): when their stealth ends, in Time.time.
     private static readonly Dictionary<ulong, float> hiddenUntil = new();
+
+    internal static void Bind(ConfigFile config)
+    {
+        Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 6f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
+        BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
+        MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
+    }
 
     internal static void Init()
     {
@@ -77,8 +89,6 @@ internal static class Stealth
     // ---- Kills while hidden: each adds 25% dagger damage (up to +100%) for the rest of the
     // stealth; a full-windup kill also adds the windup's time to the stealth ----
 
-    private const float BonusPerKill = 0.25f;
-    private const float MaxBonus = 1f;
     private const float KillCheckDelay = 0.4f; // the kill is confirmed by the host; look a moment later
 
     private static float damageBonus;      // the local player's, while hidden
@@ -127,7 +137,7 @@ internal static class Stealth
             pendingKills.RemoveAt(i);
             if (enemy != null && enemy.Alive) continue;
 
-            damageBonus = Formulas.StealthBonusAfterKill(damageBonus, BonusPerKill, MaxBonus);
+            damageBonus = Formulas.StealthBonusAfterKill(damageBonus, BonusPerKill.Value, MaxBonus.Value);
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: kill while hidden - damage +{damageBonus * 100f:0}%.");
             if (windup > 0f && local.Owner != null)
             {
@@ -185,7 +195,7 @@ internal static class Stealth
             if (owner == null || !owner.IsLocallyOwned || owner.Owner == null) return;
 
             // Starts (or tops back up to) the full stealth - never cutting a stretched one short.
-            var seconds = Mathf.Max(Seconds, Remaining(owner));
+            var seconds = Mathf.Max(Seconds.Value, Remaining(owner));
             Hide(owner.Owner.Lookup, seconds);
             NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(seconds));
         }

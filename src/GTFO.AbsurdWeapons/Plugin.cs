@@ -27,6 +27,8 @@ public class Plugin : BasePlugin
         WeaponSettings.Bind(Config);
         TentaclePool.Bind(Config);
         GearCycler.Bind(Config);
+        Stealth.Bind(Config);
+        KatanaDash.Bind(Config);
         FlameThrower.Bind(Config);
         FlakCannon.Bind(Config);
         VictoryBanner.Bind(Config);

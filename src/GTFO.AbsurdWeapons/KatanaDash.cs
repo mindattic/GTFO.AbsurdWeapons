@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using Enemies;
 using GameData;
 using Gear;
@@ -21,11 +22,19 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class KatanaDash
 {
-    internal const float Distance = 40f;
-    internal const float Seconds = 0.6f; // ~67 m/s
-    internal const float SlashRadius = 1.2f;
-    internal const float SlashStagger = 3f;
+    internal static ConfigEntry<float> Distance = null!;
+    internal static ConfigEntry<float> Seconds = null!;
+    internal static ConfigEntry<float> SlashRadius = null!;
+    internal static ConfigEntry<float> SlashStagger = null!;
     private const float FullChargeLeeway = 0.95f; // a charge held this share of the full time counts
+
+    internal static void Bind(ConfigFile config)
+    {
+        Distance = config.Bind("Katana", "DashDistance", 40f, "Metres the full-charge dash moves you.");
+        Seconds = config.Bind("Katana", "DashSeconds", 0.6f, "Seconds the dash takes (so ~67 m/s at the defaults).");
+        SlashRadius = config.Bind("Katana", "DashSlashRadius", 1.2f, "How wide a swath the dash slashes through.");
+        SlashStagger = config.Bind("Katana", "DashSlashStagger", 3f, "Stagger multiplier of each dash slash.");
+    }
 
     // When the local player's Katana started charging (Time.time), or -1.
     private static float chargeStarted = -1f;
@@ -85,7 +94,7 @@ internal sealed class DashRunner : MonoBehaviour
     {
         player = owner;
         direction = dir;
-        left = KatanaDash.Seconds;
+        left = KatanaDash.Seconds.Value;
         damage = slashDamage;
         gearCategoryId = categoryId;
         slashed.Clear();
@@ -106,11 +115,11 @@ internal sealed class DashRunner : MonoBehaviour
             left -= dt;
             var controller = player.PlayerCharacterController;
             var from = player.Position;
-            controller?.Move(direction * (KatanaDash.Distance / KatanaDash.Seconds) * dt);
+            controller?.Move(direction * (KatanaDash.Distance.Value / KatanaDash.Seconds.Value) * dt);
             Slash(from);
             if (left <= 0f)
             {
-                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Katana dash done: moved {Vector3.Distance(startPosition, player.Position):0.0} m of {KatanaDash.Distance} m, slashed {slashed.Count}.");
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Katana dash done: moved {Vector3.Distance(startPosition, player.Position):0.0} m of {KatanaDash.Distance.Value} m, slashed {slashed.Count}.");
                 player = null;
             }
         }
@@ -128,13 +137,13 @@ internal sealed class DashRunner : MonoBehaviour
     private static void Slash(Vector3 from)
     {
         var center = player!.Position + Vector3.up;
-        foreach (var collider in Physics.OverlapCapsule(from + Vector3.up, center, KatanaDash.SlashRadius, LayerManager.MASK_ENEMY_DAMAGABLE))
+        foreach (var collider in Physics.OverlapCapsule(from + Vector3.up, center, KatanaDash.SlashRadius.Value, LayerManager.MASK_ENEMY_DAMAGABLE))
         {
             var limb = collider.GetComponent<Dam_EnemyDamageLimb>();
             var enemy = limb?.m_base?.Owner;
             if (limb == null || enemy == null || !enemy.Alive || !slashed.Add(enemy.Pointer)) continue;
             limb.BulletDamage(damage, player.Cast<Agent>(), collider.ClosestPoint(center), direction, -direction,
-                allowDirectionalBonus: false, KatanaDash.SlashStagger, 1f, gearCategoryId);
+                allowDirectionalBonus: false, KatanaDash.SlashStagger.Value, 1f, gearCategoryId);
         }
     }
 }

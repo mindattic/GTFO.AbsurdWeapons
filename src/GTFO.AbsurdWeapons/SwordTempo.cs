@@ -16,10 +16,10 @@ internal static class SwordTempo
 {
     internal static float SpeedFor(uint id) => id switch
     {
-        MeleeInjector.TantoId => 1.6f,
-        MeleeInjector.WakizashiId => 1.25f,
-        MeleeInjector.OdachiId => 0.85f,
-        MeleeInjector.ShadowDaggerId => Stealth.StabSpeed,
+        MeleeInjector.TantoId => WeaponSettings.Or(WeaponSettings.Tanto.LightAttackSpeed, 1.6f),
+        MeleeInjector.WakizashiId => WeaponSettings.Or(WeaponSettings.Wakizashi.LightAttackSpeed, 1.25f),
+        MeleeInjector.OdachiId => WeaponSettings.Or(WeaponSettings.Odachi.LightAttackSpeed, 0.85f),
+        MeleeInjector.ShadowDaggerId => WeaponSettings.Or(WeaponSettings.ShadowDagger.LightAttackSpeed, Stealth.StabSpeed),
         _ => 1f,
     };
 
