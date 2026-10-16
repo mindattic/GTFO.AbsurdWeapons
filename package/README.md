@@ -3,8 +3,8 @@
 *(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-A BepInEx plugin for GTFO that adds **twenty-two new weapons**: nine melee weapons, twelve guns and
-a tool. No game files are shipped or edited. Every weapon is built at load time from the game's own
+A BepInEx plugin for GTFO that adds **twenty-three new weapons**: nine melee weapons, twelve guns
+and two tools. No game files are shipped or edited. Every weapon is built at load time from the game's own
 data, so they pick up vanilla balance changes, and nothing vanilla is modified.
 
 They show up in the loadout screen next to the vanilla weapons, in their normal slots. Every one of
@@ -48,11 +48,12 @@ first; balance comes later.
 | **Flamethrower** | Special | TechMan Veruta XII | A short cone of fire, devastating up close; afterburn keeps ticking after the stream, and fire spreads between enemies standing close together. Hold Aim to lob a fuel bomb instead |
 | **Flak Cannon** | Special | Bataldo J 300 | A cone of bouncing shrapnel, devastating point-blank. Hold Aim to fire one compressed ball instead that explodes into a radial shrapnel burst on contact |
 
-### Tool
+### Tools
 
 | Weapon | Model | In one line |
 |---|---|---|
 | **Grenade Launcher** | Stalwart Flow G2 (C-Foam launcher) | Lobs lock-melter grenades: instant on an enemy, else bounce and blow after 3 s; infinite ammo |
+| **Victory Banner** | Stalwart Flow G2 (C-Foam launcher) | Sets a banner down in front of you; fire again to pick it up. Heals and buffs everyone standing in its ring |
 
 ## Melee weapons
 
@@ -197,7 +198,7 @@ single slow ball: it explodes on the first thing it touches (no fuse) for a blas
 burst of secondary shrapnel**, catching things just past the edge of it - the classic Unreal
 Tournament flak trick.
 
-## Tool
+## Tools
 
 ### Grenade Launcher
 
@@ -209,6 +210,19 @@ per trigger pull, with **infinite tool ammo**.
 - While it's out it **flashes red faster and faster** (with a beep each flash) as the fuse burns.
 - The blast does 40 damage at the center, falling to 25% at 5 m, with a heavy stagger (x5). It
   never hurts players.
+
+### Victory Banner
+
+The C-Foam launcher, but firing it **sets a banner down right in front of you** instead of throwing
+anything. Fire again while yours is still up and you **pick it back up** instead of planting a
+second one. Switching your tool slot away from it - PageUp/PageDown, equipping something else, or
+pressing Home to restore your starting loadout - **retires it on its own**, no need to pick it up
+first.
+
+While it's up it pulses an expanding ring every couple of seconds out to **8 m**, **healing**
+everyone standing inside it, and giving **you** a damage bonus (any weapon, this mod's or vanilla)
+while you're in it: **+15%**, climbing toward **+25%** the more enemies you kill without leaving the
+ring, reset the moment you step out.
 
 ## Swapping weapons in a level
 

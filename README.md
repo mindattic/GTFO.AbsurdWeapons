@@ -1,9 +1,9 @@
 # GTFO.AbsurdWeapons
 
-Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty-two new weapons, each shown with "(!)"
+Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty-three new weapons, each shown with "(!)"
 after its name: nine melee weapons that put one weapon's model on another's moves (Yari, Tanto,
 Wakizashi, Katana, Odachi, Mjolnir, Warhammer, Gravity Hammer, Shadow Dagger), twelve guns (Plasma,
-Hive, Laser and Tentacle Pistol/Rifle, Railgun, Chain Lightning Gun, Flamethrower, Flak Cannon) and a tool (Grenade Launcher).
+Hive, Laser and Tentacle Pistol/Rifle, Railgun, Chain Lightning Gun, Flamethrower, Flak Cannon) and two tools (Grenade Launcher, Victory Banner).
 Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. See
 `package/README.md` for the player-facing breakdown and stat tables.
 
@@ -46,6 +46,7 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Flak Cannon | 1112 | the J 300's archetype for its fire mode | the J 300's (`ShotgunHEL`) | `ShotgunHEL` (Bataldo J 300, special) | `AddFlakCannon`: Semi, 9 pellets, cone/spread 5, damage 7 (per shard, before falloff), shot delay 0.85 s, clip 6, no brass, kickless recoil 1112; the bouncing shards and the Aim-held ball are runtime (`FlakCannon`) |
 | Tentacle Pistol | 1110 | the XDist2's archetype (shared with the Tentacle Rifle) | the 3RB's (`RevolverStandard`) | `RevolverHEL` (Bataldo 3RB, main) | `AddTentacle`: same stats as the Tentacle Rifle, kickless recoil 1110, model's own hold |
 | Grenade Launcher | 1201 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddGrenadeLauncher`: category and gear only; the launcher's own prefab drives pressure and bursts; the grenades are runtime (`GrenadeLauncher`) |
+| Victory Banner | 1202 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddVictoryBanner`: category and gear only; placing, picking up, healing and the damage buff are runtime (`VictoryBanner`) |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
 uses an id, that weapon isn't added and an error is logged. The rest still load. Vanilla names,
@@ -355,6 +356,25 @@ shows it to everyone.
   body, and for the local player everything under `FPItemHolder` (arms and the dagger). Everything
   is turned back on at the end.
 
+### Victory Banner (`VictoryBanner`, `BannerPylon`, `VictoryBannerBuff`)
+
+The C-Foam launcher's `WantToFireGlue` hook is reused a third time: it toggles instead of firing a
+projectile. Nothing active for the owner: a raycast down from just in front of them places a
+`BannerPylon` right there (no throw), sent to teammates (`...BannerPlant`). One already active:
+that pull instead retires it (`...BannerPickUp`) - the same message also fires automatically,
+from the owner's own game, when `BannerPylon.StillInToolSlot` (checked twice a second, reading
+`PlayerBackpackManager.LocalBackpack`'s `GearClass` slot the same way `GearCycler` does) finds the
+Victory Banner is no longer what's actually equipped there - PageUp/PageDown, picking something
+else, or Home's restore. Every client runs the same planted `BannerPylon` independently: a pulsing
+ring every `PulseSeconds` out to `Radius`, and each client's own local player self-heals
+(`ReceiveAddHealth`, like Shadow Dagger's per-client decisions) if they're standing in it - no
+cross-client authority needed. `VictoryBannerBuff`, an always-on ticker, separately tracks whether
+the local player is in *any* active banner's ring; while they are, a `Dam_EnemyDamageLimb.
+BulletDamage` prefix multiplies every hit they deal - any weapon, this mod's or vanilla, since
+`BulletDamage` is the one choke point all instant damage runs through - by `BaseDamageBuff`,
+climbing by `DamageBuffPerKill` per enemy a postfix catches them killing while still inside, capped
+at `MaxDamageBuff` and reset to base the moment they leave.
+
 ## Layout
 
 ```
@@ -375,6 +395,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   ChainLightning.cs     Chain Lightning Gun strikes, jumps and bolt
   FlameThrower.cs       Flamethrower cone, afterburn, fire spread and the fuel bomb
   FlakCannon.cs         Flak Cannon shrapnel shards and the Aim-held ball
+  VictoryBanner.cs      Victory Banner placement/pickup, healing and the damage buff
   GrenadeLauncher.cs    Grenade Launcher hook, grenade flight, fuse, blast, infinite tool ammo
   GravityHammer.cs      Gravity Hammer pull and release blast
   SwordTempo.cs         the swords' light-attack speeds
@@ -465,6 +486,11 @@ Still to verify in-game:
   shrapnel on whatever it touches first (enemy or wall), never a fuse. Known gap: the primary
   shards aren't sent to teammates (only the ball is), so they only see your muzzle flash and the
   enemies reacting, not the bouncing debris itself.
+- Victory Banner: fires it sets one down right in front of you (no throw); firing again picks it
+  back up; PageUp/PageDown away from it, re-equipping another tool, or Home's restore all despawn
+  it on their own within half a second. The ring heals everyone standing in it and the damage buff
+  shows up on your own hits (any weapon) while you're inside it, climbing as you get kills without
+  leaving, resetting the moment you step out.
 - Tentacle Rifle (tentacles draw and bite, confirmed):
   - The level fan reads as wild without going up or down.
   - Lashes start at the barrel on screen with the new hold.

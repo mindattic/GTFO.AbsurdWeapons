@@ -19,8 +19,10 @@
     between enemies standing close together, and an Aim-triggered fuel bomb for reach), Flak Cannon
     (Unreal Tournament style: bouncing shrapnel shards, or hold Aim to fire one ball that explodes
     into a radial shrapnel burst on contact).
-  - **Tool:** Grenade Launcher (the C-Foam launcher firing lock-melter grenades that blow on an
-    enemy or bounce and blow after 3 s, flashing red faster and faster; infinite ammo).
+  - **Tools:** Grenade Launcher (the C-Foam launcher firing lock-melter grenades that blow on an
+    enemy or bounce and blow after 3 s, flashing red faster and faster; infinite ammo), Victory
+    Banner (set it down like a turret, pick it up like one too; heals everyone in its ring and buffs
+    the holder's own damage +15%, climbing to +25% with kills made without leaving).
 - Swap between this mod's weapons in a level with Page Up / Page Down (configurable).
 - Config: per-weapon `BladeLength`, `BladeLengthAxis` and `Reach`; `[Gear Cycling]` keys;
   `[Tentacles] PoolMultiplier` raises how many tentacles the game can draw at once.
