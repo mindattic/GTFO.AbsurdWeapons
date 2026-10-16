@@ -14,7 +14,9 @@
   - **Guns (infinite ammo):** Plasma Pistol/Rifle (Doom plasma), Hive Pistol/Rifle (Titanfall smart
     rounds), Laser Pistol/Rifle (continuous burning beams), Tentacle Pistol/Rifle (striker tentacles
     in a wide, level fan), Railgun (hitscan slug with infinite penetration and a double-helix beam),
-    Chain Lightning Gun (bolts that jump between up to six enemies).
+    Chain Lightning Gun (bolts that jump between up to six enemies), Flamethrower (a short cone of
+    fire with heavy range falloff, stacking afterburn that outlives the stream, fire that spreads
+    between enemies standing close together, and an Aim-triggered fuel bomb for reach).
   - **Tool:** Grenade Launcher (the C-Foam launcher firing lock-melter grenades that blow on an
     enemy or bounce and blow after 3 s, flashing red faster and faster; infinite ammo).
 - Swap between this mod's weapons in a level with Page Up / Page Down (configurable).

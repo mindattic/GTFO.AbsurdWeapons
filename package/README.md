@@ -45,6 +45,7 @@ first; balance comes later.
 | **Tentacle Rifle** | Special | Buckland XDist2 | The same tentacle stream |
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | Lightning that leaps from enemy to enemy, up to five jumps |
+| **Flamethrower** | Special | TechMan Veruta XII | A short cone of fire, devastating up close; afterburn keeps ticking after the stream, and fire spreads between enemies standing close together. Hold Aim to lob a fuel bomb instead |
 
 ### Tool
 
@@ -175,6 +176,16 @@ The Omneco exp1, full-auto at ~6.7 bolts a second. Each bolt strikes the enemy u
 (or the nearest within 6° if you just miss), then **jumps** to the nearest enemy within 8 m it
 hasn't hit, up to 5 jumps. Damage is 10 to the first, then 75% of the last on each jump. Jumps need
 a clear line. No recoil, no brass.
+
+### Flamethrower (special)
+
+The TechMan Veruta XII, full-auto, 15 ticks a second. Each tick is a short 8 m cone that falls off
+hard with range - devastating up close, nearly useless across a room. An enemy it touches catches
+**afterburn**: a damage-over-time that keeps ticking for 3 seconds after the stream leaves them
+(stacks up to 5x, refreshed by the next hit), and a burning enemy's own ticks can set off any other
+living enemy within 3 m of it, so a cluster goes up together. **Hold Aim** instead of firing to lob
+a fuel bomb: it explodes on the first thing it touches - no fuse - and leaves a lingering patch of
+fire rather than one instant blast.
 
 ## Tool
 

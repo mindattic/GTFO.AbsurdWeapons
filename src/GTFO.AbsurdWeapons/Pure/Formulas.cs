@@ -59,4 +59,8 @@ internal static class Formulas
 
     // A light attack's timing (seconds or frames) at `speed` times the pace.
     internal static float ScaledTiming(float value, float speed) => speed > 0f ? value / speed : value;
+
+    // The Flamethrower's afterburn: one more stack on an enemy already alight, capped so repeated
+    // hits can't stack damage forever.
+    internal static int AfterburnStacks(int current, int max) => Math.Min(current + 1, max);
 }

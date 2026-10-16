@@ -138,7 +138,8 @@ internal static class ChainLightning
         return best;
     }
 
-    private static Dam_EnemyDamageLimb? NearestLimb(EnemyAgent enemy, Vector3 point)
+    // Shared with FlameThrower's afterburn ticks: the limb of `enemy` nearest `point`.
+    internal static Dam_EnemyDamageLimb? NearestLimb(EnemyAgent enemy, Vector3 point)
     {
         Dam_EnemyDamageLimb? nearest = null;
         var best = float.MaxValue;

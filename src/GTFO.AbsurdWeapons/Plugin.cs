@@ -35,6 +35,7 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<RailBeam>();
         ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
         ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
+        ClassInjector.RegisterTypeInIl2Cpp<FireBombProjectile>();
         SeekerGuns.Init();
         ImpactBursts.Init();
         Stealth.Init();
@@ -43,6 +44,7 @@ public class Plugin : BasePlugin
         GrenadeLauncher.Init();
         Railgun.Init();
         ChainLightning.Init();
+        FlameThrower.Init();
         Knockback.Init();
         new Harmony(GUID).PatchAll();
         AddComponent<StealthVisuals>();
@@ -51,6 +53,7 @@ public class Plugin : BasePlugin
         AddComponent<GravityPull>();
         AddComponent<GearCycler>();
         AddComponent<InfiniteAmmo>();
+        AddComponent<FlameAfterburn>();
         MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }

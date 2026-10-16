@@ -40,6 +40,7 @@ internal static class GunInjector
     internal const uint RailgunId = 1108;
     internal const uint ChainLightningId = 1109;
     internal const uint TentaclePistolId = 1110;
+    internal const uint FlamethrowerId = 1111;
     internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
 
     // Every gun this mod adds (infinite ammo applies to all of them).
@@ -74,7 +75,30 @@ internal static class GunInjector
         TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "Precision_Rifle", null, laser)); // Drekker DEL P1, special slot
         TryAdd("Railgun", RailgunId, AddRailgun);
         TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
+        TryAdd("Flamethrower", FlamethrowerId, AddFlamethrower);
         TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
+    }
+
+    // The TechMan Veruta XII machine gun, full-auto, firing FlameThrower's cone instead of bullets:
+    // short range, falls off hard with distance, every tick that lands stacks afterburn. Hold Aim
+    // to lob a fuel bomb instead (FlameThrower.FireBomb).
+    private static void AddFlamethrower(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("MachinegunAuto");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Auto;
+        archetype.ShotgunBulletCount = 1;
+        archetype.Damage = 6f;        // per tick, before FlameThrower's own range falloff
+        archetype.ShotDelay = 1f / 15f; // 15 ticks a second
+        archetype.DefaultClipSize = 150;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.ShellCasingSize = 0f; // fire, not bullets: no brass ejected
+        archetype.SpecialChargetupTime = 0f;
+        archetype.SpecialCooldownTime = 0f;
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, category, gear,
+            "A short, brutal cone of fire: devastating up close, nearly useless across a room. Anything it touches keeps burning, and fire catches between enemies standing close together. Hold Aim to lob a fuel bomb instead, for reach.");
     }
 
     // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id. Tools

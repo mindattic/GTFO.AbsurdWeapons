@@ -1,9 +1,9 @@
 # GTFO.AbsurdWeapons
 
-Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty new weapons, each shown with "(!)"
+Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty-one new weapons, each shown with "(!)"
 after its name: nine melee weapons that put one weapon's model on another's moves (Yari, Tanto,
-Wakizashi, Katana, Odachi, Mjolnir, Warhammer, Gravity Hammer, Shadow Dagger), ten guns (Plasma,
-Hive, Laser and Tentacle Pistol/Rifle, Railgun, Chain Lightning Gun) and a tool (Grenade Launcher).
+Wakizashi, Katana, Odachi, Mjolnir, Warhammer, Gravity Hammer, Shadow Dagger), eleven guns (Plasma,
+Hive, Laser and Tentacle Pistol/Rifle, Railgun, Chain Lightning Gun, Flamethrower) and a tool (Grenade Launcher).
 Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. See
 `package/README.md` for the player-facing breakdown and stat tables.
 
@@ -42,6 +42,7 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Laser Rifle | 1107 | the DEL P1's archetype | the DEL P1's | `Precision_Rifle` (Drekker DEL P1, special) | `AddLaser`: same stats as the Laser Pistol, kickless recoil 1107, model's own hold |
 | Railgun | 1108 | the PR 11's archetype for its fire mode | the PR 11's (`Sniper`) | `SniperSemi` (Koning PR 11, special) | `AddRailgun`: Semi, damage 60 (to every enemy on the line), shot delay 1.0 s, clip 5, no spread, `ShellCasingSize` 0, the sniper's own recoil and scope; the slug is runtime (`Railgun`) |
 | Chain Lightning Gun | 1109 | the exp1's archetype for its fire mode | the exp1's (`MachineGun_LowRPM`) | `HELGun` (Omneco exp1, special) | `AddChainLightning`: Auto, damage 10 (first strike), shot delay 0.15 s, clip 60, no spread or spin-up, no brass, kickless recoil 1109; the bolts are runtime (`ChainLightning`) |
+| Flamethrower | 1111 | the Veruta XII's archetype for its fire mode | the Veruta XII's (`MachinegunAuto`) | `MachinegunAuto` (TechMan Veruta XII, special) | `AddFlamethrower`: Auto, damage 6 (per tick, before falloff), shot delay 1/15 s, clip 150, no spread, no brass, kickless recoil 1111; the cone, afterburn, fire spread and fuel bomb are runtime (`FlameThrower`) |
 | Tentacle Pistol | 1110 | the XDist2's archetype (shared with the Tentacle Rifle) | the 3RB's (`RevolverStandard`) | `RevolverHEL` (Bataldo 3RB, main) | `AddTentacle`: same stats as the Tentacle Rifle, kickless recoil 1110, model's own hold |
 | Grenade Launcher | 1201 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddGrenadeLauncher`: category and gear only; the launcher's own prefab drives pressure and bursts; the grenades are runtime (`GrenadeLauncher`) |
 
@@ -196,6 +197,25 @@ last strike with a clear `MASK_WORLD` line, up to five jumps at 75% of the previ
 `BurstFlash` and `Impact_Electronics` sparks at each strike. The path (up to 7 points) goes to
 teammates as `MindAttic.GTFO.AbsurdWeapons.ChainLightning`.
 
+### Flamethrower (`FlameThrower`, `FlameAfterburn`, `FireBombProjectile`)
+
+The `CastWeaponRay` prefix swallows its ray too, once a tick (15/s). `FlameThrower.Tick` checks
+`InputMapper.GetButtonKeyMouse(InputAction.Aim, ...)` for the local shooter: held, it lobs a fuel
+bomb instead of streaming (`FireBomb`, rate-limited to one every 1.25 s); otherwise `Stream` fans 5
+raycasts across a 12°-either-side cone out to 8 m and calls `BulletDamage` on whatever enemy each
+hits, falling off with distance (`Formulas.AreaFalloff`). A landed hit also `Ignite`s that enemy: an
+afterburn stack (capped at 5, `Formulas.AfterburnStacks`) that expires 3 s after the last hit.
+`FlameAfterburn`, an always-running `MonoBehaviour` (not gated on the trigger), ticks every burning
+enemy every 0.5 s for `AfterburnDamagePerStack x stacks` through the bullet path, and each tick also
+checks other living enemies within 3 m in sight and ignites them too, so fire spreads through a
+cluster. `FireBomb` spawns a `FireBombProjectile` that flies by hand (gravity, a sphere cast each
+step) and explodes on the first enemy or wall it touches - no fuse, no bounce - leaving a
+`FlameThrower.PoolState` that `FlameAfterburn` also ticks: `AreaDamage.Apply` every 0.5 s for 4 s,
+igniting anything it catches. Everything above is the igniting player's own game only (damage
+already syncs through the bullet path, same as every other weapon here); the bomb's flight is sent
+to teammates (`MindAttic.GTFO.AbsurdWeapons.FlameBombLaunch`) so they see it thrown and explode, but
+the afterburn ticks and the fire pool are not synced - a teammate doesn't see the lingering flames.
+
 ### Grenade Launcher (`GrenadeLauncher`, `LauncherGrenade`, `Explosion`)
 
 - **Firing:** a prefix on `ProjectileManager.WantToFireGlue` checks the owner's wielded item's
@@ -336,6 +356,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   TentacleCannon.cs     Tentacle Pistol/Rifle fan, targeting, surface grab and the GPU tentacle lash
   Railgun.cs            Railgun slug and its double-helix beam
   ChainLightning.cs     Chain Lightning Gun strikes, jumps and bolt
+  FlameThrower.cs       Flamethrower cone, afterburn, fire spread and the fuel bomb
   GrenadeLauncher.cs    Grenade Launcher hook, grenade flight, fuse, blast, infinite tool ammo
   GravityHammer.cs      Gravity Hammer pull and release blast
   SwordTempo.cs         the swords' light-attack speeds
@@ -414,6 +435,13 @@ Still to verify in-game:
 - New since the last in-game test: Grenade Launcher (tool slot, model, bounce, fuse, flash,
   blast), Railgun, Chain Lightning Gun, Gravity Hammer (charge never auto-swings, pull, blast),
   Tanto/Wakizashi/Odachi sizes and tempo, Tentacle Pistol, PageUp/PageDown swapping mid-level.
+- Flamethrower: the cone falls off with range and the stagger reads as "uncontrollable" up close;
+  afterburn keeps ticking after you stop firing or switch weapons and stacks/refreshes correctly;
+  fire visibly catches between enemies standing close together; holding Aim lobs a fuel bomb that
+  explodes on first contact (no fuse) and leaves a damaging patch rather than one blast. Known gap:
+  afterburn ticks and the fuel bomb's fire pool are the igniting player's own game only - a
+  teammate doesn't see your flame's impact flashes or the lingering ground fire, only the gun firing
+  and the enemy reacting (which does sync).
 - Tentacle Rifle (tentacles draw and bite, confirmed):
   - The level fan reads as wild without going up or down.
   - Lashes start at the barrel on screen with the new hold.

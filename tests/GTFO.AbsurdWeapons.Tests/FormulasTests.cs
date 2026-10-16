@@ -115,4 +115,13 @@ public class FormulasTests
     {
         Assert.That(Formulas.ScaledTiming(value, speed), Is.EqualTo(expected).Within(1e-5));
     }
+
+    [Test]
+    public void AfterburnStacks_CapsAtTheMax()
+    {
+        var stacks = 0;
+        for (var hit = 0; hit < 8; hit++) stacks = Formulas.AfterburnStacks(stacks, 5);
+        Assert.That(stacks, Is.EqualTo(5));
+        Assert.That(Formulas.AfterburnStacks(0, 5), Is.EqualTo(1));
+    }
 }
