@@ -41,6 +41,7 @@ internal static class GunInjector
     internal const uint ChainLightningId = 1109;
     internal const uint TentaclePistolId = 1110;
     internal const uint FlamethrowerId = 1111;
+    internal const uint FlakCannonId = 1112;
     internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
 
     // Every gun this mod adds (infinite ammo applies to all of them).
@@ -76,7 +77,29 @@ internal static class GunInjector
         TryAdd("Railgun", RailgunId, AddRailgun);
         TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
         TryAdd("Flamethrower", FlamethrowerId, AddFlamethrower);
+        TryAdd("Flak Cannon", FlakCannonId, AddFlakCannon);
         TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
+    }
+
+    // The Bataldo J 300 shotgun: primary fire scatters bouncing shrapnel shards (FlakCannon); hold
+    // Aim to compress the shot into one ball that explodes into a shrapnel burst on contact.
+    private static void AddFlakCannon(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("ShotgunHEL");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Semi;
+        archetype.ShotgunBulletCount = 9;
+        archetype.ShotgunConeSize = 5;
+        archetype.ShotgunBulletSpread = 5;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.Damage = 7f;        // per shard, before FlakCannon's own range falloff
+        archetype.ShotDelay = 0.85f;
+        archetype.DefaultClipSize = 6;
+        archetype.ShellCasingSize = 0f; // shrapnel, not shot: no brass ejected
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, category, gear,
+            "A classic flak cannon: a cone of bouncing shrapnel shards, devastating point-blank. Hold Aim to fire a single compressed ball instead - it explodes into a radial burst of shrapnel the instant it touches anything.");
     }
 
     // The TechMan Veruta XII machine gun, full-auto, firing FlameThrower's cone instead of bullets:

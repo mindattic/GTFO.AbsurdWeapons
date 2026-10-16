@@ -36,6 +36,8 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
         ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
         ClassInjector.RegisterTypeInIl2Cpp<FireBombProjectile>();
+        ClassInjector.RegisterTypeInIl2Cpp<ShrapnelShard>();
+        ClassInjector.RegisterTypeInIl2Cpp<FlakBall>();
         SeekerGuns.Init();
         ImpactBursts.Init();
         Stealth.Init();
@@ -45,6 +47,7 @@ public class Plugin : BasePlugin
         Railgun.Init();
         ChainLightning.Init();
         FlameThrower.Init();
+        FlakCannon.Init();
         Knockback.Init();
         new Harmony(GUID).PatchAll();
         AddComponent<StealthVisuals>();

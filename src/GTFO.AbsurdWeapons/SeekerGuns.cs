@@ -172,6 +172,7 @@ internal static class SeekerGuns
             LaserGuns.MuteTracer(weapon);
         if (TentacleCannon.IsTentacleGun(firingArchetype) && TentacleCannon.DiagnosticShots > 0)
             Plugin.Logger.LogInfo("GTFO.AbsurdWeapons Tentacle Rifle: Fire() called.");
+        if (firingArchetype == GunInjector.FlakCannonId) FlakCannon.ResetShot();
     }
 
     private static void EndFire(BulletWeapon weapon, uint previous)
@@ -260,6 +261,21 @@ internal static class SeekerGuns
                 {
                     var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
                     FlameThrower.Tick(shooter, originPos, aim, weaponRayData.damage, weaponRayData.gearCategoryId);
+                }
+                return false;
+            }
+
+            if (firingArchetype == GunInjector.FlakCannonId || weaponRayData.gearCategoryId == GunInjector.FlakCannonId)
+            {
+                ours = true;
+                weaponRayData.maxRayDist = 0f;
+                __result = false;
+                // Shotgun pellets come without an owner in the hit data: fall back to the gun's.
+                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
+                if (shooter != null && shooter.IsLocallyOwned)
+                {
+                    FlakCannon.FirePellet(shooter, firingWeapon?.MuzzleAlign, originPos, PelletDirection(alignTransform, weaponRayData),
+                        weaponRayData.damage, weaponRayData.gearCategoryId);
                 }
                 return false;
             }

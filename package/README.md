@@ -3,8 +3,8 @@
 *(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-A BepInEx plugin for GTFO that adds **twenty new weapons**: nine melee weapons, ten guns and a
-tool. No game files are shipped or edited. Every weapon is built at load time from the game's own
+A BepInEx plugin for GTFO that adds **twenty-two new weapons**: nine melee weapons, twelve guns and
+a tool. No game files are shipped or edited. Every weapon is built at load time from the game's own
 data, so they pick up vanilla balance changes, and nothing vanilla is modified.
 
 They show up in the loadout screen next to the vanilla weapons, in their normal slots. Every one of
@@ -46,6 +46,7 @@ first; balance comes later.
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | Lightning that leaps from enemy to enemy, up to five jumps |
 | **Flamethrower** | Special | TechMan Veruta XII | A short cone of fire, devastating up close; afterburn keeps ticking after the stream, and fire spreads between enemies standing close together. Hold Aim to lob a fuel bomb instead |
+| **Flak Cannon** | Special | Bataldo J 300 | A cone of bouncing shrapnel, devastating point-blank. Hold Aim to fire one compressed ball instead that explodes into a radial shrapnel burst on contact |
 
 ### Tool
 
@@ -186,6 +187,15 @@ hard with range - devastating up close, nearly useless across a room. An enemy i
 living enemy within 3 m of it, so a cluster goes up together. **Hold Aim** instead of firing to lob
 a fuel bomb: it explodes on the first thing it touches - no fuse - and leaves a lingering patch of
 fire rather than one instant blast.
+
+### Flak Cannon (special)
+
+The Bataldo J 300, semi-auto, scattering 9 pellets a shot. Not aiming, every pellet becomes a
+**bouncing shard of shrapnel** - devastating up close, falling off hard with distance, bouncing off
+walls up to twice before it burns out. **Hold Aim** instead and the whole shot compresses into a
+single slow ball: it explodes on the first thing it touches (no fuse) for a blast plus a **radial
+burst of secondary shrapnel**, catching things just past the edge of it - the classic Unreal
+Tournament flak trick.
 
 ## Tool
 
