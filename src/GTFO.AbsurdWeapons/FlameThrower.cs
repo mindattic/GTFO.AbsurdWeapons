@@ -107,6 +107,11 @@ internal static class FlameThrower
         right = right.sqrMagnitude > 0.0001f ? right.normalized : Vector3.right;
         var up = Vector3.Cross(aim, right).normalized;
 
+        // At point-blank range the cone's rays are only centimetres apart, so several of them often
+        // land on the same enemy - fine for damage (more of the flame touching them, same as a
+        // shotgun's pellets), but afterburn must stack once per tick, not once per ray that connects.
+        var ignitedThisTick = new HashSet<IntPtr>();
+
         for (var i = 0; i < ConeRays; i++)
         {
             var t = ConeRays == 1 ? 0f : i / (float)(ConeRays - 1) * 2f - 1f; // -1..1 across the cone
@@ -120,7 +125,7 @@ internal static class FlameThrower
             var falloff = Formulas.AreaFalloff(hit.distance, Range.Value, EdgeDamageFraction.Value);
             limb.BulletDamage(damage * falloff, owner.Cast<Agent>(), hit.point, direction, -direction,
                 allowDirectionalBonus: false, StaggerMulti.Value, 1f, gearCategoryId);
-            Ignite(enemy, owner, gearCategoryId);
+            if (ignitedThisTick.Add(enemy.Pointer)) Ignite(enemy, owner, gearCategoryId);
         }
     }
 

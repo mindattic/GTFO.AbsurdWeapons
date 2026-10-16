@@ -29,56 +29,55 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
     // Released by the weapon's own trigger (ImpactBursts.Release) rather than when a hit lands.
     internal bool OnRelease { get; init; }
 
-    // Config entries, bound before any of the bursts below are first touched (lazily constructed on
-    // first access - after Plugin.Load - since nothing reads them before actual melee combat does).
-    private static ConfigEntry<float> ThunderclapRadius = null!, ThunderclapDamage = null!, ThunderclapEdgeFraction = null!, ThunderclapStagger = null!;
-    private static ConfigEntry<float> ShockwaveRadius = null!, ShockwaveStagger = null!, ShockwaveKnockStruckLight = null!, ShockwaveKnockStruckCharged = null!, ShockwaveKnockArea = null!, ShockwaveSlamDamagePerMeter = null!;
-    private static ConfigEntry<float> GravityBlastRadius = null!, GravityBlastDamage = null!, GravityBlastStagger = null!, GravityBlastKnockArea = null!, GravityBlastSlamDamagePerMeter = null!;
+    // Mjolnir's thunderclap: every hit that lands shocks the enemies around the one it struck. (A
+    // full charge also throws the hammer - MjolnirThrow.) Built inside Bind(), not as a static field
+    // initializer: those would run (as part of this type's static constructor) the moment Bind()
+    // itself is first called, before Bind()'s own body had assigned the config entries they read.
+    internal static ImpactBurst Thunderclap = null!;
+    internal static ImpactBurst Shockwave = null!;
+    internal static ImpactBurst GravityBlast = null!;
 
     internal static void Bind(ConfigFile config)
     {
-        ThunderclapRadius = config.Bind("Mjolnir", "ThunderclapRadius", 5f, "Metres the thunderclap reaches.");
-        ThunderclapDamage = config.Bind("Mjolnir", "ThunderclapDamage", 8f, "Damage at the thunderclap's center.");
-        ThunderclapEdgeFraction = config.Bind("Mjolnir", "ThunderclapEdgeFraction", 0.4f, "Share of damage left at the thunderclap's edge.");
-        ThunderclapStagger = config.Bind("Mjolnir", "ThunderclapStagger", 3f, "Thunderclap stagger multiplier.");
-        ShockwaveRadius = config.Bind("Warhammer", "ShockwaveRadius", 6f, "Metres the shockwave reaches.");
-        ShockwaveStagger = config.Bind("Warhammer", "ShockwaveStagger", 100f, "Shockwave stagger multiplier.");
-        ShockwaveKnockStruckLight = config.Bind("Warhammer", "ShockwaveKnockStruckLight", 4f, "Metres the struck enemy slides on a light hit.");
-        ShockwaveKnockStruckCharged = config.Bind("Warhammer", "ShockwaveKnockStruckCharged", 12f, "Metres the struck enemy slides on a charged hit.");
-        ShockwaveKnockArea = config.Bind("Warhammer", "ShockwaveKnockArea", 6f, "Metres everyone else in the shockwave slides.");
-        ShockwaveSlamDamagePerMeter = config.Bind("Warhammer", "ShockwaveSlamDamagePerMeter", 5f, "Wall-slam damage per metre of unspent slide.");
-        GravityBlastRadius = config.Bind("Gravity Hammer", "BlastRadius", 8f, "Metres the release blast reaches.");
-        GravityBlastDamage = config.Bind("Gravity Hammer", "BlastDamage", 15f, "Damage at the blast's center.");
-        GravityBlastStagger = config.Bind("Gravity Hammer", "BlastStagger", 100f, "Blast stagger multiplier.");
-        GravityBlastKnockArea = config.Bind("Gravity Hammer", "BlastKnockArea", 5f, "Metres everyone in the blast is thrown back.");
-        GravityBlastSlamDamagePerMeter = config.Bind("Gravity Hammer", "BlastSlamDamagePerMeter", 3f, "Wall-slam damage per metre of unspent slide.");
+        var thunderclapRadius = config.Bind("Mjolnir", "ThunderclapRadius", 5f, "Metres the thunderclap reaches.");
+        var thunderclapDamage = config.Bind("Mjolnir", "ThunderclapDamage", 8f, "Damage at the thunderclap's center.");
+        var thunderclapEdgeFraction = config.Bind("Mjolnir", "ThunderclapEdgeFraction", 0.4f, "Share of damage left at the thunderclap's edge.");
+        var thunderclapStagger = config.Bind("Mjolnir", "ThunderclapStagger", 3f, "Thunderclap stagger multiplier.");
+        Thunderclap = new(1, MeleeInjector.MjolnirId, ChargedOnly: false, SparesStruckEnemy: true,
+            Radius: thunderclapRadius.Value, Damage: thunderclapDamage.Value, EdgeDamageFraction: thunderclapEdgeFraction.Value, StaggerMulti: thunderclapStagger.Value,
+            new Color(0.45f, 0.75f, 1f), FlashRange: 7f, FlashIntensity: 6f, FlashSeconds: 0.25f);
+
+        var shockwaveRadius = config.Bind("Warhammer", "ShockwaveRadius", 6f, "Metres the shockwave reaches.");
+        var shockwaveStagger = config.Bind("Warhammer", "ShockwaveStagger", 100f, "Shockwave stagger multiplier.");
+        var shockwaveKnockStruckLight = config.Bind("Warhammer", "ShockwaveKnockStruckLight", 4f, "Metres the struck enemy slides on a light hit.");
+        var shockwaveKnockStruckCharged = config.Bind("Warhammer", "ShockwaveKnockStruckCharged", 12f, "Metres the struck enemy slides on a charged hit.");
+        var shockwaveKnockArea = config.Bind("Warhammer", "ShockwaveKnockArea", 6f, "Metres everyone else in the shockwave slides.");
+        var shockwaveSlamDamagePerMeter = config.Bind("Warhammer", "ShockwaveSlamDamagePerMeter", 5f, "Wall-slam damage per metre of unspent slide.");
+        // The Warhammer's shockwave: any hit that lands staggers everything around it, struck enemy
+        // included. Barely any damage - stagger is damage x stagger multiplier, so 1 x 100 knocks
+        // back anything short of the game's stagger-immune heavies.
+        Shockwave = new(2, MeleeInjector.WarhammerId, ChargedOnly: false, SparesStruckEnemy: false,
+            Radius: shockwaveRadius.Value, Damage: 1f, EdgeDamageFraction: 1f, StaggerMulti: shockwaveStagger.Value,
+            new Color(1f, 0.82f, 0.6f), FlashRange: 9f, FlashIntensity: 8f, FlashSeconds: 0.35f)
+        {
+            KnockStruckLight = shockwaveKnockStruckLight.Value, KnockStruckCharged = shockwaveKnockStruckCharged.Value,
+            KnockArea = shockwaveKnockArea.Value, SlamDamagePerMeter = shockwaveSlamDamagePerMeter.Value,
+        };
+
+        var gravityBlastRadius = config.Bind("Gravity Hammer", "BlastRadius", 8f, "Metres the release blast reaches.");
+        var gravityBlastDamage = config.Bind("Gravity Hammer", "BlastDamage", 15f, "Damage at the blast's center.");
+        var gravityBlastStagger = config.Bind("Gravity Hammer", "BlastStagger", 100f, "Blast stagger multiplier.");
+        var gravityBlastKnockArea = config.Bind("Gravity Hammer", "BlastKnockArea", 5f, "Metres everyone in the blast is thrown back.");
+        var gravityBlastSlamDamagePerMeter = config.Bind("Gravity Hammer", "BlastSlamDamagePerMeter", 3f, "Wall-slam damage per metre of unspent slide.");
+        // The Gravity Hammer's release: a full charge let go in front of you staggers everything
+        // within 8 m (100x, like the shockwave, with a little damage) and throws it 5 m back out.
+        GravityBlast = new(3, MeleeInjector.GravityHammerId, ChargedOnly: true, SparesStruckEnemy: false,
+            Radius: gravityBlastRadius.Value, Damage: gravityBlastDamage.Value, EdgeDamageFraction: 0.5f, StaggerMulti: gravityBlastStagger.Value,
+            new Color(0.6f, 0.3f, 1f), FlashRange: 12f, FlashIntensity: 10f, FlashSeconds: 0.45f)
+        {
+            KnockArea = gravityBlastKnockArea.Value, OnRelease = true, SlamDamagePerMeter = gravityBlastSlamDamagePerMeter.Value,
+        };
     }
-
-    // Mjolnir's thunderclap: every hit that lands shocks the enemies around the one it struck. (A
-    // full charge also throws the hammer - MjolnirThrow.)
-    internal static readonly ImpactBurst Thunderclap = new(1, MeleeInjector.MjolnirId, ChargedOnly: false, SparesStruckEnemy: true,
-        Radius: ThunderclapRadius.Value, Damage: ThunderclapDamage.Value, EdgeDamageFraction: ThunderclapEdgeFraction.Value, StaggerMulti: ThunderclapStagger.Value,
-        new Color(0.45f, 0.75f, 1f), FlashRange: 7f, FlashIntensity: 6f, FlashSeconds: 0.25f);
-
-    // The Warhammer's shockwave: any hit that lands staggers everything around it, struck enemy
-    // included. Barely any damage - stagger is damage x stagger multiplier, so 1 x 100 knocks
-    // back anything short of the game's stagger-immune heavies.
-    internal static readonly ImpactBurst Shockwave = new(2, MeleeInjector.WarhammerId, ChargedOnly: false, SparesStruckEnemy: false,
-        Radius: ShockwaveRadius.Value, Damage: 1f, EdgeDamageFraction: 1f, StaggerMulti: ShockwaveStagger.Value,
-        new Color(1f, 0.82f, 0.6f), FlashRange: 9f, FlashIntensity: 8f, FlashSeconds: 0.35f)
-    {
-        KnockStruckLight = ShockwaveKnockStruckLight.Value, KnockStruckCharged = ShockwaveKnockStruckCharged.Value,
-        KnockArea = ShockwaveKnockArea.Value, SlamDamagePerMeter = ShockwaveSlamDamagePerMeter.Value,
-    };
-
-    // The Gravity Hammer's release: a full charge let go in front of you staggers everything
-    // within 8 m (100x, like the shockwave, with a little damage) and throws it 5 m back out.
-    internal static readonly ImpactBurst GravityBlast = new(3, MeleeInjector.GravityHammerId, ChargedOnly: true, SparesStruckEnemy: false,
-        Radius: GravityBlastRadius.Value, Damage: GravityBlastDamage.Value, EdgeDamageFraction: 0.5f, StaggerMulti: GravityBlastStagger.Value,
-        new Color(0.6f, 0.3f, 1f), FlashRange: 12f, FlashIntensity: 10f, FlashSeconds: 0.45f)
-    {
-        KnockArea = GravityBlastKnockArea.Value, OnRelease = true, SlamDamagePerMeter = GravityBlastSlamDamagePerMeter.Value,
-    };
 
     // The burst a weapon's landed hit releases (not the release-triggered ones).
     internal static ImpactBurst? ForWeapon(uint id) => id == Thunderclap.WeaponId ? Thunderclap : id == Shockwave.WeaponId ? Shockwave : null;

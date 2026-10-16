@@ -161,6 +161,7 @@ internal sealed class ShrapnelShard : MonoBehaviour
 
             if (Physics.SphereCast(position, Radius, direction, out var enemyHit, distance, LayerManager.MASK_ENEMY_DAMAGABLE))
             {
+                traveled += enemyHit.distance;
                 Hit(enemyHit);
                 return;
             }
@@ -170,7 +171,7 @@ internal sealed class ShrapnelShard : MonoBehaviour
                 traveled += Vector3.Distance(position, worldHit.point);
                 transform.position = worldHit.point + worldHit.normal * (Radius + 0.01f);
                 velocity = Vector3.Reflect(velocity, worldHit.normal) * FlakCannon.ShardBounciness.Value;
-                if (++bounces > FlakCannon.ShardMaxBounces.Value) Destroy(gameObject);
+                if (++bounces >= FlakCannon.ShardMaxBounces.Value) Destroy(gameObject);
                 return;
             }
 

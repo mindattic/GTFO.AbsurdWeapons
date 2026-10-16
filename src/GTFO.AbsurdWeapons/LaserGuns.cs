@@ -29,17 +29,19 @@ internal sealed record LaserKind(byte Id, uint GunId, float Range, float Width);
 [HarmonyPatch]
 internal static class LaserGuns
 {
-    internal static ConfigEntry<float> BeamRange = null!;
-    internal static ConfigEntry<float> BeamWidth = null!;
+    // Built inside Bind(), not as static field initializers: those would run (as part of this
+    // type's static constructor) the moment Bind() is first called, before Bind()'s own body had
+    // assigned the config entries they'd read.
+    internal static LaserKind Pistol = null!;
+    internal static LaserKind Rifle = null!;
 
     internal static void Bind(ConfigFile config)
     {
-        BeamRange = config.Bind("Laser Guns", "BeamRange", 70f, "Metres the beam reaches.");
-        BeamWidth = config.Bind("Laser Guns", "BeamWidth", 0.025f, "The beam's visual width.");
+        var beamRange = config.Bind("Laser Guns", "BeamRange", 70f, "Metres the beam reaches.");
+        var beamWidth = config.Bind("Laser Guns", "BeamWidth", 0.025f, "The beam's visual width.");
+        Pistol = new(1, GunInjector.LaserPistolId, Range: beamRange.Value, Width: beamWidth.Value);
+        Rifle = new(2, GunInjector.LaserRifleId, Range: beamRange.Value, Width: beamWidth.Value);
     }
-
-    internal static readonly LaserKind Pistol = new(1, GunInjector.LaserPistolId, Range: BeamRange.Value, Width: BeamWidth.Value);
-    internal static readonly LaserKind Rifle = new(2, GunInjector.LaserRifleId, Range: BeamRange.Value, Width: BeamWidth.Value);
 
     internal static LaserKind? ForGun(uint id) => id == Pistol.GunId ? Pistol : id == Rifle.GunId ? Rifle : null;
     private static LaserKind? ForId(byte id) => id == Pistol.Id ? Pistol : id == Rifle.Id ? Rifle : null;

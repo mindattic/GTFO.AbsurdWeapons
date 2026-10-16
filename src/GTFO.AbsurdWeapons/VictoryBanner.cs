@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Agents;
 using AK;
 using BepInEx.Configuration;
+using Enemies;
 using Gear;
 using GTFO.API;
 using HarmonyLib;
@@ -44,6 +45,11 @@ internal static class VictoryBanner
 
     private static bool localInRange;
     private static float killBonus;
+
+    // A kill isn't reflected in EnemyAgent.Alive synchronously for a non-host client - the host has
+    // to confirm it - so kills are checked a moment later, same as Shadow Dagger's kill bonus.
+    private const float KillCheckDelay = 0.4f;
+    private static readonly List<(EnemyAgent Enemy, float CheckAt)> pendingKills = new();
 
     internal static void Bind(ConfigFile config)
     {
@@ -171,23 +177,44 @@ internal static class VictoryBanner
     {
         if (!__state) return;
         var enemy = __instance.m_base?.Owner;
-        if (enemy != null && !enemy.Alive) OnLocalKill();
+        if (enemy != null) QueueKillCheck(enemy);
     }
 
     private static float CurrentDamageBuff() => Math.Min(MaxDamageBuff.Value, BaseDamageBuff.Value + killBonus);
 
-    private static void OnLocalKill()
+    // One check per enemy, however many buffed hits struck it (a kill counts once).
+    private static void QueueKillCheck(EnemyAgent enemy)
     {
-        if (!localInRange) return;
-        killBonus = Formulas.StealthBonusAfterKill(killBonus, DamageBuffPerKill.Value, MaxDamageBuff.Value - BaseDamageBuff.Value);
+        if (pendingKills.Exists(p => p.Enemy != null && p.Enemy.Pointer == enemy.Pointer)) return;
+        pendingKills.Add((enemy, Time.time + KillCheckDelay));
+    }
+
+    // Kills confirmed since they were struck. Called every frame (VictoryBannerBuff). The bonus is
+    // earned by being in range when the killing blow landed, not by still being in range now.
+    internal static void ProcessPendingKills()
+    {
+        if (pendingKills.Count == 0) return;
+        for (var i = pendingKills.Count - 1; i >= 0; i--)
+        {
+            var (enemy, checkAt) = pendingKills[i];
+            if (Time.time < checkAt) continue;
+            pendingKills.RemoveAt(i);
+            if (enemy == null || enemy.Alive) continue;
+            killBonus = Formulas.StealthBonusAfterKill(killBonus, DamageBuffPerKill.Value, MaxDamageBuff.Value - BaseDamageBuff.Value);
+        }
     }
 
     // Run every frame from VictoryBannerBuff: is the local player inside any active banner's ring.
-    // Leaving clears the kill bonus, so the next visit (even to the same banner) starts at base.
+    // Leaving clears the kill bonus (the next visit, even to the same banner, starts at base) and
+    // drops any kill still waiting on host confirmation, so it can't retroactively bump a reset bonus.
     internal static void UpdateLocalRange(PlayerAgent local)
     {
         var inRange = BannerPylon.IsPositionBuffed(local.Position);
-        if (!inRange) killBonus = 0f;
+        if (!inRange)
+        {
+            killBonus = 0f;
+            pendingKills.Clear();
+        }
         localInRange = inRange;
     }
 
@@ -203,8 +230,12 @@ internal static class VictoryBanner
         }
     }
 
+    // A zero-field struct would throw from GTFO-API's Marshal.SizeOf<T>() (no meaningful size can be
+    // computed for a type with no fields), so this carries one dummy byte just to have a layout.
     private readonly struct PickUpMessage
     {
+        public readonly byte Dummy;
+        public PickUpMessage() => Dummy = 0;
     }
 }
 
@@ -429,5 +460,6 @@ internal sealed class VictoryBannerBuff : MonoBehaviour
     {
         var local = PlayerManager.GetLocalPlayerAgent();
         if (local != null) VictoryBanner.UpdateLocalRange(local);
+        VictoryBanner.ProcessPendingKills();
     }
 }

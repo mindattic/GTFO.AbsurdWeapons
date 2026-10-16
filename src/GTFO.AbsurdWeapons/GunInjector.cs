@@ -140,7 +140,7 @@ internal static class GunInjector
         category.name = blockName;
         category.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
         category.Description = new LocalizedText { Id = 0, UntranslatedText =
-            "Plants a banner that pulses an expanding ring every couple of seconds out to 8 metres, healing every teammate standing inside it. Lasts a while; planting a new one retires your last." };
+            "Sets a banner down like a turret; fire again to pick it back up. Pulses healing to every teammate in its ring and buffs your own damage while you're standing in it, climbing the more you kill without leaving." };
 
         var gear = Clone(sourceGear);
         gear.persistentID = id;

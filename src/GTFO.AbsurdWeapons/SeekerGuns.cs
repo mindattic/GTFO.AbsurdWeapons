@@ -59,31 +59,9 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
 
     private static readonly Color ElectricBlue = new(0.45f, 0.75f, 1f); // Mjolnir's thunderclap
 
-    // Config for Plasma's and Hive's numbers (lazily read when these records are first built - after
-    // Plugin.Load - since nothing touches them before an actual shot is fired).
-    private static ConfigEntry<float> PlasmaSpeed = null!, PlasmaBlastRadius = null!, PlasmaBlastDamage = null!, PlasmaBlastStagger = null!;
-    private static ConfigEntry<int> PlasmaDamageDie = null!;
-    private static ConfigEntry<float> PlasmaDamageScale = null!;
-    private static ConfigEntry<float> HiveSpeed = null!, HiveTurnDegreesPerSecond = null!, HiveLockConeDegrees = null!, HiveLockRange = null!;
-    private static ConfigEntry<int> HiveMaxLocks = null!;
-
-    internal static void Bind(ConfigFile config)
-    {
-        PlasmaSpeed = config.Bind("Plasma Guns", "BallSpeed", 28.6f, "Plasma ball speed, m/s.");
-        PlasmaDamageDie = config.Bind("Plasma Guns", "DamageDie", 8, "Each hit rolls DamageScale x 1dDamageDie.");
-        PlasmaDamageScale = config.Bind("Plasma Guns", "DamageScale", 5f, "Each hit rolls DamageScale x 1dDamageDie.");
-        PlasmaBlastRadius = config.Bind("Plasma Guns", "BlastRadius", 1.25f, "Metres of the small shock on impact.");
-        PlasmaBlastDamage = config.Bind("Plasma Guns", "BlastDamage", 6f, "Damage at the shock's center.");
-        PlasmaBlastStagger = config.Bind("Plasma Guns", "BlastStagger", 3f, "Shock stagger multiplier.");
-        HiveSpeed = config.Bind("Hive Guns", "RoundSpeed", 45f, "Round speed, m/s.");
-        HiveTurnDegreesPerSecond = config.Bind("Hive Guns", "TurnRate", 1500f, "How fast a homing round can turn, degrees/second.");
-        HiveLockConeDegrees = config.Bind("Hive Guns", "LockConeDegrees", 35f, "Cone around the crosshair that locks count as nearby.");
-        HiveLockRange = config.Bind("Hive Guns", "LockRange", 60f, "Metres a lock can be picked up from.");
-        HiveMaxLocks = config.Bind("Hive Guns", "MaxLocks", 6, "How many enemies it cycles locks between.");
-    }
-
     // Split shards: quick, short-lived, a smaller shock, no further splits. (Nothing splits into
-    // them right now; kept for a weapon that wants them.)
+    // them right now; kept for a weapon that wants them.) No config dependency, so this one's safe
+    // as a plain static field initializer; Plasma and Hive aren't - see Bind() below.
     internal static readonly SeekerKind Shard = new(3, ProjectileType.SemiTargetingQuick)
     {
         Speed = 30f, TurnDegreesPerSecond = 420f * TurnBoost, Lifetime = 2.5f, SearchRange = 20f, SearchConeDegrees = 180f,
@@ -92,30 +70,50 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
         FlashColor = ElectricBlue, FlashRange = 3f,
     };
 
-    // Plasma Gun, after Doom's (1993): blue plasma balls that fly dead straight at 25 map units a
-    // tic (~28.6 m/s, scaling Doom's 56-unit-tall player to 1.83 m) for 5 x 1d8 damage each. No
-    // homing, no recoil, no splitting. The one addition is a small electric splash on impact like
-    // Mjolnir's (blue flash, falloff to 40%, x3 stagger) - Doom 2016's plasma rifle splashes too.
-    internal static readonly SeekerKind Plasma = new(1, ProjectileType.TargetingSmall)
-    {
-        Speed = PlasmaSpeed.Value, Homing = false, Lifetime = 6f,
-        DamageDie = PlasmaDamageDie.Value, DamageScale = PlasmaDamageScale.Value,
-        Tint = new Color(0.3f, 0.55f, 1f),
-        BlastRadius = PlasmaBlastRadius.Value, BlastDamage = PlasmaBlastDamage.Value, BlastStagger = PlasmaBlastStagger.Value,
-        FlashColor = ElectricBlue, FlashRange = 2f,
-    };
+    // Built inside Bind(), not as static field initializers: those would run (as part of this
+    // type's static constructor) the moment Bind() is first called, before Bind()'s own body had
+    // assigned the config entries they'd read.
+    internal static SeekerKind Plasma = null!;
+    internal static SeekerKind Hive = null!;
 
-    // Hive Pistol: the Hybrid's swarm projectile fired like Titanfall's Smart Pistol. Each round
-    // leaves the barrel along your aim and bends smoothly onto one of up to six enemies locked
-    // near the crosshair, taking turns between them. A round fired with nothing locked - or whose
-    // target dies mid-flight - hunts down the nearest enemy instead.
-    internal static readonly SeekerKind Hive = new(2, ProjectileType.SemiTargetingQuick)
+    internal static void Bind(ConfigFile config)
     {
-        Speed = HiveSpeed.Value, Lifetime = 3f,
-        TurnDegreesPerSecond = HiveTurnDegreesPerSecond.Value, SearchRange = 50f, SearchConeDegrees = 120f,
-        SmartLock = true, LockConeDegrees = HiveLockConeDegrees.Value, LockRange = HiveLockRange.Value, MaxLocks = HiveMaxLocks.Value, CurveBend = 0.4f,
-        FlashColor = new Color(1f, 0.55f, 0.25f), FlashRange = 3f,
-    };
+        var plasmaSpeed = config.Bind("Plasma Guns", "BallSpeed", 28.6f, "Plasma ball speed, m/s.");
+        var plasmaDamageDie = config.Bind("Plasma Guns", "DamageDie", 8, "Each hit rolls DamageScale x 1dDamageDie.");
+        var plasmaDamageScale = config.Bind("Plasma Guns", "DamageScale", 5f, "Each hit rolls DamageScale x 1dDamageDie.");
+        var plasmaBlastRadius = config.Bind("Plasma Guns", "BlastRadius", 1.25f, "Metres of the small shock on impact.");
+        var plasmaBlastDamage = config.Bind("Plasma Guns", "BlastDamage", 6f, "Damage at the shock's center.");
+        var plasmaBlastStagger = config.Bind("Plasma Guns", "BlastStagger", 3f, "Shock stagger multiplier.");
+        // Plasma Gun, after Doom's (1993): blue plasma balls that fly dead straight at 25 map units
+        // a tic (~28.6 m/s, scaling Doom's 56-unit-tall player to 1.83 m) for 5 x 1d8 damage each. No
+        // homing, no recoil, no splitting. The one addition is a small electric splash on impact like
+        // Mjolnir's (blue flash, falloff to 40%, x3 stagger) - Doom 2016's plasma rifle splashes too.
+        Plasma = new(1, ProjectileType.TargetingSmall)
+        {
+            Speed = plasmaSpeed.Value, Homing = false, Lifetime = 6f,
+            DamageDie = plasmaDamageDie.Value, DamageScale = plasmaDamageScale.Value,
+            Tint = new Color(0.3f, 0.55f, 1f),
+            BlastRadius = plasmaBlastRadius.Value, BlastDamage = plasmaBlastDamage.Value, BlastStagger = plasmaBlastStagger.Value,
+            FlashColor = ElectricBlue, FlashRange = 2f,
+        };
+
+        var hiveSpeed = config.Bind("Hive Guns", "RoundSpeed", 45f, "Round speed, m/s.");
+        var hiveTurnDegreesPerSecond = config.Bind("Hive Guns", "TurnRate", 1500f, "How fast a homing round can turn, degrees/second.");
+        var hiveLockConeDegrees = config.Bind("Hive Guns", "LockConeDegrees", 35f, "Cone around the crosshair that locks count as nearby.");
+        var hiveLockRange = config.Bind("Hive Guns", "LockRange", 60f, "Metres a lock can be picked up from.");
+        var hiveMaxLocks = config.Bind("Hive Guns", "MaxLocks", 6, "How many enemies it cycles locks between.");
+        // Hive Pistol: the Hybrid's swarm projectile fired like Titanfall's Smart Pistol. Each round
+        // leaves the barrel along your aim and bends smoothly onto one of up to six enemies locked
+        // near the crosshair, taking turns between them. A round fired with nothing locked - or
+        // whose target dies mid-flight - hunts down the nearest enemy instead.
+        Hive = new(2, ProjectileType.SemiTargetingQuick)
+        {
+            Speed = hiveSpeed.Value, Lifetime = 3f,
+            TurnDegreesPerSecond = hiveTurnDegreesPerSecond.Value, SearchRange = 50f, SearchConeDegrees = 120f,
+            SmartLock = true, LockConeDegrees = hiveLockConeDegrees.Value, LockRange = hiveLockRange.Value, MaxLocks = hiveMaxLocks.Value, CurveBend = 0.4f,
+            FlashColor = new Color(1f, 0.55f, 0.25f), FlashRange = 3f,
+        };
+    }
 
     internal static SeekerKind? ForGun(uint id) => id switch
     {
