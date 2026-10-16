@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BepInEx.Configuration;
 using GameData;
 using Gear;
 using HarmonyLib;
@@ -19,15 +20,23 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class GravityHammer
 {
-    internal const float PullRange = 12f;
-    internal const float PullStep = 1.2f;      // metres per tug
-    internal const float PullInterval = 0.2f;  // seconds between tugs
-    internal const float PullStopDistance = 2.5f; // close enough: no closer than this
+    internal static ConfigEntry<float> PullRange = null!;
+    internal static ConfigEntry<float> PullStep = null!;        // metres per tug
+    internal static ConfigEntry<float> PullInterval = null!;    // seconds between tugs
+    internal static ConfigEntry<float> PullStopDistance = null!; // close enough: no closer than this
     private const float FullChargeLeeway = 0.95f;
 
     // The local player while they hold the Gravity Hammer's charge.
     internal static PlayerAgent? Holder;
     internal static float ChargeStarted = -1f;
+
+    internal static void Bind(ConfigFile config)
+    {
+        PullRange = config.Bind("Gravity Hammer", "PullRange", 12f, "Metres the pull reaches while charging.");
+        PullStep = config.Bind("Gravity Hammer", "PullStep", 1.2f, "Metres each tug drags an enemy.");
+        PullInterval = config.Bind("Gravity Hammer", "PullInterval", 0.2f, "Seconds between tugs.");
+        PullStopDistance = config.Bind("Gravity Hammer", "PullStopDistance", 2.5f, "How close the pull drags an enemy before stopping.");
+    }
 
     [HarmonyPatch(typeof(MeleeWeaponFirstPerson), nameof(MeleeWeaponFirstPerson.ChangeState))]
     [HarmonyPostfix]
@@ -96,20 +105,20 @@ internal sealed class GravityPull : MonoBehaviour
             var held = Time.time - GravityHammer.ChargeStarted;
             Glow(holder, held);
             if (Time.time < nextTug) return;
-            nextTug = Time.time + GravityHammer.PullInterval;
+            nextTug = Time.time + GravityHammer.PullInterval.Value;
 
             var center = holder.Position + Vector3.up;
             var tugged = new HashSet<IntPtr>();
-            foreach (var collider in Physics.OverlapSphere(center, GravityHammer.PullRange, LayerManager.MASK_ENEMY_DAMAGABLE))
+            foreach (var collider in Physics.OverlapSphere(center, GravityHammer.PullRange.Value, LayerManager.MASK_ENEMY_DAMAGABLE))
             {
                 var enemy = collider.GetComponent<Dam_EnemyDamageLimb>()?.m_base?.Owner;
                 if (enemy == null || !enemy.Alive || !tugged.Add(enemy.Pointer)) continue; // one tug per enemy per pulse
 
                 var toward = holder.Position - enemy.Position;
                 var distance = toward.magnitude;
-                if (distance <= GravityHammer.PullStopDistance) continue;
+                if (distance <= GravityHammer.PullStopDistance.Value) continue;
                 if (Physics.Linecast(center, enemy.AimTarget.position, LayerManager.MASK_WORLD)) continue;
-                Knockback.Push(enemy, toward, Mathf.Min(GravityHammer.PullStep, distance - GravityHammer.PullStopDistance));
+                Knockback.Push(enemy, toward, Mathf.Min(GravityHammer.PullStep.Value, distance - GravityHammer.PullStopDistance.Value));
             }
         }
         catch (Exception e)

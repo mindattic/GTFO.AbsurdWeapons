@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using Enemies;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
@@ -23,6 +24,19 @@ namespace GTFO.AbsurdWeapons;
 internal static class Knockback
 {
     private const string KnockEvent = "MindAttic.GTFO.AbsurdWeapons.Knockback";
+
+    internal static ConfigEntry<float> Sharpness = null!;
+    internal static ConfigEntry<float> MaxSeconds = null!;
+    internal static ConfigEntry<float> SlamFreeMeters = null!;
+    internal static ConfigEntry<float> SlamStagger = null!;
+
+    internal static void Bind(ConfigFile config)
+    {
+        Sharpness = config.Bind("Knockback", "Sharpness", 14f, "How quickly a slide covers its distance (ease-out rate).");
+        MaxSeconds = config.Bind("Knockback", "MaxSeconds", 0.6f, "A slide is cut short after this many seconds regardless.");
+        SlamFreeMeters = config.Bind("Knockback", "SlamFreeMeters", 1f, "Slides ending within this of their full distance take no wall-slam damage.");
+        SlamStagger = config.Bind("Knockback", "SlamStagger", 3f, "Stagger multiplier of a wall slam.");
+    }
 
     internal static void Init()
     {
@@ -100,11 +114,7 @@ internal static class Knockback
 /// <summary>Runs the knockback slides in progress, a little each frame.</summary>
 internal sealed class KnockbackSlides : MonoBehaviour
 {
-    private const float Sharpness = 14f;    // how quickly a slide covers its distance (ease-out)
-    private const float MaxSeconds = 0.6f;
     private const int AllAreas = -1; // NavMesh.AllAreas, missing from the interop build
-    private const float SlamFreeMeters = 1f; // slides ending within this of their full distance don't hurt
-    private const float SlamStagger = 3f;
 
     private sealed class Slide
     {
@@ -141,13 +151,13 @@ internal sealed class KnockbackSlides : MonoBehaviour
             {
                 var enemy = slide.Enemy;
                 slide.Age += Time.deltaTime;
-                if (enemy == null || !enemy.Alive || slide.Remaining < 0.02f || slide.Age > MaxSeconds)
+                if (enemy == null || !enemy.Alive || slide.Remaining < 0.02f || slide.Age > Knockback.MaxSeconds.Value)
                 {
                     finished.Add(key);
                     continue;
                 }
 
-                var step = slide.Remaining * (1f - Mathf.Exp(-Sharpness * Time.deltaTime));
+                var step = slide.Remaining * (1f - Mathf.Exp(-Knockback.Sharpness.Value * Time.deltaTime));
                 var from = enemy.Position;
                 var to = from + slide.Direction * step;
                 if (!NavMesh.SamplePosition(from, out var fromHit, 1f, AllAreas)) { finished.Add(key); continue; }
@@ -156,7 +166,7 @@ internal sealed class KnockbackSlides : MonoBehaviour
                 {
                     to = blocked.position;
                     var unspent = slide.Remaining - Vector3.Distance(fromHit.position, blocked.position);
-                    var slam = Formulas.SlamDamage(unspent, slide.SlamDamagePerMeter, SlamFreeMeters);
+                    var slam = Formulas.SlamDamage(unspent, slide.SlamDamagePerMeter, Knockback.SlamFreeMeters.Value);
                     if (slam > 0f && WallAhead(blocked.position, slide.Direction))
                         Slam(enemy, blocked.position, slide.Direction, slam, slide.Attacker, slide.GearCategoryId);
                     slide.Remaining = 0f;
@@ -200,7 +210,7 @@ internal sealed class KnockbackSlides : MonoBehaviour
         if (nearest == null) return;
         var point = nearest.transform.position;
         nearest.BulletDamage(damage, source.Cast<Agents.Agent>(), point, direction, -direction,
-            allowDirectionalBonus: false, SlamStagger, 1f, gearCategoryId);
+            allowDirectionalBonus: false, Knockback.SlamStagger.Value, 1f, gearCategoryId);
         try
         {
             FX_EffectSystem.FX_Manager.PlayEffect(false, FX_EffectSystem.FX_GroupName.Impact_Concrete, point + direction * 0.3f,

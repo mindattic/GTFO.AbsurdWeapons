@@ -29,6 +29,10 @@ public class Plugin : BasePlugin
         GearCycler.Bind(Config);
         Stealth.Bind(Config);
         KatanaDash.Bind(Config);
+        GravityHammer.Bind(Config);
+        ImpactBurst.Bind(Config);
+        Knockback.Bind(Config);
+        MjolnirThrow.Bind(Config);
         FlameThrower.Bind(Config);
         FlakCannon.Bind(Config);
         VictoryBanner.Bind(Config);

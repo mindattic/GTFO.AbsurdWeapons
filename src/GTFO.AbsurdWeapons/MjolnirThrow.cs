@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using GameData;
 using Gear;
 using GTFO.API;
@@ -23,21 +24,36 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class MjolnirThrow
 {
-    internal const float Speed = 26f;
-    internal const float ReturnSpeed = 32f;
-    internal const float Reach = 25f;
-    internal const float SpinDegreesPerSecond = 1080f;
-    internal const float HitRadius = 0.6f;
-    internal const float HitDamage = 20f;
-    internal const float HitStagger = 4f;
-    internal const float PulseSeconds = 0.12f;
-    internal const float PulseRange = 6f;
-    internal const float PulseDamage = 6f;
-    internal const int PulseJumps = 2;
+    internal static ConfigEntry<float> Speed = null!;
+    internal static ConfigEntry<float> ReturnSpeed = null!;
+    internal static ConfigEntry<float> Reach = null!;
+    internal static ConfigEntry<float> SpinDegreesPerSecond = null!;
+    internal static ConfigEntry<float> HitRadius = null!;
+    internal static ConfigEntry<float> HitDamage = null!;
+    internal static ConfigEntry<float> HitStagger = null!;
+    internal static ConfigEntry<float> PulseSeconds = null!;
+    internal static ConfigEntry<float> PulseRange = null!;
+    internal static ConfigEntry<float> PulseDamage = null!;
+    internal static ConfigEntry<int> PulseJumps = null!;
     private const float FullChargeLeeway = 0.95f;
     private const string ThrowEvent = "MindAttic.GTFO.AbsurdWeapons.MjolnirThrow";
 
     private static float chargeStarted = -1f;
+
+    internal static void Bind(ConfigFile config)
+    {
+        Speed = config.Bind("Mjolnir", "ThrowSpeed", 26f, "The thrown hammer's outbound speed, m/s.");
+        ReturnSpeed = config.Bind("Mjolnir", "ThrowReturnSpeed", 32f, "Its speed flying back to you, m/s.");
+        Reach = config.Bind("Mjolnir", "ThrowReach", 25f, "Metres it flies before turning back (or the first wall).");
+        SpinDegreesPerSecond = config.Bind("Mjolnir", "ThrowSpin", 1080f, "How fast it tumbles end over end, degrees/second.");
+        HitRadius = config.Bind("Mjolnir", "ThrowHitRadius", 0.6f, "How wide a swath the flying hammer hits.");
+        HitDamage = config.Bind("Mjolnir", "ThrowHitDamage", 20f, "Damage per enemy hit, each way.");
+        HitStagger = config.Bind("Mjolnir", "ThrowHitStagger", 4f, "Stagger multiplier per hit.");
+        PulseSeconds = config.Bind("Mjolnir", "ThrowPulseSeconds", 0.12f, "Seconds between the flying hammer's lightning pulses.");
+        PulseRange = config.Bind("Mjolnir", "ThrowPulseRange", 6f, "Metres each pulse reaches for its first target.");
+        PulseDamage = config.Bind("Mjolnir", "ThrowPulseDamage", 6f, "Damage of a pulse's first strike.");
+        PulseJumps = config.Bind("Mjolnir", "ThrowPulseJumps", 2, "Chain-lightning jumps per pulse, after the first strike.");
+    }
 
     internal static void Init()
     {
@@ -169,7 +185,7 @@ internal sealed class ThrownHammer : MonoBehaviour
             Vector3 next;
             if (!returning)
             {
-                var step = MjolnirThrow.Speed * dt;
+                var step = MjolnirThrow.Speed.Value * dt;
                 next = position + direction * step;
                 travelled += step;
                 if (Physics.Linecast(position, next, out var wall, LayerManager.MASK_WORLD))
@@ -177,14 +193,14 @@ internal sealed class ThrownHammer : MonoBehaviour
                     next = wall.point - direction * 0.2f;
                     returning = true;
                 }
-                else if (travelled >= MjolnirThrow.Reach) returning = true;
+                else if (travelled >= MjolnirThrow.Reach.Value) returning = true;
             }
             else
             {
                 // Home back to the thrower's hand (or where it was thrown from).
                 var hand = thrower != null && thrower.Alive ? thrower.Position + Vector3.up * 1.3f : origin;
                 var toHand = hand - position;
-                var step = MjolnirThrow.ReturnSpeed * dt;
+                var step = MjolnirThrow.ReturnSpeed.Value * dt;
                 if (toHand.magnitude <= Mathf.Max(step, 1f) || age > 6f)
                 {
                     Destroy(gameObject);
@@ -195,7 +211,7 @@ internal sealed class ThrownHammer : MonoBehaviour
 
             if (owner != null) Strike(position, next);
             transform.position = next;
-            transform.Rotate(spinAxis, MjolnirThrow.SpinDegreesPerSecond * dt, Space.World);
+            transform.Rotate(spinAxis, MjolnirThrow.SpinDegreesPerSecond.Value * dt, Space.World);
             glow.Intensity = 3f + Mathf.PerlinNoise(age * 20f, 0f) * 4f;
         }
         catch (Exception e)
@@ -215,20 +231,20 @@ internal sealed class ThrownHammer : MonoBehaviour
         var length = line.magnitude;
         if (length > 0.0001f)
         {
-            foreach (var hit in Physics.SphereCastAll(from, MjolnirThrow.HitRadius, line / length, length, LayerManager.MASK_ENEMY_DAMAGABLE))
+            foreach (var hit in Physics.SphereCastAll(from, MjolnirThrow.HitRadius.Value, line / length, length, LayerManager.MASK_ENEMY_DAMAGABLE))
             {
                 var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
                 var enemy = limb?.m_base?.Owner;
                 if (limb == null || enemy == null || !enemy.Alive || !hitSet.Add(enemy.Pointer)) continue;
                 var point = hit.point == Vector3.zero ? limb.transform.position : hit.point;
-                limb.BulletDamage(MjolnirThrow.HitDamage, owner!.Cast<Agent>(), point, line / length, -line / length,
-                    allowDirectionalBonus: false, MjolnirThrow.HitStagger, 1f, MeleeInjector.MjolnirId);
+                limb.BulletDamage(MjolnirThrow.HitDamage.Value, owner!.Cast<Agent>(), point, line / length, -line / length,
+                    allowDirectionalBonus: false, MjolnirThrow.HitStagger.Value, 1f, MeleeInjector.MjolnirId);
             }
         }
 
         if (age < nextPulse) return;
-        nextPulse = age + MjolnirThrow.PulseSeconds;
-        ChainLightning.Pulse(owner!, to, MjolnirThrow.PulseRange, MjolnirThrow.PulseDamage, MjolnirThrow.PulseJumps, MeleeInjector.MjolnirId);
+        nextPulse = age + MjolnirThrow.PulseSeconds.Value;
+        ChainLightning.Pulse(owner!, to, MjolnirThrow.PulseRange.Value, MjolnirThrow.PulseDamage.Value, MjolnirThrow.PulseJumps.Value, MeleeInjector.MjolnirId);
     }
 
     // The held hammer's meshes (positioned relative to the weapon's root), drawn on the default
