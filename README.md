@@ -244,7 +244,10 @@ in `CFoamGun`'s dictionary, refreshing a duration rather than adding to it. Once
 `StackThreshold` stacks, `CFoamTicker` - an always-on `MonoBehaviour`, not gated on the trigger -
 pulses a very heavy stagger on it every `TickSeconds` for as long as the foam holds, so a fully
 encased enemy stays held even after you stop shooting it, until the duration runs out without a
-fresh hit. The spraying player's own game only, like every other weapon here.
+fresh hit. The spraying player's own game only, like every other weapon here. The first hit on an
+enemy also spawns a tinted blob stuck to them (a plain primitive, no new assets) that grows with
+each stack; `[C-Foam Guns] FoamColor` picks White/Tan/Orange/Blue/Green/Purple, or `Random` for a
+fresh hue (any enemy, any shot) each time a new one starts getting foamed.
 
 ### Grenade Launcher (`GrenadeLauncher`, `LauncherGrenade`, `Explosion`)
 

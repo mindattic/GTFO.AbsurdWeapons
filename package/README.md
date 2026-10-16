@@ -206,6 +206,8 @@ The C-Foam Launcher's own hardening foam, sprayed full-auto instead of lobbed. B
 damage - every round instead **stacks foam** on the enemy it hits. Enough stacks and they're fully
 **encased**: held in place by a heavy stagger pulse every half second for as long as the foam
 holds, even if you stop shooting them, until it runs out without a fresh hit to top it back up.
+The foam shows up as a tinted blob on the enemy that grows with every stack - pick its color in
+the config (`[C-Foam Guns] FoamColor`), or set it to `Random` for a different color each time.
 
 ## Tools
 
