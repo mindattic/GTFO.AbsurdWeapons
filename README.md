@@ -534,8 +534,11 @@ Katana's dash distance/time/slash radius/stagger (`[Katana] Dash...`) are their 
 live. Also config now: Gravity Hammer's pull (`[Gravity Hammer] Pull...`), the hammer-family impact
 bursts - Mjolnir's thunderclap, the Warhammer's shockwave and the Gravity Hammer's release blast
 (`[Mjolnir] Thunderclap...`, `[Warhammer] Shockwave...`, `[Gravity Hammer] Blast...`) - Mjolnir's
-throw (`[Mjolnir] Throw...`) and the shared physical-knockback tuning (`[Knockback]`). The gun stats are fixed in `GunInjector` for the ten original guns (see G.AWPN-T19/T20),
-except for the Flamethrower, Flak Cannon and Victory Banner: every one of their numbers - gun stats
+throw (`[Mjolnir] Throw...`) and the shared physical-knockback tuning (`[Knockback]`). The ten original guns' damage, rate of fire and clip size are config too (`[Plasma Guns]`,
+`[Hive Guns]`, `[Laser Guns]`, `[Railgun]`, `[Chain Lightning Gun]`, `[Tentacle Guns]` - one section
+covers both the pistol and rifle of a pair, since they share stats); their other runtime numbers
+(seeker kinds, beam range, chain jumps, the tentacle fan) are tracked separately (G.AWPN-T20). For
+the Flamethrower, Flak Cannon and Victory Banner, every one of their numbers - gun stats
 (damage, rate of fire, clip, pellet count/spread) included - is its own config entry
 (`[Flamethrower]`, `[Flak Cannon]`, `[Victory Banner]`), read once at `GameDataInit.Initialize` for
 the gun stats and live for the runtime behaviour (ranges, radii, afterburn, the damage buff), so

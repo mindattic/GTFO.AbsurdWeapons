@@ -1,4 +1,5 @@
 using System;
+using BepInEx.Configuration;
 using GameData;
 using HarmonyLib;
 using Localization;
@@ -44,6 +45,43 @@ internal static class GunInjector
     internal const uint FlakCannonId = 1112;
     internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
     internal const uint VictoryBannerId = 1202;   // a tool: same reason
+
+    // The ten original guns' own stats (0 keeps the built-in value; takes effect on restart - baked
+    // in at GameDataInit.Initialize, same as every other datablock here).
+    internal static ConfigEntry<float> PlasmaDamage = null!, PlasmaShotDelay = null!;
+    internal static ConfigEntry<int> PlasmaClipSize = null!;
+    internal static ConfigEntry<float> HiveDamage = null!, HiveShotDelay = null!;
+    internal static ConfigEntry<int> HiveClipSize = null!;
+    internal static ConfigEntry<float> LaserDamage = null!, LaserShotDelay = null!;
+    internal static ConfigEntry<int> LaserClipSize = null!;
+    internal static ConfigEntry<float> RailgunDamage = null!, RailgunShotDelay = null!;
+    internal static ConfigEntry<int> RailgunClipSize = null!;
+    internal static ConfigEntry<float> ChainLightningDamage = null!, ChainLightningShotDelay = null!;
+    internal static ConfigEntry<int> ChainLightningClipSize = null!;
+    internal static ConfigEntry<float> TentacleDamage = null!, TentacleShotDelay = null!;
+    internal static ConfigEntry<int> TentacleClipSize = null!;
+
+    internal static void Bind(ConfigFile config)
+    {
+        PlasmaDamage = config.Bind("Plasma Guns", "Damage", 22.5f, "Average damage per ball (it's actually rolled, 5 x 1d8).");
+        PlasmaShotDelay = config.Bind("Plasma Guns", "ShotDelay", 2f / 35f, "Seconds between balls.");
+        PlasmaClipSize = config.Bind("Plasma Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        HiveDamage = config.Bind("Hive Guns", "Damage", 1f, "Damage per round.");
+        HiveShotDelay = config.Bind("Hive Guns", "ShotDelay", 0.09f, "Seconds between rounds.");
+        HiveClipSize = config.Bind("Hive Guns", "ClipSize", 30, "Clip size (infinite ammo refills it anyway).");
+        LaserDamage = config.Bind("Laser Guns", "Damage", 2f, "Damage per tick (20 ticks a second).");
+        LaserShotDelay = config.Bind("Laser Guns", "ShotDelay", 0.05f, "Seconds between ticks.");
+        LaserClipSize = config.Bind("Laser Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        RailgunDamage = config.Bind("Railgun", "Damage", 60f, "Damage to every enemy on the line.");
+        RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.0f, "Seconds between shots.");
+        RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Clip size (infinite ammo refills it anyway).");
+        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 10f, "Damage of the first strike (each jump is 75% of the last).");
+        ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
+        ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
+        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 11f, "Damage per tentacle bite.");
+        TentacleShotDelay = config.Bind("Tentacle Guns", "ShotDelay", 0.235f, "Seconds between tentacles.");
+        TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
+    }
 
     // Every gun this mod adds (infinite ammo applies to all of them).
     internal static bool IsOurs(uint id) => GunArchetypes.Contains(id);
@@ -222,9 +260,9 @@ internal static class GunInjector
         var archetype = StatsFrom("HELRifleSemi");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 22.5f;
-        archetype.ShotDelay = 2f / 35f;
-        archetype.DefaultClipSize = 100;
+        archetype.Damage = PlasmaDamage.Value;
+        archetype.ShotDelay = PlasmaShotDelay.Value;
+        archetype.DefaultClipSize = PlasmaClipSize.Value;
         archetype.ShellCasingSize = 0f; // plasma, not bullets: no brass ejected
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, CategoryOf(gear), gear, description);
@@ -239,9 +277,9 @@ internal static class GunInjector
         var archetype = StatsFrom("RifleHeavyAuto");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 1f;
-        archetype.ShotDelay = 0.09f;
-        archetype.DefaultClipSize = 30;
+        archetype.Damage = HiveDamage.Value;
+        archetype.ShotDelay = HiveShotDelay.Value;
+        archetype.DefaultClipSize = HiveClipSize.Value;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
@@ -255,9 +293,9 @@ internal static class GunInjector
         var archetype = StatsFrom("Precision_Rifle");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 2f;
-        archetype.ShotDelay = 0.05f;
-        archetype.DefaultClipSize = 100;
+        archetype.Damage = LaserDamage.Value;
+        archetype.ShotDelay = LaserShotDelay.Value;
+        archetype.DefaultClipSize = LaserClipSize.Value;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f; // a beam, not bullets: no brass ejected
@@ -275,9 +313,9 @@ internal static class GunInjector
         var (category, archetype) = ModelSource(gear);
         archetype.FireMode = eWeaponFireMode.Semi;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 60f;          // to every enemy on the line (sniper 40)
-        archetype.ShotDelay = 1.0f;      // sniper 0.8
-        archetype.DefaultClipSize = 5;
+        archetype.Damage = RailgunDamage.Value;     // to every enemy on the line (sniper 40)
+        archetype.ShotDelay = RailgunShotDelay.Value; // sniper 0.8
+        archetype.DefaultClipSize = RailgunClipSize.Value;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;  // a slug thrown by magnets: no brass
@@ -294,9 +332,9 @@ internal static class GunInjector
         var (category, archetype) = ModelSource(gear);
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 10f;
-        archetype.ShotDelay = 0.15f;
-        archetype.DefaultClipSize = 60;
+        archetype.Damage = ChainLightningDamage.Value;
+        archetype.ShotDelay = ChainLightningShotDelay.Value;
+        archetype.DefaultClipSize = ChainLightningClipSize.Value;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;
@@ -321,10 +359,10 @@ internal static class GunInjector
         archetype.ShotgunBulletSpread = 0;
         archetype.HipFireSpread = 0f; // the tentacles bring their own spread
         archetype.AimSpread = 0f;
-        archetype.Damage = 11f;       // per tentacle
-        archetype.ShotDelay = 0.235f; // ~4.3 tentacles a second, so each has time to live
+        archetype.Damage = TentacleDamage.Value;       // per tentacle
+        archetype.ShotDelay = TentacleShotDelay.Value; // ~4.3 tentacles a second by default, so each has time to live
         archetype.ShellCasingSize = 0f; // tentacles, not bullets: no brass ejected
-        archetype.DefaultClipSize = 60;
+        archetype.DefaultClipSize = TentacleClipSize.Value;
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);

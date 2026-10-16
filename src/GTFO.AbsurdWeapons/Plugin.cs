@@ -33,6 +33,7 @@ public class Plugin : BasePlugin
         ImpactBurst.Bind(Config);
         Knockback.Bind(Config);
         MjolnirThrow.Bind(Config);
+        GunInjector.Bind(Config);
         FlameThrower.Bind(Config);
         FlakCannon.Bind(Config);
         VictoryBanner.Bind(Config);
