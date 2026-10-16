@@ -43,6 +43,7 @@ internal static class GunInjector
     internal const uint FlamethrowerId = 1111;
     internal const uint FlakCannonId = 1112;
     internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
+    internal const uint VictoryBannerId = 1202;   // a tool: same reason
 
     // Every gun this mod adds (infinite ammo applies to all of them).
     internal static bool IsOurs(uint id) => GunArchetypes.Contains(id);
@@ -79,6 +80,39 @@ internal static class GunInjector
         TryAdd("Flamethrower", FlamethrowerId, AddFlamethrower);
         TryAdd("Flak Cannon", FlakCannonId, AddFlakCannon);
         TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
+        TryAdd("Victory Banner", VictoryBannerId, AddVictoryBanner);
+    }
+
+    // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id,
+    // same as the Grenade Launcher - the glob becomes a plantable banner (VictoryBanner) instead.
+    private static void AddVictoryBanner(string name, uint id)
+    {
+        var sourceCategory = Lookup<GearCategoryDataBlock>("GlueGun");
+        var sourceGear = Lookup<PlayerOfflineGearDataBlock>("Glue_distance");
+        var gearJson = RewriteGearJson(sourceGear.GearJSON, sourceCategory.persistentID, id, DisplayName(name));
+        if (gearJson == null)
+        {
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons: couldn't find category {sourceCategory.persistentID} in '{sourceGear.name}' gear JSON - not adding the {name}.");
+            return;
+        }
+
+        var blockName = name.Replace(" ", "");
+        var category = Clone(sourceCategory);
+        category.persistentID = id;
+        category.name = blockName;
+        category.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
+        category.Description = new LocalizedText { Id = 0, UntranslatedText =
+            "Plants a banner that pulses an expanding ring every couple of seconds out to 8 metres, healing every teammate standing inside it. Lasts a while; planting a new one retires your last." };
+
+        var gear = Clone(sourceGear);
+        gear.persistentID = id;
+        gear.name = blockName;
+        gear.GearJSON = gearJson;
+
+        GameDataBlockBase<GearCategoryDataBlock>.AddBlock(category, -1);
+        AddedCategories.Add(id);
+        GameDataBlockBase<PlayerOfflineGearDataBlock>.AddBlock(gear, -1);
+        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons added the {name} (tool; category and gear id {id}).");
     }
 
     // The Bataldo J 300 shotgun: primary fire scatters bouncing shrapnel shards (FlakCannon); hold
@@ -88,14 +122,14 @@ internal static class GunInjector
         var gear = Lookup<PlayerOfflineGearDataBlock>("ShotgunHEL");
         var (category, archetype) = ModelSource(gear);
         archetype.FireMode = eWeaponFireMode.Semi;
-        archetype.ShotgunBulletCount = 9;
-        archetype.ShotgunConeSize = 5;
-        archetype.ShotgunBulletSpread = 5;
+        archetype.ShotgunBulletCount = FlakCannon.GunPelletCount.Value;
+        archetype.ShotgunConeSize = FlakCannon.GunConeAndSpread.Value;
+        archetype.ShotgunBulletSpread = FlakCannon.GunConeAndSpread.Value;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
-        archetype.Damage = 7f;        // per shard, before FlakCannon's own range falloff
-        archetype.ShotDelay = 0.85f;
-        archetype.DefaultClipSize = 6;
+        archetype.Damage = FlakCannon.GunDamagePerShard.Value; // per shard, before FlakCannon's own range falloff
+        archetype.ShotDelay = FlakCannon.GunShotDelay.Value;
+        archetype.DefaultClipSize = FlakCannon.GunClipSize.Value;
         archetype.ShellCasingSize = 0f; // shrapnel, not shot: no brass ejected
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
@@ -111,9 +145,9 @@ internal static class GunInjector
         var (category, archetype) = ModelSource(gear);
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 6f;        // per tick, before FlameThrower's own range falloff
-        archetype.ShotDelay = 1f / 15f; // 15 ticks a second
-        archetype.DefaultClipSize = 150;
+        archetype.Damage = FlameThrower.GunDamagePerTick.Value;        // per tick, before FlameThrower's own range falloff
+        archetype.ShotDelay = 1f / FlameThrower.GunTicksPerSecond.Value;
+        archetype.DefaultClipSize = FlameThrower.GunClipSize.Value;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f; // fire, not bullets: no brass ejected

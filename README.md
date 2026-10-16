@@ -500,7 +500,12 @@ Still to verify in-game:
 `BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg` has one section per melee weapon: `BladeLength`,
 `BladeLengthAxis`, `Reach`. `BladeLength` is re-read whenever a model is built, so it can be tuned
 without restarting. `Reach` overrides the archetype's `CameraDamageRayLength` at injection, so it
-needs a restart. The gun stats are fixed in `GunInjector`.
+needs a restart. The gun stats are fixed in `GunInjector`, except for the Flamethrower, Flak Cannon
+and Victory Banner: every one of their numbers - gun stats (damage, rate of fire, clip, pellet
+count/spread) included - is its own config entry (`[Flamethrower]`, `[Flak Cannon]`,
+`[Victory Banner]`), read once at `GameDataInit.Initialize` for the gun stats and live for the
+runtime behaviour (ranges, radii, afterburn, the damage buff), so most of it can be dialed in
+without restarting.
 
 ## Versioning
 

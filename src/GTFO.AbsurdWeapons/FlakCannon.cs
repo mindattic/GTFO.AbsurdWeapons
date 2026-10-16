@@ -1,5 +1,6 @@
 using System;
 using Agents;
+using BepInEx.Configuration;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -18,29 +19,60 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class FlakCannon
 {
+    // The gun's own archetype stats (read by GunInjector.AddFlakCannon).
+    internal static ConfigEntry<float> GunDamagePerShard = null!;
+    internal static ConfigEntry<int> GunPelletCount = null!;
+    internal static ConfigEntry<int> GunConeAndSpread = null!;
+    internal static ConfigEntry<float> GunShotDelay = null!;
+    internal static ConfigEntry<int> GunClipSize = null!;
+
     // Shrapnel shard (primary fire): falls off with distance travelled, dead by ShardRange.
-    internal const float ShardSpeed = 45f;
-    internal const float ShardRange = 10f;
-    internal const float ShardEdgeFraction = 0f;
-    internal const float ShardBounciness = 0.5f;
-    internal const int ShardMaxBounces = 2;
-    internal const float ShardLifetime = 1.2f;
+    internal static ConfigEntry<float> ShardSpeed = null!;
+    internal static ConfigEntry<float> ShardRange = null!;
+    internal static ConfigEntry<float> ShardEdgeFraction = null!;
+    internal static ConfigEntry<float> ShardBounciness = null!;
+    internal static ConfigEntry<int> ShardMaxBounces = null!;
+    internal static ConfigEntry<float> ShardLifetime = null!;
 
     // The ball (secondary fire, held Aim): one shot, slow and a little lobbed, explodes on contact.
-    internal const float BallSpeed = 22f;
-    internal const float BallGravity = 4f;
-    internal const float BallBlastRadius = 4f;
-    internal const float BallBlastDamage = 25f;
-    internal const float BallBlastEdgeFraction = 0.3f;
-    internal const float BallBlastStagger = 6f;
-    internal const int BallShrapnelRays = 10;
-    internal const float BallShrapnelRange = 6f;
-    internal const float BallShrapnelDamage = 10f;
+    internal static ConfigEntry<float> BallSpeed = null!;
+    internal static ConfigEntry<float> BallGravity = null!;
+    internal static ConfigEntry<float> BallBlastRadius = null!;
+    internal static ConfigEntry<float> BallBlastDamage = null!;
+    internal static ConfigEntry<float> BallBlastEdgeFraction = null!;
+    internal static ConfigEntry<float> BallBlastStagger = null!;
+    internal static ConfigEntry<int> BallShrapnelRays = null!;
+    internal static ConfigEntry<float> BallShrapnelRange = null!;
+    internal static ConfigEntry<float> BallShrapnelDamage = null!;
 
     private const string BallLaunchEvent = "MindAttic.GTFO.AbsurdWeapons.FlakBallLaunch";
 
     // One shot's worth of pellets all land here; only the first (while Aim is held) becomes the ball.
     private static bool ballFiredThisShot;
+
+    internal static void Bind(ConfigFile config)
+    {
+        GunDamagePerShard = config.Bind("Flak Cannon", "GunDamagePerShard", 7f, "Damage per shard, before range falloff.");
+        GunPelletCount = config.Bind("Flak Cannon", "GunPelletCount", 9, "Pellets (shards) per shot.");
+        GunConeAndSpread = config.Bind("Flak Cannon", "GunConeAndSpread", 5, "The shotgun's cone size and bullet spread.");
+        GunShotDelay = config.Bind("Flak Cannon", "GunShotDelay", 0.85f, "Seconds between shots.");
+        GunClipSize = config.Bind("Flak Cannon", "GunClipSize", 6, "Clip size (infinite ammo refills it anyway).");
+        ShardSpeed = config.Bind("Flak Cannon", "ShardSpeed", 45f, "Shrapnel shard speed, m/s.");
+        ShardRange = config.Bind("Flak Cannon", "ShardRange", 10f, "Metres of travel before a shard's damage falls to nothing.");
+        ShardEdgeFraction = config.Bind("Flak Cannon", "ShardEdgeFraction", 0f, "Share of damage left at ShardRange.");
+        ShardBounciness = config.Bind("Flak Cannon", "ShardBounciness", 0.5f, "Speed kept per bounce off the world.");
+        ShardMaxBounces = config.Bind("Flak Cannon", "ShardMaxBounces", 2, "Bounces before a shard burns out.");
+        ShardLifetime = config.Bind("Flak Cannon", "ShardLifetime", 1.2f, "Seconds before a shard expires outright.");
+        BallSpeed = config.Bind("Flak Cannon", "BallSpeed", 22f, "The compressed ball's launch speed, m/s.");
+        BallGravity = config.Bind("Flak Cannon", "BallGravity", 4f, "Gravity applied to the ball in flight.");
+        BallBlastRadius = config.Bind("Flak Cannon", "BallBlastRadius", 4f, "Metres of the ball's central blast.");
+        BallBlastDamage = config.Bind("Flak Cannon", "BallBlastDamage", 25f, "Damage at the center of the ball's blast.");
+        BallBlastEdgeFraction = config.Bind("Flak Cannon", "BallBlastEdgeFraction", 0.3f, "Share of blast damage left at its edge.");
+        BallBlastStagger = config.Bind("Flak Cannon", "BallBlastStagger", 6f, "Stagger multiplier of the ball's blast.");
+        BallShrapnelRays = config.Bind("Flak Cannon", "BallShrapnelRays", 10, "Radial secondary-shrapnel rays on the ball's detonation.");
+        BallShrapnelRange = config.Bind("Flak Cannon", "BallShrapnelRange", 6f, "Metres each secondary shrapnel ray reaches.");
+        BallShrapnelDamage = config.Bind("Flak Cannon", "BallShrapnelDamage", 10f, "Damage of each secondary shrapnel ray that hits.");
+    }
 
     internal static void Init() =>
         NetworkAPI.RegisterEvent<BallMessage>(BallLaunchEvent, (_, message) =>
@@ -58,13 +90,13 @@ internal static class FlakCannon
         {
             if (ballFiredThisShot) return; // the rest of this shot's pellets: already spent on the ball
             ballFiredThisShot = true;
-            var velocity = direction * BallSpeed;
+            var velocity = direction * BallSpeed.Value;
             FlakBall.Spawn(owner, position, velocity, gearCategoryId);
             NetworkAPI.InvokeEvent(BallLaunchEvent, new BallMessage(position, velocity));
             return;
         }
 
-        ShrapnelShard.Spawn(owner, position, direction * ShardSpeed, damage, gearCategoryId);
+        ShrapnelShard.Spawn(owner, position, direction * ShardSpeed.Value, damage, gearCategoryId);
     }
 
     // Plain fields so GTFO-API can copy it as raw bytes.
@@ -115,7 +147,7 @@ internal sealed class ShrapnelShard : MonoBehaviour
         try
         {
             age += Time.deltaTime;
-            if (age >= FlakCannon.ShardLifetime || owner == null)
+            if (age >= FlakCannon.ShardLifetime.Value || owner == null)
             {
                 Destroy(gameObject);
                 return;
@@ -137,8 +169,8 @@ internal sealed class ShrapnelShard : MonoBehaviour
             {
                 traveled += Vector3.Distance(position, worldHit.point);
                 transform.position = worldHit.point + worldHit.normal * (Radius + 0.01f);
-                velocity = Vector3.Reflect(velocity, worldHit.normal) * FlakCannon.ShardBounciness;
-                if (++bounces > FlakCannon.ShardMaxBounces) Destroy(gameObject);
+                velocity = Vector3.Reflect(velocity, worldHit.normal) * FlakCannon.ShardBounciness.Value;
+                if (++bounces > FlakCannon.ShardMaxBounces.Value) Destroy(gameObject);
                 return;
             }
 
@@ -158,7 +190,7 @@ internal sealed class ShrapnelShard : MonoBehaviour
         var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
         if (limb != null && limb.m_base?.Owner != null && limb.m_base.Owner.Alive)
         {
-            var falloff = Formulas.AreaFalloff(traveled, FlakCannon.ShardRange, FlakCannon.ShardEdgeFraction);
+            var falloff = Formulas.AreaFalloff(traveled, FlakCannon.ShardRange.Value, FlakCannon.ShardEdgeFraction.Value);
             var direction = velocity.normalized;
             limb.BulletDamage(damage * falloff, owner.Cast<Agent>(), hit.point, direction, -direction,
                 allowDirectionalBonus: false, 1f, 1f, gearCategoryId);
@@ -202,7 +234,7 @@ internal sealed class FlakBall : MonoBehaviour
         if (exploded) return;
         try
         {
-            velocity += Vector3.down * (FlakCannon.BallGravity * Time.deltaTime);
+            velocity += Vector3.down * (FlakCannon.BallGravity.Value * Time.deltaTime);
             var position = transform.position;
             var step = velocity * Time.deltaTime;
             var distance = step.magnitude;
@@ -244,18 +276,18 @@ internal sealed class FlakBall : MonoBehaviour
         Explosion.Show(position);
 
         if (owner == null) return; // a teammate's copy: flash and gone
-        AreaDamage.Apply(position, FlakCannon.BallBlastRadius, FlakCannon.BallBlastDamage, FlakCannon.BallBlastEdgeFraction,
-            FlakCannon.BallBlastStagger, owner.Cast<Agent>(), null, gearCategoryId);
+        AreaDamage.Apply(position, FlakCannon.BallBlastRadius.Value, FlakCannon.BallBlastDamage.Value, FlakCannon.BallBlastEdgeFraction.Value,
+            FlakCannon.BallBlastStagger.Value, owner.Cast<Agent>(), null, gearCategoryId);
 
         // The UT touch: a radial burst of secondary shrapnel rays layered over the main blast,
         // catching things just past its edge.
-        for (var i = 0; i < FlakCannon.BallShrapnelRays; i++)
+        for (var i = 0; i < FlakCannon.BallShrapnelRays.Value; i++)
         {
             var direction = UnityEngine.Random.onUnitSphere;
-            if (!Physics.Raycast(position, direction, out var hit, FlakCannon.BallShrapnelRange, LayerManager.MASK_ENEMY_DAMAGABLE)) continue;
+            if (!Physics.Raycast(position, direction, out var hit, FlakCannon.BallShrapnelRange.Value, LayerManager.MASK_ENEMY_DAMAGABLE)) continue;
             var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
             if (limb == null || limb.m_base?.Owner == null || !limb.m_base.Owner.Alive) continue;
-            limb.BulletDamage(FlakCannon.BallShrapnelDamage, owner.Cast<Agent>(), hit.point, direction, -direction,
+            limb.BulletDamage(FlakCannon.BallShrapnelDamage.Value, owner.Cast<Agent>(), hit.point, direction, -direction,
                 allowDirectionalBonus: false, 1f, 1f, gearCategoryId);
         }
     }

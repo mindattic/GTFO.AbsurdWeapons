@@ -27,6 +27,9 @@ public class Plugin : BasePlugin
         WeaponSettings.Bind(Config);
         TentaclePool.Bind(Config);
         GearCycler.Bind(Config);
+        FlameThrower.Bind(Config);
+        FlakCannon.Bind(Config);
+        VictoryBanner.Bind(Config);
         ClassInjector.RegisterTypeInIl2Cpp<SeekerProjectile>();
         ClassInjector.RegisterTypeInIl2Cpp<BurstFlash>();
         ClassInjector.RegisterTypeInIl2Cpp<TentacleLash>();
@@ -38,6 +41,7 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<FireBombProjectile>();
         ClassInjector.RegisterTypeInIl2Cpp<ShrapnelShard>();
         ClassInjector.RegisterTypeInIl2Cpp<FlakBall>();
+        ClassInjector.RegisterTypeInIl2Cpp<BannerPylon>();
         SeekerGuns.Init();
         ImpactBursts.Init();
         Stealth.Init();
@@ -48,6 +52,7 @@ public class Plugin : BasePlugin
         ChainLightning.Init();
         FlameThrower.Init();
         FlakCannon.Init();
+        VictoryBanner.Init();
         Knockback.Init();
         new Harmony(GUID).PatchAll();
         AddComponent<StealthVisuals>();
@@ -57,6 +62,7 @@ public class Plugin : BasePlugin
         AddComponent<GearCycler>();
         AddComponent<InfiniteAmmo>();
         AddComponent<FlameAfterburn>();
+        AddComponent<VictoryBannerBuff>();
         MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }

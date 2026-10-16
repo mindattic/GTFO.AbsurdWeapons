@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Agents;
+using BepInEx.Configuration;
 using Enemies;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
@@ -25,33 +26,59 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class FlameThrower
 {
+    // The gun's own archetype stats (read by GunInjector.AddFlamethrower).
+    internal static ConfigEntry<float> GunDamagePerTick = null!;
+    internal static ConfigEntry<float> GunTicksPerSecond = null!;
+    internal static ConfigEntry<int> GunClipSize = null!;
+
     // The stream.
-    internal const float Range = 8f;
-    internal const float EdgeDamageFraction = 0.15f;
-    internal const float ConeDegrees = 12f;
+    internal static ConfigEntry<float> Range = null!;
+    internal static ConfigEntry<float> EdgeDamageFraction = null!;
+    internal static ConfigEntry<float> ConeDegrees = null!;
     internal const int ConeRays = 5;
-    internal const float StaggerMulti = 1.5f;
+    internal static ConfigEntry<float> StaggerMulti = null!;
 
     // Afterburn: stacks on every landed tick, each stack worth its own tick damage, refreshed
     // (not stacked in duration) by the next hit.
-    internal const float AfterburnTickSeconds = 0.5f;
-    internal const float AfterburnDamagePerStack = 1.5f;
-    internal const int AfterburnMaxStacks = 5;
-    internal const float AfterburnDuration = 3f;
+    internal static ConfigEntry<float> AfterburnTickSeconds = null!;
+    internal static ConfigEntry<float> AfterburnDamagePerStack = null!;
+    internal static ConfigEntry<int> AfterburnMaxStacks = null!;
+    internal static ConfigEntry<float> AfterburnDuration = null!;
 
     // Fire spreads: a burning enemy's tick also ignites other living enemies this close to it.
-    internal const float SpreadRadius = 3f;
+    internal static ConfigEntry<float> SpreadRadius = null!;
 
     // The fuel bomb (held Aim).
-    internal const float BombCooldownSeconds = 1.25f;
-    internal const float BombSpeed = 18f;
-    internal const float PoolRadius = 4f;
-    internal const float PoolDamagePerTick = 4f;
-    internal const float PoolSeconds = 4f;
+    internal static ConfigEntry<float> BombCooldownSeconds = null!;
+    internal static ConfigEntry<float> BombSpeed = null!;
+    internal static ConfigEntry<float> PoolRadius = null!;
+    internal static ConfigEntry<float> PoolDamagePerTick = null!;
+    internal static ConfigEntry<float> PoolSeconds = null!;
 
     private const string BombLaunchEvent = "MindAttic.GTFO.AbsurdWeapons.FlameBombLaunch";
 
     private static float lastBomb = -10f;
+
+    internal static void Bind(ConfigFile config)
+    {
+        GunDamagePerTick = config.Bind("Flamethrower", "GunDamagePerTick", 6f, "Damage dealt per tick, before range falloff.");
+        GunTicksPerSecond = config.Bind("Flamethrower", "GunTicksPerSecond", 15f, "How many stream ticks the gun fires a second.");
+        GunClipSize = config.Bind("Flamethrower", "GunClipSize", 150, "Clip size (infinite ammo refills it anyway).");
+        Range = config.Bind("Flamethrower", "Range", 8f, "Metres the cone reaches before falling off to nothing.");
+        EdgeDamageFraction = config.Bind("Flamethrower", "EdgeDamageFraction", 0.15f, "Share of full damage left at the edge of Range.");
+        ConeDegrees = config.Bind("Flamethrower", "ConeDegrees", 12f, "Half-angle of the cone, either side of where you're aiming.");
+        StaggerMulti = config.Bind("Flamethrower", "StaggerMulti", 1.5f, "Stagger multiplier per stream tick.");
+        AfterburnTickSeconds = config.Bind("Flamethrower", "AfterburnTickSeconds", 0.5f, "Seconds between afterburn/fire-pool ticks.");
+        AfterburnDamagePerStack = config.Bind("Flamethrower", "AfterburnDamagePerStack", 1.5f, "Damage per afterburn stack, per tick.");
+        AfterburnMaxStacks = config.Bind("Flamethrower", "AfterburnMaxStacks", 5, "Cap on afterburn stacks per enemy.");
+        AfterburnDuration = config.Bind("Flamethrower", "AfterburnDuration", 3f, "Seconds afterburn keeps ticking after the last hit.");
+        SpreadRadius = config.Bind("Flamethrower", "SpreadRadius", 3f, "Metres a burning enemy's tick can ignite another enemy in.");
+        BombCooldownSeconds = config.Bind("Flamethrower", "BombCooldownSeconds", 1.25f, "Minimum seconds between fuel bombs.");
+        BombSpeed = config.Bind("Flamethrower", "BombSpeed", 18f, "Fuel bomb launch speed, m/s.");
+        PoolRadius = config.Bind("Flamethrower", "PoolRadius", 4f, "Metres the fuel bomb's fire pool reaches.");
+        PoolDamagePerTick = config.Bind("Flamethrower", "PoolDamagePerTick", 4f, "Fire pool damage per tick.");
+        PoolSeconds = config.Bind("Flamethrower", "PoolSeconds", 4f, "Seconds the fire pool lasts.");
+    }
 
     private sealed record BurnState(EnemyAgent Enemy, int Stacks, float ExpiresAt, PlayerAgent Owner, uint GearCategoryId);
     private sealed record PoolState(Vector3 Position, PlayerAgent Owner, uint GearCategoryId, float ExpiresAt);
@@ -83,26 +110,26 @@ internal static class FlameThrower
         for (var i = 0; i < ConeRays; i++)
         {
             var t = ConeRays == 1 ? 0f : i / (float)(ConeRays - 1) * 2f - 1f; // -1..1 across the cone
-            var direction = (Quaternion.AngleAxis(t * ConeDegrees, up) * aim).normalized;
-            if (!Physics.Raycast(eye, direction, out var hit, Range, LayerManager.MASK_BULLETWEAPON_RAY)) continue;
+            var direction = (Quaternion.AngleAxis(t * ConeDegrees.Value, up) * aim).normalized;
+            if (!Physics.Raycast(eye, direction, out var hit, Range.Value, LayerManager.MASK_BULLETWEAPON_RAY)) continue;
 
             var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
             var enemy = limb?.m_base?.Owner;
             if (limb == null || enemy == null || !enemy.Alive) continue;
 
-            var falloff = Formulas.AreaFalloff(hit.distance, Range, EdgeDamageFraction);
+            var falloff = Formulas.AreaFalloff(hit.distance, Range.Value, EdgeDamageFraction.Value);
             limb.BulletDamage(damage * falloff, owner.Cast<Agent>(), hit.point, direction, -direction,
-                allowDirectionalBonus: false, StaggerMulti, 1f, gearCategoryId);
+                allowDirectionalBonus: false, StaggerMulti.Value, 1f, gearCategoryId);
             Ignite(enemy, owner, gearCategoryId);
         }
     }
 
     private static void FireBomb(PlayerAgent owner, Vector3 eye, Vector3 aim, uint gearCategoryId)
     {
-        if (Time.time - lastBomb < BombCooldownSeconds) return;
+        if (Time.time - lastBomb < BombCooldownSeconds.Value) return;
         lastBomb = Time.time;
         var position = eye + aim * 0.5f;
-        var velocity = aim * BombSpeed;
+        var velocity = aim * BombSpeed.Value;
         FireBombProjectile.Spawn(owner, position, velocity, gearCategoryId);
         NetworkAPI.InvokeEvent(BombLaunchEvent, new BombMessage(position, velocity));
     }
@@ -110,12 +137,12 @@ internal static class FlameThrower
     private static void Ignite(EnemyAgent enemy, PlayerAgent owner, uint gearCategoryId)
     {
         var stacks = burning.TryGetValue(enemy.Pointer, out var existing) ? existing.Stacks : 0;
-        stacks = Formulas.AfterburnStacks(stacks, AfterburnMaxStacks);
-        burning[enemy.Pointer] = new BurnState(enemy, stacks, Time.time + AfterburnDuration, owner, gearCategoryId);
+        stacks = Formulas.AfterburnStacks(stacks, AfterburnMaxStacks.Value);
+        burning[enemy.Pointer] = new BurnState(enemy, stacks, Time.time + AfterburnDuration.Value, owner, gearCategoryId);
     }
 
     internal static void SpawnPool(Vector3 position, PlayerAgent owner, uint gearCategoryId) =>
-        pools.Add(new PoolState(position, owner, gearCategoryId, Time.time + PoolSeconds));
+        pools.Add(new PoolState(position, owner, gearCategoryId, Time.time + PoolSeconds.Value));
 
     // Runs off FlameAfterburn's own clock, not the gun's trigger: the damage keeps ticking after
     // the stream (or the bomb's fire) stops.
@@ -132,7 +159,7 @@ internal static class FlameThrower
                 var limb = ChainLightning.NearestLimb(state.Enemy, state.Enemy.AimTarget.position);
                 if (limb != null)
                 {
-                    limb.BulletDamage(AfterburnDamagePerStack * state.Stacks, state.Owner.Cast<Agent>(),
+                    limb.BulletDamage(AfterburnDamagePerStack.Value * state.Stacks, state.Owner.Cast<Agent>(),
                         state.Enemy.AimTarget.position, Vector3.up, Vector3.down,
                         allowDirectionalBonus: false, 0.5f, 1f, state.GearCategoryId);
                 }
@@ -148,8 +175,8 @@ internal static class FlameThrower
             if (Time.time >= pool.ExpiresAt) { pools.RemoveAt(i); continue; }
             if (!pool.Owner.IsLocallyOwned) continue;
 
-            AreaDamage.Apply(pool.Position, PoolRadius, PoolDamagePerTick, 1f, 1f, pool.Owner.Cast<Agent>(), null, pool.GearCategoryId);
-            foreach (var collider in Physics.OverlapSphere(pool.Position, PoolRadius, LayerManager.MASK_ENEMY_DAMAGABLE))
+            AreaDamage.Apply(pool.Position, PoolRadius.Value, PoolDamagePerTick.Value, 1f, 1f, pool.Owner.Cast<Agent>(), null, pool.GearCategoryId);
+            foreach (var collider in Physics.OverlapSphere(pool.Position, PoolRadius.Value, LayerManager.MASK_ENEMY_DAMAGABLE))
             {
                 var caught = collider.GetComponent<Dam_EnemyDamageLimb>()?.m_base?.Owner;
                 if (caught != null && caught.Alive) Ignite(caught, pool.Owner, pool.GearCategoryId);
@@ -162,7 +189,7 @@ internal static class FlameThrower
     private static void SpreadTo(EnemyAgent source, PlayerAgent owner, uint gearCategoryId)
     {
         var from = source.AimTarget.position;
-        foreach (var collider in Physics.OverlapSphere(from, SpreadRadius, LayerManager.MASK_ENEMY_DAMAGABLE))
+        foreach (var collider in Physics.OverlapSphere(from, SpreadRadius.Value, LayerManager.MASK_ENEMY_DAMAGABLE))
         {
             var other = collider.GetComponent<Dam_EnemyDamageLimb>()?.m_base?.Owner;
             if (other == null || !other.Alive || other.Pointer == source.Pointer || burning.ContainsKey(other.Pointer)) continue;
@@ -194,7 +221,7 @@ internal sealed class FlameAfterburn : MonoBehaviour
     private void Update()
     {
         if (Time.time < nextTickAt) return;
-        nextTickAt = Time.time + FlameThrower.AfterburnTickSeconds;
+        nextTickAt = Time.time + FlameThrower.AfterburnTickSeconds.Value;
         try
         {
             FlameThrower.TickBurning();
