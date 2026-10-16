@@ -50,6 +50,7 @@ public class Plugin : BasePlugin
         AddComponent<DashRunner>();
         AddComponent<GravityPull>();
         AddComponent<GearCycler>();
+        AddComponent<InfiniteAmmo>();
         MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }

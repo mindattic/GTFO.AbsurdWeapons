@@ -33,16 +33,16 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Odachi | 1008 | `Hammer` | `MeleeSledgehammer` | `Knife` (blade x8.4 = 2.26 m) | light 6 / charged 9999, reach 3.5, sphere 0.4, cleaves, 70% speed charging; light attacks x0.85 |
 | Tanto | 1009 | `Knife` | `MeleeKnife` | `Knife` (blade x0.93 = 25 cm) | light 2 / charged 6, reach 1.6; light attacks x1.6 |
 | Gravity Hammer | 1010 | `Hammer`, on its own `MeleeAnimationSetDataBlock` 1010 (the hammer's with `AutoAttackTime` pushed out of reach) | `MeleeSledgehammer` | `Maul` (Omneco Maul) | light 4 / charged 30, charged stagger x20, sphere 0.5, reach 2.2, cleaves, 60% speed charging; the pull and blast are runtime (`GravityHammer`) |
-| Plasma Pistol | 1101 | the Steigro's archetype for its fire mode | the Steigro's (`Pistol_Stagger`) | `Autopistol staggering` (Raptus Steigro, main, no sight) | `AddPlasma`: `FireMode` Auto, damage 22.5 (display; rolled per hit), shot delay 3/35 s, clip 100, own kickless `RecoilDataBlock` 1101 |
-| Hive Pistol | 1102 | the S49's archetype for its fire mode | the S49's (`Pistol`) | `PistolSemi` (Shelling S49, main, no sight) | `AddHive`: `FireMode` Auto, damage 1, shot delay 0.12 s, clip 30, own kickless `RecoilDataBlock` 1102 |
-| Hive Rifle | 1104 | the HXC's archetype for its fire mode | the HXC's (`RifleHeavy`) | `RifleHeavyAuto` (Malatack HXC, special) | `AddHive`: damage 1, shot delay 0.09 s, kickless recoil 1104 |
-| Plasma Rifle | 1105 | the LRG's archetype for its fire mode | the LRG's (`Gauss_Rifle`) | `HELRifleSemi` (Omneco LRG, special) | `AddPlasma`: shot delay 2/35 s, kickless recoil 1105 |
-| Tentacle Rifle (was Tentacle Cannon) | 1103 | the XDist2's archetype for its fire mode | the XDist2's | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `FireMode` Auto, 1 pellet, no cone or spread, damage 11 (per tentacle), shot delay 0.235 s, `ShellCasingSize` 0, clip 60, no spin-up, own kickless `RecoilDataBlock` 1103, own first-person hold `ItemFPSSettingsDataBlock` 1103 (`AddFarLowHold`: vanilla `Shotgun` pushed lower and further out, aim FOV 30); the lashes are runtime (`TentacleCannon`) |
-| Laser Pistol | 1106 | the Treffen 2's archetype for its fire mode | the Treffen 2's | `Pistolauto` (Raptus Treffen 2, main, no sight) | `AddLaser`: `FireMode` Auto, damage 1.2 per tick, shot delay 0.05 s (20 ticks/s), clip 100, no spread, `ShellCasingSize` 0, kickless recoil 1106, hold swapped to `ItemFPSSettings` 48 (`Pistol_Chunky`, 10 cm lower) so the beam shows; the beam is runtime (`LaserGuns`) |
-| Laser Rifle | 1107 | the DEL P1's archetype for its fire mode | the DEL P1's | `Precision_Rifle` (Drekker DEL P1, special) | `AddLaser`: damage 2 per tick, kickless recoil 1107, model's own hold |
+| Plasma Pistol | 1101 | the LRG's archetype (shared with the Plasma Rifle) | the Steigro's (`Pistol_Stagger`) | `Autopistol staggering` (Raptus Steigro, main, no sight) | `AddPlasma`: `FireMode` Auto, damage 22.5 (display; rolled per hit), shot delay 2/35 s, clip 100, own kickless `RecoilDataBlock` 1101 |
+| Hive Pistol | 1102 | the HXC's archetype (shared with the Hive Rifle) | the S49's (`Pistol`) | `PistolSemi` (Shelling S49, main, no sight) | `AddHive`: `FireMode` Auto, damage 1, shot delay 0.09 s, clip 30, own kickless `RecoilDataBlock` 1102 |
+| Hive Rifle | 1104 | the HXC's archetype | the HXC's (`RifleHeavy`) | `RifleHeavyAuto` (Malatack HXC, special) | `AddHive`: same stats as the Hive Pistol, kickless recoil 1104 |
+| Plasma Rifle | 1105 | the LRG's archetype | the LRG's (`Gauss_Rifle`) | `HELRifleSemi` (Omneco LRG, special) | `AddPlasma`: same stats as the Plasma Pistol, kickless recoil 1105 |
+| Tentacle Rifle (was Tentacle Cannon) | 1103 | the XDist2's archetype (shared with the Tentacle Pistol) | the XDist2's | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `AddTentacle`: `FireMode` Auto, 1 pellet, no cone or spread, damage 11 (per tentacle), shot delay 0.235 s, `ShellCasingSize` 0, clip 60, no spin-up, own kickless `RecoilDataBlock` 1103, own first-person hold `ItemFPSSettingsDataBlock` 1103 (`AddFarLowHold`: vanilla `Shotgun` pushed lower and further out, aim FOV 30); the lashes are runtime (`TentacleCannon`) |
+| Laser Pistol | 1106 | the DEL P1's archetype (shared with the Laser Rifle) | the Treffen 2's | `Pistolauto` (Raptus Treffen 2, main, no sight) | `AddLaser`: `FireMode` Auto, damage 2 per tick, beam 70 m, shot delay 0.05 s (20 ticks/s), clip 100, no spread, `ShellCasingSize` 0, kickless recoil 1106, hold swapped to `ItemFPSSettings` 48 (`Pistol_Chunky`, 10 cm lower) so the beam shows; the beam is runtime (`LaserGuns`) |
+| Laser Rifle | 1107 | the DEL P1's archetype | the DEL P1's | `Precision_Rifle` (Drekker DEL P1, special) | `AddLaser`: same stats as the Laser Pistol, kickless recoil 1107, model's own hold |
 | Railgun | 1108 | the PR 11's archetype for its fire mode | the PR 11's (`Sniper`) | `SniperSemi` (Koning PR 11, special) | `AddRailgun`: Semi, damage 60 (to every enemy on the line), shot delay 1.0 s, clip 5, no spread, `ShellCasingSize` 0, the sniper's own recoil and scope; the slug is runtime (`Railgun`) |
 | Chain Lightning Gun | 1109 | the exp1's archetype for its fire mode | the exp1's (`MachineGun_LowRPM`) | `HELGun` (Omneco exp1, special) | `AddChainLightning`: Auto, damage 10 (first strike), shot delay 0.15 s, clip 60, no spread or spin-up, no brass, kickless recoil 1109; the bolts are runtime (`ChainLightning`) |
-| Tentacle Pistol | 1110 | the 3RB's archetype for its fire mode | the 3RB's (`RevolverStandard`) | `RevolverHEL` (Bataldo 3RB, main) | `AddTentaclePistol`: Auto, 1 pellet, damage 8, shot delay 0.35 s, clip 30, no brass, kickless recoil 1110, model's own hold |
+| Tentacle Pistol | 1110 | the XDist2's archetype (shared with the Tentacle Rifle) | the 3RB's (`RevolverStandard`) | `RevolverHEL` (Bataldo 3RB, main) | `AddTentacle`: same stats as the Tentacle Rifle, kickless recoil 1110, model's own hold |
 | Grenade Launcher | 1201 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddGrenadeLauncher`: category and gear only; the launcher's own prefab drives pressure and bursts; the grenades are runtime (`GrenadeLauncher`) |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
@@ -100,7 +100,9 @@ homes onto and damages players only, so it can't be used as-is.
   - Every impact flashes a small `EffectLight`. Teammates' visual copies fly and flash on their
     own; a smart round's message carries its target's position, which the copy curves to.
 - **Infinite ammo:** the `Fire` postfixes top the clip back up (`SetCurrentClip(ClipSize)`) after
-  every shot from one of our guns, for the local player.
+  every shot from one of our guns, for the local player. `InfiniteAmmo` (a per-frame component)
+  also keeps the wielded gun's clip and its slot's reserve full, so a gun swapped in by gear
+  cycling starts loaded.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.
 - **Multiplayer:** each shot is sent to teammates with GTFO-API's `NetworkAPI`
@@ -113,10 +115,16 @@ homes onto and damages players only, so it can't be used as-is.
   round. Shotgun pellet hit data has no `owner`, so the shooter falls back to the firing weapon's
   `Owner`. For the local shooter each ray calls `TentacleCannon.FirePellet`, which turns the aim into
   that tentacle's own line with `Fan` (random yaw up to 30°, pitch up to 5°: a wide, level fan). It
-  picks an enemy with `SeekerGuns.FindLocks` around that line (15°, 25 m, line of sight) that no
-  other tentacle fired the same frame has claimed; failing that, any enemy within 60° of the aim and 25 m (nearest the crosshair first, doubling up if all are claimed), so no tentacle wanders to a surface while an enemy is in view. With no enemy at all, `SomethingToGrab` casts 10 probes in a
-  flat fan (35° sideways, 8° up/down, 12 m, `MASK_BULLETWEAPON_RAY`) and latches onto the nearest
-  hit; with nothing in reach it flails 15 m out along its line.
+  picks an enemy with `SeekerGuns.FindLocks` around that line (15°, `Reach`, line of sight) that no
+  other tentacle fired the same frame has claimed; failing that, any enemy within 60° of the aim and `Reach` (nearest the crosshair first, doubling up if all are claimed), so no tentacle wanders to a surface while an enemy is in view. With no enemy at all, `SomethingToGrab` casts 10 probes in a
+  flat fan (35° sideways, 8° up/down, `Reach`, `MASK_BULLETWEAPON_RAY`) and latches onto the nearest
+  hit; with nothing in reach it flails `Reach` out along its line.
+- **Reach:** the strikers' own tentacle length, `EAB_MovingEnemeyTentacle.m_absoluteMaxDistanceToHitTarget`,
+  read (longest found) from the level's strikers via `FindObjectsOfType`, retried every 5 s until
+  one exists (25 m until then) and logged. A lash whose target moves out of reach is cut to it.
+- **Spline ends:** the GPU tentacle's spline runs through the inner control points only (its head
+  was measured at 75% of the line with 5 points), so `Draw` puts the second point on the barrel and
+  the second-to-last on the target, the outer two extrapolated beyond.
 - **Start point (`BarrelOnScreen`):** the first-person gun is drawn by `FPSCamera.m_itemCamera` with
   its own FOV, so the muzzle's world position doesn't match the barrel on screen. The lash starts
   where the item camera shows the muzzle (5 cm behind it), re-projected through the world camera at
@@ -236,7 +244,13 @@ An injected MonoBehaviour reads `[Gear Cycling]` keys (PageUp / PageDown) while
 it takes `GearManager.GetAllGearForSlot`, keeps the entries whose category is in
 `DataBlocks.AddedCategories` (filled as each weapon registers), and equips the next or previous
 with `PlayerBackpackManager.EquipLocalGear` - the lobby's own path, which syncs - then re-wields the
-slot 0.4 s later and shows a one-second `PUI_WardenIntel` sub-objective message.
+slot 0.4 s later and shows a five-second `PUI_WardenIntel` sub-objective message.
+
+**Restore (Home):** before a slot's first swap in a level, `Save` records its `BackpackItem.GearIDRange`,
+the gun's `GetCurrentClip()` and the slot's `GetAmmoInPack` reserve. Home re-equips every saved slot
+whose category differs (`EquipLocalGear`, so an unchanged tool - a deployed sentry - is left alone),
+then `FinishRestore` waits until each item `IsLoaded` (5 s at most) to `SetAmmo` the reserves,
+`SetCurrentClip` the magazines and re-wield the slot that was held. Saves clear on leaving `InLevel`.
 
 ### Mjolnir's throw (`MjolnirThrow`, `ThrownHammer`)
 
@@ -325,7 +339,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   GrenadeLauncher.cs    Grenade Launcher hook, grenade flight, fuse, blast, infinite tool ammo
   GravityHammer.cs      Gravity Hammer pull and release blast
   SwordTempo.cs         the swords' light-attack speeds
-  GearCycler.cs         PageUp/PageDown in-level weapon swapping
+  GearCycler.cs         PageUp/PageDown in-level weapon swapping, Home restores the starting loadout
   LaserGuns.cs          laser beam ticks, the persistent beam, its burn and the muted tracer
   KatanaDash.cs         the Katana's full-charge dash-slash
   Knockback.cs          host-side physical knockback slides (Warhammer)
@@ -423,7 +437,7 @@ Still to verify in-game:
   - Seekers hit enemies, are blocked by walls and doors, and never hurt players.
   - Damage registers when fired by the host and when fired by a client.
   - Teammates see the shots.
-  - The Plasma Pistol fires ~11.7 blue balls a second (Rifle ~17.5), straight, with no recoil; the blue tint takes
+  - The Plasma Pistol and Rifle fire ~17.5 blue balls a second, straight, with no recoil; the blue tint takes
     on the whole projectile (glow, trail, particle core).
   - Hive Pistol/Rifle rounds leave the muzzle (not the camera) and curve onto locked enemies, cycling
     between them.

@@ -54,28 +54,24 @@ internal static class GunInjector
     [HarmonyAfter(Plugin.GtfoEzGuid)]
     private static void Postfix()
     {
-        TryAdd("Plasma Pistol", PlasmaPistolId, (name, id) => AddPlasma(name, id,
-            "Autopistol staggering", 3f / 35f, // Raptus Steigro: the high-tech HEL pistol, main slot
-            "Rapid-fire blue plasma, straight out of Doom: no recoil, no homing, just a stream of energy that shocks whatever it hits."));
-        TryAdd("Plasma Rifle", PlasmaRifleId, (name, id) => AddPlasma(name, id,
-            "HELRifleSemi", 2f / 35f, // Omneco LRG: the sci-fi gauss rifle, special slot
-            "Doom's plasma at rifle pace: an even faster stream of blue plasma, no recoil, shocking everything it hits."));
-        TryAdd("Hive Pistol", HivePistolId, (name, id) => AddHive(name, id,
-            "PistolSemi", 1f, 0.12f, // Shelling S49: the plain pistol, main slot
-            "A smart pistol: locks onto the enemies around your crosshair, and every round curves out of the barrel onto one of them."));
-        TryAdd("Hive Rifle", HiveRifleId, (name, id) => AddHive(name, id,
-            "RifleHeavyAuto", 1f, 0.09f, // Malatack HXC: the heavy auto rifle, special slot
-            "A smart rifle: locks onto the enemies around your crosshair and curves a fast stream of rounds onto them."));
-        TryAdd("Tentacle Pistol", TentaclePistolId, AddTentaclePistol);
-        TryAdd("Tentacle Rifle", TentacleRifleId, AddTentacleRifle);
+        // Each pistol/rifle pair shares one set of stats (built from the same source archetype), so
+        // the pistol and the rifle behave identically; the model only decides the look and hold.
+        const string plasma = "Rapid-fire blue plasma, straight out of Doom: no recoil, no homing, just a stream of energy that shocks whatever it hits.";
+        TryAdd("Plasma Pistol", PlasmaPistolId, (name, id) => AddPlasma(name, id, "Autopistol staggering", plasma)); // Raptus Steigro, main slot
+        TryAdd("Plasma Rifle", PlasmaRifleId, (name, id) => AddPlasma(name, id, "HELRifleSemi", plasma));           // Omneco LRG, special slot
+        const string hive = "A smart gun: locks onto the enemies around your crosshair and curves a fast stream of rounds onto them.";
+        TryAdd("Hive Pistol", HivePistolId, (name, id) => AddHive(name, id, "PistolSemi", hive));    // Shelling S49, main slot
+        TryAdd("Hive Rifle", HiveRifleId, (name, id) => AddHive(name, id, "RifleHeavyAuto", hive)); // Malatack HXC, special slot
+        const string tentacle = "Fires the strikers' own tentacles, full-auto: every round is a tentacle that lashes out at an enemy near your crosshair and bites hard.";
+        TryAdd("Tentacle Pistol", TentaclePistolId, (name, id) => AddTentacle(name, id, "RevolverHEL", null, tentacle)); // Bataldo 3RB, main slot
+        // Buckland XDist2: the biggest special-slot gun with no optic, held out low (AddFarLowHold) so the tentacles have room.
+        TryAdd("Tentacle Rifle", TentacleRifleId, (name, id) => AddTentacle(name, id, "ShotgunRanged", AddFarLowHold(name, id), tentacle));
+        const string laser = "A continuous laser beam, like a trip mine's: it burns whatever it's held on, out to 70 metres, for as long as you hold it there.";
         TryAdd("Laser Pistol", LaserPistolId, (name, id) => AddLaser(name, id,
-            "Pistolauto", 1.2f, // Raptus Treffen 2: full-auto pistol, no sight, main slot
+            "Pistolauto", // Raptus Treffen 2: full-auto pistol, no sight, main slot
             48, // held low (ItemFPSSettings "Pistol_Chunky", 10 cm down) so the beam is visible
-            "A continuous laser beam, like a trip mine's: it burns whatever it's held on, for as long as you hold it there."));
-        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id,
-            "Precision_Rifle", 2f, // Drekker DEL P1: precision rifle, special slot
-            null,
-            "A heavier, longer laser beam: it burns whatever it's held on, out to 70 metres."));
+            laser));
+        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "Precision_Rifle", null, laser)); // Drekker DEL P1, special slot
         TryAdd("Railgun", RailgunId, AddRailgun);
         TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
         TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
@@ -136,56 +132,49 @@ internal static class GunInjector
         }
     }
 
-    // A Doom plasma gun on the given model (gear block name): forced full-auto at `shotDelay`, no
-    // recoil. Damage is rolled per ball (SeekerKind.Plasma, 5 x 1d8); 22.5 is that roll's average,
-    // for the loadout screen. Infinite ammo is SeekerGuns' clip refill.
-    private static void AddPlasma(string name, uint id, string model, float shotDelay, string description)
+    // A Doom plasma gun on the given model (gear block name): forced full-auto, no recoil. Damage is
+    // rolled per ball (SeekerKind.Plasma, 5 x 1d8); 22.5 is that roll's average, for the loadout
+    // screen. Stats come from the Omneco LRG for both plasma guns.
+    private static void AddPlasma(string name, uint id, string model, string description)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>(model);
-        var (category, archetype) = ModelSource(gear);
+        var archetype = StatsFrom("HELRifleSemi");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = 22.5f;
-        archetype.ShotDelay = shotDelay;
+        archetype.ShotDelay = 2f / 35f;
         archetype.DefaultClipSize = 100;
         archetype.ShellCasingSize = 0f; // plasma, not bullets: no brass ejected
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear, description);
+        Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
     // A Titanfall-style smart gun on the given model: forced full-auto, no recoil; each round
-    // curves onto an enemy locked near the crosshair (SeekerKind.Hive). Both Hive guns do 1 damage
-    // a round: they never miss, so it takes a stream of them to kill anything.
-    private static void AddHive(string name, uint id, string model, float damage, float shotDelay, string description)
+    // curves onto an enemy locked near the crosshair (SeekerKind.Hive). 1 damage a round: they
+    // never miss, so it takes a stream of them to kill anything. Stats come from the Malatack HXC.
+    private static void AddHive(string name, uint id, string model, string description)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>(model);
-        var (category, archetype) = ModelSource(gear);
+        var archetype = StatsFrom("RifleHeavyAuto");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = damage;
-        archetype.ShotDelay = shotDelay;
+        archetype.Damage = 1f;
+        archetype.ShotDelay = 0.09f;
         archetype.DefaultClipSize = 30;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear, description);
+        Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
     // A laser beam gun (LaserGuns) on the given model: forced full-auto at 20 ticks a second - every
-    // tick burns `damagePerTick` into whatever the beam is on - with no spread, no recoil and
-    // infinite ammo.
-    // `hold`, if given, replaces the model's first-person hold (ItemFPSSettings).
-    private static void AddLaser(string name, uint id, string model, float damagePerTick, uint? hold, string description)
+    // tick burns 2 into whatever the beam is on - with no spread, no recoil and infinite ammo.
+    // Stats come from the Drekker DEL P1. `hold`, if given, replaces the model's first-person hold.
+    private static void AddLaser(string name, uint id, string model, uint? hold, string description)
     {
-        var gear = Lookup<PlayerOfflineGearDataBlock>(model);
-        if (hold.HasValue)
-        {
-            var held = Clone(gear);
-            held.GearJSON = SetGearComponent(gear.GearJSON, 4, hold.Value);
-            gear = held;
-        }
-        var (category, archetype) = ModelSource(gear);
+        var gear = WithHold(Lookup<PlayerOfflineGearDataBlock>(model), hold);
+        var archetype = StatsFrom("Precision_Rifle");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = damagePerTick;
+        archetype.Damage = 2f;
         archetype.ShotDelay = 0.05f;
         archetype.DefaultClipSize = 100;
         archetype.HipFireSpread = 0f;
@@ -194,7 +183,7 @@ internal static class GunInjector
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear, description);
+        Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
     // The Koning PR 11 sniper, semi-auto: every shot is one Railgun slug through everything in its
@@ -237,44 +226,20 @@ internal static class GunInjector
             "Every shot is a bolt of lightning that leaps from enemy to enemy, up to five jumps, weaker with each.");
     }
 
-    // The Bataldo 3RB HEL revolver, forced full-auto: the Tentacle Rifle's tentacles from a sidearm,
-    // slower (~2.9 a second) and a little weaker (8 a bite), with the revolver's own hold.
-    private static void AddTentaclePistol(string name, uint id)
+    // A tentacle gun on the given model, forced full-auto: a tentacle (TentacleCannon) for every
+    // round while the trigger is held - one "pellet" per shot, no cone. (Shotgun pellets carry no
+    // owner in the hit data; SeekerGuns falls back to the gun's owner.) Stats come from the
+    // Buckland XDist2. `hold`, if given, replaces the model's first-person hold.
+    private static void AddTentacle(string name, uint id, string model, uint? hold, string description)
     {
-        var gear = Lookup<PlayerOfflineGearDataBlock>("RevolverHEL");
-        var (category, archetype) = ModelSource(gear);
+        var gear = WithHold(Lookup<PlayerOfflineGearDataBlock>(model), hold);
+        var archetype = StatsFrom("ShotgunRanged");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
         archetype.ShotgunConeSize = 0;
         archetype.ShotgunBulletSpread = 0;
-        archetype.HipFireSpread = 0f;
+        archetype.HipFireSpread = 0f; // the tentacles bring their own spread
         archetype.AimSpread = 0f;
-        archetype.Damage = 8f;          // per tentacle
-        archetype.ShotDelay = 0.35f;
-        archetype.ShellCasingSize = 0f;
-        archetype.DefaultClipSize = 30;
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
-        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear,
-            "A sidearm that fires the strikers' own tentacles: each one lashes out at an enemy near your crosshair and bites.");
-    }
-
-    private static void AddTentacleRifle(string name, uint id)
-    {
-        // Buckland XDist2: the biggest special-slot gun with no optic or holosight - a long-range
-        // shotgun with plain iron sights. Full-auto: a tentacle (TentacleCannon) for every round
-        // while the trigger is held - one "pellet" per shot, no cone. (Its pellets carry no owner
-        // in the hit data; SeekerGuns falls back to the gun's owner.)
-        var model = Lookup<PlayerOfflineGearDataBlock>("ShotgunRanged");
-        var (category, archetype) = ModelSource(model);
-        archetype.FireMode = eWeaponFireMode.Auto;
-        archetype.ShotgunBulletCount = 1;
-        archetype.ShotgunConeSize = 0;
-        archetype.ShotgunBulletSpread = 0;
-        archetype.HipFireSpread = 0f; // the machine gun's own spread off: the tentacles bring their own
-        archetype.AimSpread = 0f;
-        archetype.ShotgunBulletCount = 1;
         archetype.Damage = 11f;       // per tentacle
         archetype.ShotDelay = 0.235f; // ~4.3 tentacles a second, so each has time to live
         archetype.ShellCasingSize = 0f; // tentacles, not bullets: no brass ejected
@@ -282,14 +247,15 @@ internal static class GunInjector
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, CategoryOf(gear), gear, description);
+    }
 
-        // Its own first-person hold, held out away from the face and low, so the tentacles have
-        // room: see AddFarLowHold.
-        var held = Clone(model);
-        held.GearJSON = SetGearComponent(model.GearJSON, 4, AddFarLowHold(name, id));
-
-        Register(name, id, archetype, category, held,
-            "Fires the strikers' own tentacles, full-auto: every round is a tentacle that lashes out at an enemy near your crosshair and bites hard.");
+    private static PlayerOfflineGearDataBlock WithHold(PlayerOfflineGearDataBlock gear, uint? hold)
+    {
+        if (!hold.HasValue) return gear;
+        var held = Clone(gear);
+        held.GearJSON = SetGearComponent(gear.GearJSON, 4, hold.Value);
+        return held;
     }
 
     // The Tentacle Rifle's first-person hold (ItemFPSSettingsDataBlock): the XDist2's own
@@ -349,12 +315,9 @@ internal static class GunInjector
         return id;
     }
 
-    // The gear's own category and a clone of the archetype its own fire mode uses.
     private static (GearCategoryDataBlock Category, ArchetypeDataBlock Archetype) ModelSource(PlayerOfflineGearDataBlock gear)
     {
-        var categoryId = CategoryIdOf(gear) ?? throw new InvalidOperationException($"no category in '{gear.name}' gear JSON");
-        var category = GameDataBlockBase<GearCategoryDataBlock>.GetBlock(categoryId)
-            ?? throw new InvalidOperationException($"gear category {categoryId} not found");
+        var category = CategoryOf(gear);
         var archetypeId = FireModeOf(gear) switch
         {
             eWeaponFireMode.Burst => category.BurstArchetype,
@@ -365,6 +328,16 @@ internal static class GunInjector
         var archetype = GameDataBlockBase<ArchetypeDataBlock>.GetBlock(archetypeId)
             ?? throw new InvalidOperationException($"archetype {archetypeId} not found");
         return (category, Clone(archetype));
+    }
+
+    // A clone of the archetype the named gear fires with: a pair's shared stat source.
+    private static ArchetypeDataBlock StatsFrom(string gearName) => ModelSource(Lookup<PlayerOfflineGearDataBlock>(gearName)).Archetype;
+
+    private static GearCategoryDataBlock CategoryOf(PlayerOfflineGearDataBlock gear)
+    {
+        var categoryId = CategoryIdOf(gear) ?? throw new InvalidOperationException($"no category in '{gear.name}' gear JSON");
+        return GameDataBlockBase<GearCategoryDataBlock>.GetBlock(categoryId)
+            ?? throw new InvalidOperationException($"gear category {categoryId} not found");
     }
 
     private static void Register(string name, uint id, ArchetypeDataBlock archetype, GearCategoryDataBlock sourceCategory,

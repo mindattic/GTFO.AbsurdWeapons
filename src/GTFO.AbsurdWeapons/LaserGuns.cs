@@ -28,7 +28,7 @@ internal sealed record LaserKind(byte Id, uint GunId, float Range, float Width);
 [HarmonyPatch]
 internal static class LaserGuns
 {
-    internal static readonly LaserKind Pistol = new(1, GunInjector.LaserPistolId, Range: 40f, Width: 0.015f);
+    internal static readonly LaserKind Pistol = new(1, GunInjector.LaserPistolId, Range: 70f, Width: 0.025f);
     internal static readonly LaserKind Rifle = new(2, GunInjector.LaserRifleId, Range: 70f, Width: 0.025f);
 
     internal static LaserKind? ForGun(uint id) => id == Pistol.GunId ? Pistol : id == Rifle.GunId ? Rifle : null;

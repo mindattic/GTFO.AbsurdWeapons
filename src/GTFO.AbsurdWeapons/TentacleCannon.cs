@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Agents;
 using Enemies;
 using GTFO.API;
+using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Attributes;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Player;
@@ -29,9 +30,44 @@ internal static class TentacleCannon
     private const float FanSideDegrees = 30f;  // each tentacle leaves up to this far left or right of the aim...
     private const float FanUpDownDegrees = 5f; // ...but stays close to the aim's height: a wide, level fan
     private const float SpawnBehind = 0.05f;   // a touch behind the muzzle point, so they emerge from inside the barrel
-    private const float LockRange = 25f;
-    private const float MissReach = 15f; // how far an unlocked lash reaches
     private const float StaggerMulti = 5f;
+
+    // How far a tentacle reaches - the strikers' own (EAB_MovingEnemeyTentacle's
+    // m_absoluteMaxDistanceToHitTarget), read off the first striker found in the level. Lock range,
+    // a miss's reach and a grab's reach are all this, so a lash is never drawn longer than a real one.
+    private const float FallbackReach = 25f; // until a striker has been found
+    private static float reach;
+    private static float nextReachLookup;
+
+    internal static float Reach
+    {
+        get
+        {
+            if (reach <= 0f && Time.time >= nextReachLookup) LookUpReach();
+            return reach > 0f ? reach : FallbackReach;
+        }
+    }
+
+    private static void LookUpReach()
+    {
+        nextReachLookup = Time.time + 5f;
+        try
+        {
+            var longest = 0f;
+            foreach (var found in UnityEngine.Object.FindObjectsOfType(Il2CppType.Of<EAB_MovingEnemeyTentacle>()))
+            {
+                var ability = found.TryCast<EAB_MovingEnemeyTentacle>();
+                if (ability != null) longest = Mathf.Max(longest, ability.m_absoluteMaxDistanceToHitTarget);
+            }
+            if (longest <= 0f) return;
+            reach = longest;
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: tentacle reach is {reach:0.##} m (the strikers' own).");
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't read the strikers' tentacle reach: {e.Message}");
+        }
+    }
     private const string LashEvent = "MindAttic.GTFO.AbsurdWeapons.TentacleLash";
 
     // Enemies already claimed by a tentacle of the shot being fired (a shot's pellets all come in
@@ -63,7 +99,8 @@ internal static class TentacleCannon
         pellet = Fan(pellet, FanSideDegrees, FanUpDownDegrees);
         var start = muzzle != null ? BarrelOnScreen(owner, muzzle, SpawnBehind) : eye + aim * 0.5f;
         EnemyAgent? target = null;
-        foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees, LockRange))
+        var range = Reach;
+        foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees, range))
         {
             if (!claimed.Add(enemy.Pointer)) continue;
             target = enemy;
@@ -75,7 +112,7 @@ internal static class TentacleCannon
         // view already has a tentacle this frame, they double up.
         if (target == null)
         {
-            var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees, LockRange);
+            var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees, range);
             foreach (var enemy in nearby)
             {
                 if (!claimed.Add(enemy.Pointer)) continue;
@@ -85,7 +122,7 @@ internal static class TentacleCannon
             if (target == null && nearby.Count > 0) target = nearby[0];
         }
 
-        var end = target != null ? target.AimTarget.position : SomethingToGrab(eye, pellet);
+        var end = target != null ? target.AimTarget.position : SomethingToGrab(eye, pellet, range);
 
         if (DiagnosticShots > 0)
         {
@@ -103,17 +140,16 @@ internal static class TentacleCannon
     // its line.
     private const float GrabSideDegrees = 35f; // the probes fan out sideways...
     private const float GrabUpDownDegrees = 8f; // ...but stay near the aim's height
-    private const float GrabReach = 12f;
     private const int GrabProbes = 10;
 
-    private static Vector3 SomethingToGrab(Vector3 eye, Vector3 line)
+    private static Vector3 SomethingToGrab(Vector3 eye, Vector3 line, float range)
     {
-        var best = eye + line * MissReach;
+        var best = eye + line * range;
         var bestDistance = float.MaxValue;
         for (var i = 0; i < GrabProbes; i++)
         {
             var probe = i == 0 ? line : Fan(line, GrabSideDegrees, GrabUpDownDegrees);
-            if (Physics.Raycast(eye, probe, out var hit, GrabReach, LayerManager.MASK_BULLETWEAPON_RAY) && hit.distance < bestDistance)
+            if (Physics.Raycast(eye, probe, out var hit, range, LayerManager.MASK_BULLETWEAPON_RAY) && hit.distance < bestDistance)
             {
                 bestDistance = hit.distance;
                 best = hit.point;
@@ -263,6 +299,8 @@ internal sealed class TentacleLash : MonoBehaviour
 
             if (follow != null) start = TentacleCannon.BarrelOnScreen(owner, follow, behind);
             if (target != null && target.Alive) end = target.AimTarget.position;
+            var reach = TentacleCannon.Reach;
+            if ((end - start).sqrMagnitude > reach * reach) end = start + (end - start).normalized * reach;
 
             if (!bitten && age >= OutSeconds)
             {
@@ -295,11 +333,15 @@ internal sealed class TentacleLash : MonoBehaviour
         var pulse = 0.65f + 0.35f * Mathf.Sin(age * pulseHz * Mathf.PI * 2f + seed);
         var amplitude = Mathf.Min(1f, length * 0.1f) * sizeScale * pulse;
 
+        // The spline runs through the inner control points only - the first and last just steer its
+        // ends (the head was measured landing at 75% of the line with 5 points). So the second point
+        // sits on the barrel and the second-to-last on the target, and the outer two lie beyond.
         var count = points.Length;
+        var inner = count >= 4 ? count - 3 : 0;
         for (var i = 0; i < count; i++)
         {
-            var t = count > 1 ? i / (float)(count - 1) : 0f;
-            var envelope = Mathf.Sin(t * Mathf.PI);
+            var t = inner > 0 ? (i - 1) / (float)inner : count > 1 ? i / (float)(count - 1) : 0f;
+            var envelope = Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI);
             var waveA = Mathf.Sin(t * Mathf.PI * freqA - age * speedA + seed);
             var waveB = Mathf.Sin(t * Mathf.PI * freqB - age * speedB + phaseB);
             var position = start + line * t
@@ -319,7 +361,8 @@ internal sealed class TentacleLash : MonoBehaviour
         {
             loggedMidLash = true;
             curvy.GetHeadPos(extend, out var head, out _);
-            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons tentacle mid-lash: visible {curvy.IsVisible}, head at {head}, start {start}, end {end}, extend {extend:0.##}, body tiles {curvy.CurrentBodyTileCount}.");
+            curvy.GetHeadPos(0f, out var tail, out _);
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons tentacle mid-lash: visible {curvy.IsVisible}, head at {head}, tail at {tail}, {count} control points, start {start}, end {end}, extend {extend:0.##}, body tiles {curvy.CurrentBodyTileCount}.");
         }
     }
 

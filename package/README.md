@@ -29,20 +29,20 @@ can swap between them without going back to the lobby (see [Swapping weapons in 
 
 ### Guns
 
-All guns have **infinite ammo** (the clip refills after every shot, so they never reload or use
-your reserve). They damage only enemies, never you or your teammates. They're tuned to be fun
+All guns have **infinite ammo** (the clip refills after every shot and the reserve stays full, so
+they never reload, and a gun you switch to starts fully loaded). They damage only enemies, never you or your teammates. They're tuned to be fun
 first; balance comes later.
 
 | Weapon | Slot | Model | In one line |
 |---|---|---|---|
 | **Plasma Pistol** | Main | Raptus Steigro | Doom's plasma gun: rapid blue plasma balls with a small shock on impact |
-| **Plasma Rifle** | Special | Omneco LRG | The same plasma, faster |
+| **Plasma Rifle** | Special | Omneco LRG | The same plasma |
 | **Hive Pistol** | Main | Shelling S49 | Titanfall's Smart Pistol: rounds curve onto locked enemies, 1 damage each |
-| **Hive Rifle** | Special | Malatack HXC | A faster stream of curving smart rounds |
-| **Laser Pistol** | Main | Raptus Treffen 2 | One continuous beam while the trigger is held; burns and sparks where it lands |
-| **Laser Rifle** | Special | Drekker DEL P1 | A thicker, harder-burning beam out to 70 m |
+| **Hive Rifle** | Special | Malatack HXC | The same curving smart rounds |
+| **Laser Pistol** | Main | Raptus Treffen 2 | One continuous beam out to 70 m while the trigger is held; burns and sparks where it lands |
+| **Laser Rifle** | Special | Drekker DEL P1 | The same beam |
 | **Tentacle Pistol** | Main | Bataldo 3RB | A stream of striker tentacles that bite whatever they reach |
-| **Tentacle Rifle** | Special | Buckland XDist2 | A faster, harder-biting tentacle stream in a wide, level fan |
+| **Tentacle Rifle** | Special | Buckland XDist2 | The same tentacle stream |
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | Lightning that leaps from enemy to enemy, up to five jumps |
 
@@ -141,32 +141,26 @@ visible again.
 
 Doom's plasma gun: a rapid stream of blue plasma balls (real enemy projectiles, tinted) that fly
 straight and stop at walls and doors. Each does **5 × 1d8 (5–40)** and a small 1.25 m electric
-splash (6 damage falling to 40% at the edge, x3 stagger). Pistol ~11.7 a second, Rifle ~17.5. No recoil, no brass.
+splash (6 damage falling to 40% at the edge, x3 stagger). ~17.5 a second. No recoil, no brass.
 
 ### Hive Pistol (main) and Hive Rifle (special)
 
 Titanfall's Smart Pistol: each locks onto up to 6 enemies within 35° of your crosshair (60 m), and
 every round bends out of the barrel onto one of them, taking turns. Every round lands but does only
-**1 damage**. Pistol ~8 a second, Rifle ~11. No recoil.
+**1 damage**. ~11 a second. No recoil.
 
 ### Laser Pistol (main) and Laser Rifle (special)
 
 One continuous red beam from the barrel to whatever your crosshair is on, for as long as you hold
 the trigger. Where it lands it **burns**: a white-hot spot, an orange glow, sparks and scorch marks.
-Pistol 24 damage a second out to 40 m; Rifle 40 a second out to 70 m. No recoil, no brass.
+40 damage a second out to 70 m. No recoil, no brass.
 
 ### Tentacle Pistol (main) and Tentacle Rifle (special)
 
 Every round is a striker's own tentacle, mouth and all. They burst out in a **wide, level fan** (up
 to 30° left or right, 5° up or down) thrashing side to side. **While any enemy is in front of you**
-(within 60° of your aim, 25 m) every tentacle goes for one; only with no enemy around do they grab
-the nearest crate, wall or floor. Each bite staggers hard (x5).
-
-| | **Tentacle Pistol** | **Tentacle Rifle** |
-|---|---|---|
-| Model | Bataldo 3RB (HEL revolver) | Buckland XDist2 (shotgun, iron sights) |
-| Rate | ~2.9 a second | ~4.3 a second |
-| Damage per bite | 8 | 11 |
+(within 60° of your aim, out to a striker's own tentacle length) every tentacle goes for one; only with no enemy around do they grab
+the nearest crate, wall or floor. Each bite does 11 and staggers hard (x5); ~4.3 a second.
 
 ### Railgun (special)
 
@@ -198,9 +192,13 @@ per trigger pull, with **infinite tool ammo**.
 ## Swapping weapons in a level
 
 Hold a main, special, tool or melee weapon and press **Page Up** for the next of this mod's weapons
-for that slot, or **Page Down** for the previous one. A one-second message names what you switched
-to. Only this mod's weapons are in the cycle, never vanilla gear. Teammates get the swap too. The
-keys are configurable (below).
+for that slot, or **Page Down** for the previous one. A five-second message names what you switched
+to. Only this mod's weapons are in the cycle, never vanilla gear. Teammates get the swap too.
+
+Press **Home** to go back to a serious run: every slot you've swapped this level - main, special,
+tool and melee, all at once - goes back to the gear you started with, with the magazines and
+reserve ammo you had the moment you first swapped it away. Slots you never swapped aren't touched.
+The keys are configurable (below).
 
 ## Config
 
@@ -220,6 +218,7 @@ One section per melee weapon:
 |---|---|---|
 | `NextWeaponKey` | PageUp | Swap to the next of this mod's weapons for the slot you're holding. |
 | `PreviousWeaponKey` | PageDown | Swap to the previous one. |
+| `RestoreLoadoutKey` | Home | Put back every swapped slot, ammo included, as it was before its first swap. |
 
 `[Tentacles]`:
 
