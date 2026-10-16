@@ -4,7 +4,7 @@ using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 [BepInPlugin(GUID, NAME, VERSION)]
 [BepInProcess("GTFO.exe")]
@@ -12,8 +12,8 @@ namespace GTFO.Weapons;
 [BepInDependency(GtfoEzGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BasePlugin
 {
-    public const string GUID = "MindAttic.GTFO.Weapons";
-    public const string NAME = "GTFO.Weapons";
+    public const string GUID = "MindAttic.GTFO.AbsurdWeapons";
+    public const string NAME = "GTFO.AbsurdWeapons";
     public const string VERSION = "1.0.0";
 
     // Optional: only used to order our datablock injection after it.
@@ -26,20 +26,31 @@ public class Plugin : BasePlugin
         Logger = Log;
         WeaponSettings.Bind(Config);
         TentaclePool.Bind(Config);
+        GearCycler.Bind(Config);
         ClassInjector.RegisterTypeInIl2Cpp<SeekerProjectile>();
         ClassInjector.RegisterTypeInIl2Cpp<BurstFlash>();
         ClassInjector.RegisterTypeInIl2Cpp<TentacleLash>();
         ClassInjector.RegisterTypeInIl2Cpp<LaserBeam>();
+        ClassInjector.RegisterTypeInIl2Cpp<LauncherGrenade>();
+        ClassInjector.RegisterTypeInIl2Cpp<RailBeam>();
+        ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
+        ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
         SeekerGuns.Init();
         ImpactBursts.Init();
         Stealth.Init();
         TentacleCannon.Init();
         LaserGuns.Init();
+        GrenadeLauncher.Init();
+        Railgun.Init();
+        ChainLightning.Init();
         Knockback.Init();
         new Harmony(GUID).PatchAll();
         AddComponent<StealthVisuals>();
         AddComponent<KnockbackSlides>();
         AddComponent<DashRunner>();
+        AddComponent<GravityPull>();
+        AddComponent<GearCycler>();
+        MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }
 }

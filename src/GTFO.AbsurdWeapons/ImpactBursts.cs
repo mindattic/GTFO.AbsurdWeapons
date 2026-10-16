@@ -6,9 +6,10 @@ using Gear;
 using GTFO.API;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
+using Player;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>What a hammer's hit releases around the impact.</summary>
 internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, bool SparesStruckEnemy,
@@ -21,8 +22,15 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
     internal float KnockStruckCharged { get; init; }
     internal float KnockArea { get; init; }
 
-    // Mjolnir's thunderclap: charged hits only; shocks the enemies around the one it struck.
-    internal static readonly ImpactBurst Thunderclap = new(1, MeleeInjector.MjolnirId, ChargedOnly: true, SparesStruckEnemy: true,
+    // Damage per metre of knockback left unspent when a flung enemy hits a wall (see Knockback).
+    internal float SlamDamagePerMeter { get; init; }
+
+    // Released by the weapon's own trigger (ImpactBursts.Release) rather than when a hit lands.
+    internal bool OnRelease { get; init; }
+
+    // Mjolnir's thunderclap: every hit that lands shocks the enemies around the one it struck. (A
+    // full charge also throws the hammer - MjolnirThrow.)
+    internal static readonly ImpactBurst Thunderclap = new(1, MeleeInjector.MjolnirId, ChargedOnly: false, SparesStruckEnemy: true,
         Radius: 5f, Damage: 8f, EdgeDamageFraction: 0.4f, StaggerMulti: 3f,
         new Color(0.45f, 0.75f, 1f), FlashRange: 7f, FlashIntensity: 6f, FlashSeconds: 0.25f);
 
@@ -33,15 +41,31 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
         Radius: 6f, Damage: 1f, EdgeDamageFraction: 1f, StaggerMulti: 100f,
         new Color(1f, 0.82f, 0.6f), FlashRange: 9f, FlashIntensity: 8f, FlashSeconds: 0.35f)
     {
-        KnockStruckLight = 1.5f, KnockStruckCharged = 4f, KnockArea = 2f,
+        KnockStruckLight = 4f, KnockStruckCharged = 12f, KnockArea = 6f, SlamDamagePerMeter = 5f,
     };
 
+    // The Gravity Hammer's release: a full charge let go in front of you staggers everything
+    // within 8 m (100x, like the shockwave, with a little damage) and throws it 5 m back out.
+    internal static readonly ImpactBurst GravityBlast = new(3, MeleeInjector.GravityHammerId, ChargedOnly: true, SparesStruckEnemy: false,
+        Radius: 8f, Damage: 15f, EdgeDamageFraction: 0.5f, StaggerMulti: 100f,
+        new Color(0.6f, 0.3f, 1f), FlashRange: 12f, FlashIntensity: 10f, FlashSeconds: 0.45f)
+    {
+        KnockArea = 5f, OnRelease = true, SlamDamagePerMeter = 3f,
+    };
+
+    // The burst a weapon's landed hit releases (not the release-triggered ones).
     internal static ImpactBurst? ForWeapon(uint id) => id == Thunderclap.WeaponId ? Thunderclap : id == Shockwave.WeaponId ? Shockwave : null;
-    internal static ImpactBurst? ForId(byte id) => id == Thunderclap.Id ? Thunderclap : id == Shockwave.Id ? Shockwave : null;
+    internal static ImpactBurst? ForId(byte id) => id switch
+    {
+        1 => Thunderclap,
+        2 => Shockwave,
+        3 => GravityBlast,
+        _ => null,
+    };
 }
 
 /// <summary>
-/// Area effects released when a hammer's hit lands: Mjolnir's charged-hit thunderclap and the
+/// Area effects released when a hammer's hit lands: Mjolnir's thunderclap and the
 /// Warhammer's shockwave (see <see cref="ImpactBurst"/>). Every enemy in range the impact can
 /// reach (not through walls) takes the burst's damage and stagger through the enemy limb's
 /// normal bullet path, so it syncs. The flash is sent to teammates so they see it too.
@@ -49,7 +73,9 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
 [HarmonyPatch]
 internal static class ImpactBursts
 {
-    private const string BurstEvent = "MindAttic.GTFO.Weapons.ImpactBurst";
+    private const string BurstEvent = "MindAttic.GTFO.AbsurdWeapons.ImpactBurst";
+    private const float SwingSeconds = 0.3f; // hits closer together than this are the same swing
+    private static float lastBurstTime = -10f;
 
     internal static void Init()
     {
@@ -75,6 +101,20 @@ internal static class ImpactBursts
 
             var center = data.hitPos;
             var hitEnemy = data.damageGO != null ? data.damageGO.GetComponentInParent<EnemyAgent>() : null;
+
+            // A cleaving swing calls this once per enemy it hits: only its first hit bursts; the
+            // others just get their own shove.
+            var firstHitOfSwing = Time.time - lastBurstTime >= SwingSeconds;
+            if (!firstHitOfSwing)
+            {
+                if (hitEnemy != null && burst.KnockStruckLight > 0f)
+                {
+                    var shove = IsChargedAttack(__instance.CurrentStateName) ? burst.KnockStruckCharged : burst.KnockStruckLight;
+                    Knockback.Push(hitEnemy, hitEnemy.Position - owner.Position, shove, burst.SlamDamagePerMeter, owner, data.gearCategoryId);
+                }
+                return;
+            }
+            lastBurstTime = Time.time;
             var struck = burst.SparesStruckEnemy ? hitEnemy : null;
             var caught = AreaDamage.Apply(center, burst.Radius, burst.Damage, burst.EdgeDamageFraction, burst.StaggerMulti,
                 owner.Cast<Agent>(), struck, data.gearCategoryId);
@@ -83,12 +123,12 @@ internal static class ImpactBursts
             {
                 foreach (var enemy in caught)
                     if (hitEnemy == null || enemy.Pointer != hitEnemy.Pointer)
-                        Knockback.Push(enemy, enemy.Position - center, burst.KnockArea);
+                        Knockback.Push(enemy, enemy.Position - center, burst.KnockArea, burst.SlamDamagePerMeter, owner, data.gearCategoryId);
             }
             if (hitEnemy != null)
             {
                 var distance = IsChargedAttack(__instance.CurrentStateName) ? burst.KnockStruckCharged : burst.KnockStruckLight;
-                Knockback.Push(hitEnemy, hitEnemy.Position - owner.Position, distance);
+                Knockback.Push(hitEnemy, hitEnemy.Position - owner.Position, distance, burst.SlamDamagePerMeter, owner, data.gearCategoryId);
             }
 
             BurstFlash.Spawn(burst, center);
@@ -96,8 +136,21 @@ internal static class ImpactBursts
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons impact burst failed: {e}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons impact burst failed: {e}");
         }
+    }
+
+    // A burst set off by the weapon itself (the Gravity Hammer's release) rather than by a hit:
+    // damage and stagger around `center`, everyone caught thrown out from it, and the flash.
+    internal static void Release(ImpactBurst burst, PlayerAgent owner, Vector3 center, uint gearCategoryId)
+    {
+        var caught = AreaDamage.Apply(center, burst.Radius, burst.Damage, burst.EdgeDamageFraction, burst.StaggerMulti,
+            owner.Cast<Agent>(), null, gearCategoryId);
+        if (burst.KnockArea > 0f)
+            foreach (var enemy in caught)
+                Knockback.Push(enemy, enemy.Position - center, burst.KnockArea, burst.SlamDamagePerMeter, owner, gearCategoryId);
+        BurstFlash.Spawn(burst, center);
+        NetworkAPI.InvokeEvent(BurstEvent, new BurstMessage(burst.Id, center));
     }
 
     internal static bool IsChargedAttack(eMeleeWeaponState state) => state is
@@ -144,7 +197,7 @@ internal static class AreaDamage
         {
             if (Physics.Linecast(from, point, LayerManager.MASK_WORLD)) continue;
 
-            var falloff = Mathf.Lerp(1f, edgeDamageFraction, distance / radius);
+            var falloff = Formulas.AreaFalloff(distance, radius, edgeDamageFraction);
             var direction = (point - center).sqrMagnitude > 0.0001f ? (point - center).normalized : Vector3.up;
             limb.BulletDamage(damage * falloff, source, point, direction, -direction,
                 allowDirectionalBonus: false, staggerMulti, 1f, gearCategoryId);
@@ -169,7 +222,7 @@ internal sealed class BurstFlash : MonoBehaviour
     [HideFromIl2Cpp]
     internal static void Spawn(Vector3 position, Color color, float range, float intensity, float seconds)
     {
-        var go = new GameObject("GTFO.Weapons Flash");
+        var go = new GameObject("GTFO.AbsurdWeapons Flash");
         go.transform.position = position;
         var flash = go.AddComponent<BurstFlash>();
         flash.peak = intensity;

@@ -6,7 +6,7 @@ using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// A player-fired seeker. It borrows a real enemy projectile for its looks (model, glow, trail)
@@ -64,8 +64,16 @@ internal sealed class SeekerProjectile : MonoBehaviour
         var vanilla = go.GetComponent<ProjectileBase>();
         if (vanilla != null)
         {
-            vanilla.OnFire(null);
-            vanilla.m_soundPlayer?.Stop();
+            vanilla.enabled = false;
+            try
+            {
+                vanilla.OnFire(null);
+                vanilla.m_soundPlayer?.Stop();
+            }
+            catch (Exception e)
+            {
+                Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't fully silence a borrowed projectile: {e.Message}");
+            }
             vanilla.enabled = false;
         }
 
@@ -287,7 +295,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
         // reads as lit.
         TintStep("materials", () =>
         {
-            var dump = tintDumped ? null : new System.Text.StringBuilder("GTFO.Weapons projectile tint: ");
+            var dump = tintDumped ? null : new System.Text.StringBuilder("GTFO.AbsurdWeapons projectile tint: ");
             foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
             {
                 if (renderer == null || renderer.TryCast<TrailRenderer>() != null) continue;
@@ -327,7 +335,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
         catch (Exception e)
         {
             if (tintFailuresLogged.Add(step))
-                Plugin.Logger.LogWarning($"GTFO.Weapons couldn't tint a projectile's {step} (further failures not logged): {e}");
+                Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't tint a projectile's {step} (further failures not logged): {e}");
         }
     }
 

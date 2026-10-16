@@ -16,11 +16,11 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <DebugType>none</DebugType>
-    <AssemblyName>GTFO.Weapons</AssemblyName>
-    <RootNamespace>GTFO.Weapons</RootNamespace>
+    <AssemblyName>GTFO.AbsurdWeapons</AssemblyName>
+    <RootNamespace>GTFO.AbsurdWeapons</RootNamespace>
 
     <BepInEx>$(AppData)\Thunderstore Mod Manager\DataFolder\$(GameName)\profiles\$(GameName) - $(Profile)\BepInEx</BepInEx>
-    <OutputPath>$(BepInEx)\plugins\GTFO.Weapons\</OutputPath>
+    <OutputPath>$(BepInEx)\plugins\GTFO.AbsurdWeapons\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 

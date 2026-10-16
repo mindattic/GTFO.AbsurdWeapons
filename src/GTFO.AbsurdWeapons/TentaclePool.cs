@@ -2,11 +2,11 @@ using System;
 using BepInEx.Configuration;
 using HarmonyLib;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// Raises how many tentacles the game can draw at once, for every tentacle type (strikers, tanks,
-/// scouts, wrap-arounds, the Tentacle Cannon's). Each type's GPU tentacle pool is a fixed size
+/// scouts, wrap-arounds, the Tentacle Rifle's). Each type's GPU tentacle pool is a fixed size
 /// (<c>GPUC_Setup.m_globalLimit</c>) that its compute buffers are built from in
 /// <c>GPUC_Setup.Setup</c>, so the limit is multiplied just before that runs. When a pool is full,
 /// new tentacles - an enemy's or ours - simply don't appear.
@@ -15,6 +15,7 @@ namespace GTFO.Weapons;
 internal static class TentaclePool
 {
     private static ConfigEntry<float> multiplier = null!;
+    private static readonly System.Collections.Generic.Dictionary<GPUCurvyType, int> originalLimits = new();
 
     internal static void Bind(ConfigFile config)
     {
@@ -28,15 +29,19 @@ internal static class TentaclePool
     {
         try
         {
+            // The game sets up the pools again every level on the same objects, so the multiplier
+            // is applied to each type's original size, never to an already-enlarged one.
             var before = __instance.m_globalLimit;
-            var after = (int)Math.Ceiling(before * multiplier.Value);
-            if (after <= before) return;
+            if (!originalLimits.TryGetValue(__instance.m_type, out var original))
+                originalLimits[__instance.m_type] = original = before;
+            var after = Formulas.EnlargedPoolLimit(original, multiplier.Value);
+            if (after <= original || after == before) return;
             __instance.m_globalLimit = after;
-            Plugin.Logger.LogInfo($"GTFO.Weapons: {__instance.m_type} tentacle pool {before} -> {after}.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {__instance.m_type} tentacle pool {before} -> {after}.");
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons couldn't enlarge a tentacle pool: {e.Message}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't enlarge a tentacle pool: {e.Message}");
         }
     }
 }

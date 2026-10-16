@@ -7,7 +7,7 @@ using HarmonyLib;
 using Player;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>How one kind of seeker looks, flies and hits.</summary>
 internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
@@ -113,28 +113,28 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
 [HarmonyPatch]
 internal static class SeekerGuns
 {
-    private const string ShotEvent = "MindAttic.GTFO.Weapons.SeekerShot";
+    private const string ShotEvent = "MindAttic.GTFO.AbsurdWeapons.SeekerShot";
 
     // The archetype (and weapon) whose Fire() is running right now, if it's one of ours.
     private static uint firingArchetype;
     private static BulletWeapon? firingWeapon;
 
-    // Smart lock: which of the current locks the next shot goes to.
-    private static int nextLock;
+    // Smart lock: the enemy the last smart round went to, so the next takes the one after it.
+    private static IntPtr lastLock;
 
     internal static void Init()
     {
         NetworkAPI.RegisterEvent<SeekerShot>(ShotEvent, OnRemoteShot);
     }
 
-    // Shotgun overrides Fire, so both are patched. Each prefix saves the outer value and its postfix
-    // restores it, which stays right if Shotgun.Fire calls the base Fire.
+    // Shotgun overrides Fire, so both are patched. Each prefix saves the outer value and its
+    // finalizer restores it - even if Fire throws - which stays right if Shotgun.Fire calls the base Fire.
     [HarmonyPatch(typeof(BulletWeapon), nameof(BulletWeapon.Fire))]
     [HarmonyPrefix]
     private static void BeforeBulletFire(BulletWeapon __instance, out uint __state) => BeginFire(__instance, out __state);
 
     [HarmonyPatch(typeof(BulletWeapon), nameof(BulletWeapon.Fire))]
-    [HarmonyPostfix]
+    [HarmonyFinalizer]
     private static void AfterBulletFire(BulletWeapon __instance, uint __state) => EndFire(__instance, __state);
 
     [HarmonyPatch(typeof(Shotgun), nameof(Shotgun.Fire))]
@@ -142,17 +142,36 @@ internal static class SeekerGuns
     private static void BeforeShotgunFire(Shotgun __instance, out uint __state) => BeginFire(__instance, out __state);
 
     [HarmonyPatch(typeof(Shotgun), nameof(Shotgun.Fire))]
-    [HarmonyPostfix]
+    [HarmonyFinalizer]
     private static void AfterShotgunFire(Shotgun __instance, uint __state) => EndFire(__instance, __state);
+
+    // A teammate's gun on this screen is a synced copy whose Fire overrides the base one; patched
+    // the same way so its rays are swallowed and its tracer muted like the shooter's own.
+    [HarmonyPatch(typeof(BulletWeaponSynced), nameof(BulletWeaponSynced.Fire))]
+    [HarmonyPrefix]
+    private static void BeforeSyncedFire(BulletWeaponSynced __instance, out uint __state) => BeginFire(__instance, out __state);
+
+    [HarmonyPatch(typeof(BulletWeaponSynced), nameof(BulletWeaponSynced.Fire))]
+    [HarmonyFinalizer]
+    private static void AfterSyncedFire(BulletWeaponSynced __instance, uint __state) => EndFire(__instance, __state);
+
+    [HarmonyPatch(typeof(ShotgunSynced), nameof(ShotgunSynced.Fire))]
+    [HarmonyPrefix]
+    private static void BeforeSyncedShotgunFire(ShotgunSynced __instance, out uint __state) => BeginFire(__instance, out __state);
+
+    [HarmonyPatch(typeof(ShotgunSynced), nameof(ShotgunSynced.Fire))]
+    [HarmonyFinalizer]
+    private static void AfterSyncedShotgunFire(ShotgunSynced __instance, uint __state) => EndFire(__instance, __state);
 
     private static void BeginFire(BulletWeapon weapon, out uint previous)
     {
         previous = firingArchetype;
         firingArchetype = weapon.ArchetypeData?.persistentID ?? 0;
         firingWeapon = weapon;
-        if (LaserGuns.ForGun(firingArchetype) != null) LaserGuns.MuteTracer(weapon);
-        if (firingArchetype == GunInjector.TentacleCannonId && TentacleCannon.DiagnosticShots > 0)
-            Plugin.Logger.LogInfo("GTFO.Weapons Tentacle Cannon: Fire() called.");
+        if (LaserGuns.ForGun(firingArchetype) != null || firingArchetype is GunInjector.RailgunId or GunInjector.ChainLightningId)
+            LaserGuns.MuteTracer(weapon);
+        if (TentacleCannon.IsTentacleGun(firingArchetype) && TentacleCannon.DiagnosticShots > 0)
+            Plugin.Logger.LogInfo("GTFO.AbsurdWeapons Tentacle Rifle: Fire() called.");
     }
 
     private static void EndFire(BulletWeapon weapon, uint previous)
@@ -171,7 +190,7 @@ internal static class SeekerGuns
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons couldn't refill a clip: {e.Message}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't refill a clip: {e.Message}");
         }
     }
 
@@ -181,11 +200,15 @@ internal static class SeekerGuns
     [HarmonyPrefix]
     private static bool BeforeWeaponRay(Transform alignTransform, ref Weapon.WeaponHitData weaponRayData, Vector3 originPos, ref bool __result)
     {
+        // Once one of our guns has taken the shot (it may already have dealt damage), an error
+        // must not let the vanilla bullet through as well.
+        var ours = false;
         try
         {
             var laser = LaserGuns.ForGun(firingArchetype) ?? LaserGuns.ForGun(weaponRayData.gearCategoryId);
             if (laser != null)
             {
+                ours = true;
                 weaponRayData.maxRayDist = 0f;
                 __result = false;
                 var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
@@ -198,10 +221,40 @@ internal static class SeekerGuns
                 return false;
             }
 
-            if (firingArchetype == GunInjector.TentacleCannonId || weaponRayData.gearCategoryId == GunInjector.TentacleCannonId)
+            if (firingArchetype == GunInjector.ChainLightningId || weaponRayData.gearCategoryId == GunInjector.ChainLightningId)
             {
+                ours = true;
+                weaponRayData.maxRayDist = 0f;
+                __result = false;
+                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
+                if (shooter != null && shooter.IsLocallyOwned)
+                {
+                    var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
+                    ChainLightning.Fire(shooter, originPos, aim, weaponRayData.damage, weaponRayData.gearCategoryId);
+                }
+                return false;
+            }
+
+            if (firingArchetype == GunInjector.RailgunId || weaponRayData.gearCategoryId == GunInjector.RailgunId)
+            {
+                ours = true;
+                weaponRayData.maxRayDist = 0f;
+                __result = false;
+                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
+                if (shooter != null && shooter.IsLocallyOwned)
+                {
+                    var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
+                    Railgun.Fire(shooter, originPos, aim, weaponRayData.damage, weaponRayData.staggerMulti,
+                        weaponRayData.precisionMulti, weaponRayData.gearCategoryId);
+                }
+                return false;
+            }
+
+            if (TentacleCannon.IsTentacleGun(firingArchetype) || TentacleCannon.IsTentacleGun(weaponRayData.gearCategoryId))
+            {
+                ours = true;
                 if (TentacleCannon.DiagnosticShots > 0)
-                    Plugin.Logger.LogInfo($"GTFO.Weapons Tentacle Cannon ray: archetype {firingArchetype}, category {weaponRayData.gearCategoryId}, owner {(weaponRayData.owner != null ? "set" : "null")}.");
+                    Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Rifle ray: archetype {firingArchetype}, category {weaponRayData.gearCategoryId}, owner {(weaponRayData.owner != null ? "set" : "null")}.");
                 weaponRayData.maxRayDist = 0f;
                 __result = false;
                 // Shotgun pellets come without an owner in the hit data: fall back to the gun's.
@@ -217,6 +270,7 @@ internal static class SeekerGuns
 
             var kind = SeekerKind.ForGun(firingArchetype) ?? SeekerKind.ForGun(weaponRayData.gearCategoryId);
             if (kind == null) return true;
+            ours = true;
 
             // No hitscan bullet for these guns, whoever is holding one.
             weaponRayData.maxRayDist = 0f;
@@ -246,8 +300,11 @@ internal static class SeekerGuns
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons seeker shot failed: {e}");
-            return true;
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons shot failed: {e}");
+            if (!ours) return true;
+            weaponRayData.maxRayDist = 0f;
+            __result = false;
+            return false;
         }
     }
 
@@ -258,9 +315,12 @@ internal static class SeekerGuns
         var locks = FindLocks(eye, aim, kind.LockConeDegrees, kind.LockRange);
         if (locks.Count == 0) return null;
 
+        // The one after the enemy last fired at (nearest the crosshair first if that one's gone).
         var count = Math.Min(locks.Count, kind.MaxLocks);
-        nextLock = (nextLock + 1) % count;
-        return locks[nextLock];
+        var last = locks.FindIndex(0, count, enemy => enemy.Pointer == lastLock);
+        var pick = locks[(last + 1) % count];
+        lastLock = pick.Pointer;
+        return pick;
     }
 
     // The living enemies the eye can see within `cone` degrees of the aim and `range` metres,
@@ -309,7 +369,7 @@ internal static class SeekerGuns
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons couldn't show a teammate's seeker: {e}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't show a teammate's seeker: {e}");
         }
     }
 

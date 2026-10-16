@@ -3,9 +3,9 @@ using GameData;
 using HarmonyLib;
 using Localization;
 using UnityEngine;
-using static GTFO.Weapons.DataBlocks;
+using static GTFO.AbsurdWeapons.DataBlocks;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// Adds this mod's guns. Each is a cloned archetype (stats), gear category (every fire mode
@@ -19,7 +19,11 @@ namespace GTFO.Weapons;
 /// <item>Hive Rifle (special) - Malatack HXC, a smart rifle.</item>
 /// <item>Laser Pistol (main) - Raptus Treffen 2, a continuous trip-mine laser beam.</item>
 /// <item>Laser Rifle (special) - Drekker DEL P1, a heavier, longer beam.</item>
-/// <item>Tentacle Cannon (special) - Buckland XDist2 (iron sights); every round is a striker tentacle.</item>
+/// <item>Tentacle Pistol (main) - Bataldo 3RB; a slower stream of striker tentacles.</item>
+/// <item>Tentacle Rifle (special) - Buckland XDist2 (iron sights); every round is a striker tentacle.</item>
+/// <item>Railgun (special) - Koning PR 11; a hitscan slug with infinite penetration (<see cref="Railgun"/>).</item>
+/// <item>Chain Lightning Gun (special) - Omneco exp1; lightning that jumps enemy to enemy (<see cref="ChainLightning"/>).</item>
+/// <item>Grenade Launcher (tool) - the C-Foam launcher firing bouncing lock-melter grenades (<see cref="GrenadeLauncher"/>).</item>
 /// </list>
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
@@ -28,14 +32,21 @@ internal static class GunInjector
     // Vanilla archetypes run to the low hundreds at most; melee weapons here use 1001+.
     internal const uint PlasmaPistolId = 1101;
     internal const uint HivePistolId = 1102;
-    internal const uint TentacleCannonId = 1103;
+    internal const uint TentacleRifleId = 1103; // was the Tentacle Cannon
     internal const uint HiveRifleId = 1104;
     internal const uint PlasmaRifleId = 1105;
     internal const uint LaserPistolId = 1106;
     internal const uint LaserRifleId = 1107;
+    internal const uint RailgunId = 1108;
+    internal const uint ChainLightningId = 1109;
+    internal const uint TentaclePistolId = 1110;
+    internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
 
     // Every gun this mod adds (infinite ammo applies to all of them).
-    internal static bool IsOurs(uint id) => id is >= PlasmaPistolId and <= LaserRifleId;
+    internal static bool IsOurs(uint id) => GunArchetypes.Contains(id);
+
+    // The gun archetypes this mod registered (melee and the tool have none of these).
+    private static readonly System.Collections.Generic.HashSet<uint> GunArchetypes = new();
 
     // After GTFO.EZ (if installed) has tuned the vanilla weapons, so ours start from its tuned
     // values and EZ - which keys its tuning on vanilla names and ids - never touches ours.
@@ -55,7 +66,8 @@ internal static class GunInjector
         TryAdd("Hive Rifle", HiveRifleId, (name, id) => AddHive(name, id,
             "RifleHeavyAuto", 1f, 0.09f, // Malatack HXC: the heavy auto rifle, special slot
             "A smart rifle: locks onto the enemies around your crosshair and curves a fast stream of rounds onto them."));
-        TryAdd("Tentacle Cannon", TentacleCannonId, AddTentacleCannon);
+        TryAdd("Tentacle Pistol", TentaclePistolId, AddTentaclePistol);
+        TryAdd("Tentacle Rifle", TentacleRifleId, AddTentacleRifle);
         TryAdd("Laser Pistol", LaserPistolId, (name, id) => AddLaser(name, id,
             "Pistolauto", 1.2f, // Raptus Treffen 2: full-auto pistol, no sight, main slot
             48, // held low (ItemFPSSettings "Pistol_Chunky", 10 cm down) so the beam is visible
@@ -64,17 +76,55 @@ internal static class GunInjector
             "Precision_Rifle", 2f, // Drekker DEL P1: precision rifle, special slot
             null,
             "A heavier, longer laser beam: it burns whatever it's held on, out to 70 metres."));
+        TryAdd("Railgun", RailgunId, AddRailgun);
+        TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
+        TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
+    }
+
+    // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id. Tools
+    // have no archetype - the launcher's own prefab drives its pressure and bursts - so only those
+    // two blocks are added. What it fires is GrenadeLauncher's job.
+    private static void AddGrenadeLauncher(string name, uint id)
+    {
+        var sourceCategory = Lookup<GearCategoryDataBlock>("GlueGun");
+        var sourceGear = Lookup<PlayerOfflineGearDataBlock>("Glue_distance");
+        var gearJson = RewriteGearJson(sourceGear.GearJSON, sourceCategory.persistentID, id, DisplayName(name));
+        if (gearJson == null)
+        {
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons: couldn't find category {sourceCategory.persistentID} in '{sourceGear.name}' gear JSON - not adding the {name}.");
+            return;
+        }
+
+        var blockName = name.Replace(" ", "");
+        var category = Clone(sourceCategory);
+        category.persistentID = id;
+        category.name = blockName;
+        category.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
+        category.Description = new LocalizedText { Id = 0, UntranslatedText =
+            "Lobs lock melters rigged to blow: one that hits an enemy goes off at once; one that misses bounces around, flashing red faster and faster, and blows after 3 seconds." };
+
+        var gear = Clone(sourceGear);
+        gear.persistentID = id;
+        gear.name = blockName;
+        gear.GearJSON = gearJson;
+
+        GameDataBlockBase<GearCategoryDataBlock>.AddBlock(category, -1);
+        AddedCategories.Add(id);
+        GameDataBlockBase<PlayerOfflineGearDataBlock>.AddBlock(gear, -1);
+        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons added the {name} (tool; category and gear id {id}).");
     }
 
     private static void TryAdd(string name, uint id, Action<string, uint> add)
     {
         try
         {
+            // Already added by this mod (the game initialized its data again): nothing to do.
+            if (AddedCategories.Contains(id) && GameDataBlockBase<GearCategoryDataBlock>.HasBlock(id)) return;
             if (GameDataBlockBase<ArchetypeDataBlock>.HasBlock(id)
                 || GameDataBlockBase<GearCategoryDataBlock>.HasBlock(id)
                 || GameDataBlockBase<PlayerOfflineGearDataBlock>.HasBlock(id))
             {
-                Plugin.Logger.LogError($"GTFO.Weapons: id {id} is already taken by another mod's datablock - not adding the {name}.");
+                Plugin.Logger.LogError($"GTFO.AbsurdWeapons: id {id} is already taken by another mod's datablock - not adding the {name}.");
                 return;
             }
 
@@ -82,7 +132,7 @@ internal static class GunInjector
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons failed to add the {name}: {e}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons failed to add the {name}: {e}");
         }
     }
 
@@ -99,7 +149,7 @@ internal static class GunInjector
         archetype.ShotDelay = shotDelay;
         archetype.DefaultClipSize = 100;
         archetype.ShellCasingSize = 0f; // plasma, not bullets: no brass ejected
-        archetype.RecoilDataID = AddKicklessRecoil(name, id);
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear, description);
     }
 
@@ -115,7 +165,7 @@ internal static class GunInjector
         archetype.Damage = damage;
         archetype.ShotDelay = shotDelay;
         archetype.DefaultClipSize = 30;
-        archetype.RecoilDataID = AddKicklessRecoil(name, id);
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear, description);
     }
 
@@ -143,11 +193,74 @@ internal static class GunInjector
         archetype.ShellCasingSize = 0f; // a beam, not bullets: no brass ejected
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
-        archetype.RecoilDataID = AddKicklessRecoil(name, id);
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear, description);
     }
 
-    private static void AddTentacleCannon(string name, uint id)
+    // The Koning PR 11 sniper, semi-auto: every shot is one Railgun slug through everything in its
+    // line. It keeps the sniper's own kick and scope.
+    private static void AddRailgun(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("SniperSemi");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Semi;
+        archetype.ShotgunBulletCount = 1;
+        archetype.Damage = 60f;          // to every enemy on the line (sniper 40)
+        archetype.ShotDelay = 1.0f;      // sniper 0.8
+        archetype.DefaultClipSize = 5;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.ShellCasingSize = 0f;  // a slug thrown by magnets: no brass
+        Register(name, id, archetype, category, gear,
+            "A hitscan slug with infinite penetration: it goes through every enemy and every wall in its path.");
+    }
+
+    // The Omneco exp1 HEL machine gun, full-auto at ~6.7 bolts a second, no recoil, no spread, no
+    // brass, infinite ammo. Each bolt does 10 to its first enemy, then 75% of the last on each of
+    // up to five jumps (ChainLightning).
+    private static void AddChainLightning(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("HELGun");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Auto;
+        archetype.ShotgunBulletCount = 1;
+        archetype.Damage = 10f;
+        archetype.ShotDelay = 0.15f;
+        archetype.DefaultClipSize = 60;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.ShellCasingSize = 0f;
+        archetype.SpecialChargetupTime = 0f;
+        archetype.SpecialCooldownTime = 0f;
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, category, gear,
+            "Every shot is a bolt of lightning that leaps from enemy to enemy, up to five jumps, weaker with each.");
+    }
+
+    // The Bataldo 3RB HEL revolver, forced full-auto: the Tentacle Rifle's tentacles from a sidearm,
+    // slower (~2.9 a second) and a little weaker (8 a bite), with the revolver's own hold.
+    private static void AddTentaclePistol(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("RevolverHEL");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Auto;
+        archetype.ShotgunBulletCount = 1;
+        archetype.ShotgunConeSize = 0;
+        archetype.ShotgunBulletSpread = 0;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.Damage = 8f;          // per tentacle
+        archetype.ShotDelay = 0.35f;
+        archetype.ShellCasingSize = 0f;
+        archetype.DefaultClipSize = 30;
+        archetype.SpecialChargetupTime = 0f;
+        archetype.SpecialCooldownTime = 0f;
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, category, gear,
+            "A sidearm that fires the strikers' own tentacles: each one lashes out at an enemy near your crosshair and bites.");
+    }
+
+    private static void AddTentacleRifle(string name, uint id)
     {
         // Buckland XDist2: the biggest special-slot gun with no optic or holosight - a long-range
         // shotgun with plain iron sights. Full-auto: a tentacle (TentacleCannon) for every round
@@ -162,13 +275,13 @@ internal static class GunInjector
         archetype.HipFireSpread = 0f; // the machine gun's own spread off: the tentacles bring their own
         archetype.AimSpread = 0f;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = 10f;       // per tentacle
+        archetype.Damage = 11f;       // per tentacle
         archetype.ShotDelay = 0.235f; // ~4.3 tentacles a second, so each has time to live
         archetype.ShellCasingSize = 0f; // tentacles, not bullets: no brass ejected
         archetype.DefaultClipSize = 60;
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
-        archetype.RecoilDataID = AddKicklessRecoil(name, id);
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
 
         // Its own first-person hold, held out away from the face and low, so the tentacles have
         // room: see AddFarLowHold.
@@ -179,7 +292,7 @@ internal static class GunInjector
             "Fires the strikers' own tentacles, full-auto: every round is a tentacle that lashes out at an enemy near your crosshair and bites hard.");
     }
 
-    // The Tentacle Cannon's first-person hold (ItemFPSSettingsDataBlock): the XDist2's own
+    // The Tentacle Rifle's first-person hold (ItemFPSSettingsDataBlock): the XDist2's own
     // "Shotgun" pose - so the hands and stock sit where a shotgun's do - pushed a little lower and
     // further out, tipped slightly up, with a lighter aim zoom so aiming doesn't pull it into your
     // face. Returns the id to use.
@@ -187,7 +300,7 @@ internal static class GunInjector
     {
         if (GameDataBlockBase<ItemFPSSettingsDataBlock>.HasBlock(id))
         {
-            Plugin.Logger.LogWarning($"GTFO.Weapons: first-person hold id {id} is taken by another mod - the {name} keeps its model's hold.");
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: first-person hold id {id} is taken by another mod - the {name} keeps its model's hold.");
             return Lookup<ItemFPSSettingsDataBlock>("Shotgun").persistentID;
         }
 
@@ -207,12 +320,12 @@ internal static class GunInjector
     // and shake weight zeroed. (The Arid 5's own, High_Cal_Pistol, is one of the game's heaviest -
     // a big rotational kick, double camera rotation and a hard screen shake every shot.)
     // Registered at the gun's id; returns the id to use.
-    private static uint AddKicklessRecoil(string name, uint id)
+    private static uint AddKicklessRecoil(string name, uint id, uint modelRecoil)
     {
         if (GameDataBlockBase<RecoilDataBlock>.HasBlock(id))
         {
-            Plugin.Logger.LogWarning($"GTFO.Weapons: recoil id {id} is taken by another mod - the {name} keeps its model's recoil.");
-            return Lookup<RecoilDataBlock>("High_Cal_Pistol").persistentID;
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: recoil id {id} is taken by another mod - the {name} keeps its model's recoil.");
+            return modelRecoil;
         }
 
         var recoil = Clone(Lookup<RecoilDataBlock>("PistolAuto"));
@@ -257,10 +370,10 @@ internal static class GunInjector
     private static void Register(string name, uint id, ArchetypeDataBlock archetype, GearCategoryDataBlock sourceCategory,
         PlayerOfflineGearDataBlock modelGear, string description)
     {
-        var gearJson = RewriteGearJson(modelGear.GearJSON, sourceCategory.persistentID, id, name);
+        var gearJson = RewriteGearJson(modelGear.GearJSON, sourceCategory.persistentID, id, DisplayName(name));
         if (gearJson == null)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons: couldn't find category {sourceCategory.persistentID} in '{modelGear.name}' gear JSON - not adding the {name}.");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons: couldn't find category {sourceCategory.persistentID} in '{modelGear.name}' gear JSON - not adding the {name}.");
             return;
         }
 
@@ -268,7 +381,7 @@ internal static class GunInjector
         var blockName = name.Replace(" ", "");
         archetype.persistentID = id;
         archetype.name = blockName;
-        archetype.PublicName = new LocalizedText { Id = 0, UntranslatedText = name };
+        archetype.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
 
         var category = Clone(sourceCategory);
         category.persistentID = id;
@@ -278,7 +391,7 @@ internal static class GunInjector
         category.BurstArchetype = id;
         category.AutoArchetype = id;
         category.SemiBurstArchetype = id;
-        category.PublicName = new LocalizedText { Id = 0, UntranslatedText = name };
+        category.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
         category.Description = new LocalizedText { Id = 0, UntranslatedText = description };
 
         var gear = Clone(modelGear);
@@ -288,8 +401,10 @@ internal static class GunInjector
 
         GameDataBlockBase<ArchetypeDataBlock>.AddBlock(archetype, -1);
         GameDataBlockBase<GearCategoryDataBlock>.AddBlock(category, -1);
+        AddedCategories.Add(id);
+        GunArchetypes.Add(id);
         GameDataBlockBase<PlayerOfflineGearDataBlock>.AddBlock(gear, -1);
 
-        Plugin.Logger.LogInfo($"GTFO.Weapons added the {name} (archetype, category and gear id {id}).");
+        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons added the {name} (archetype, category and gear id {id}).");
     }
 }

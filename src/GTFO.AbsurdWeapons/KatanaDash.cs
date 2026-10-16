@@ -9,7 +9,7 @@ using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// The Katana's dash-slash: releasing a fully charged swing dashes you forward along your aim
@@ -53,7 +53,8 @@ internal static class KatanaDash
             chargeStarted = -1f;
             var animations = GameDataBlockBase<MeleeAnimationSetDataBlock>.GetBlock(archetype.MeleeAnimationSet);
             var full = animations != null ? animations.MaxDamageChargeTime : 1f;
-            if (held < full * FullChargeLeeway) return;
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Katana charge released after {held:0.00} s (full charge {full:0.00} s){(held < full * FullChargeLeeway ? " - not full, no dash" : " - dash")}.");
+            if (!Formulas.IsFullCharge(held, full, FullChargeLeeway)) return;
 
             var aim = owner.FPSCamera != null ? owner.FPSCamera.Forward : owner.transform.forward;
             aim.y = 0f;
@@ -62,7 +63,7 @@ internal static class KatanaDash
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons Katana dash failed: {e}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons Katana dash failed: {e}");
         }
     }
 }
@@ -75,6 +76,7 @@ internal sealed class DashRunner : MonoBehaviour
     private static float left, damage;
     private static uint gearCategoryId;
     private static readonly HashSet<IntPtr> slashed = new();
+    private static Vector3 startPosition;
 
     public DashRunner(IntPtr ptr) : base(ptr) { }
 
@@ -87,6 +89,7 @@ internal sealed class DashRunner : MonoBehaviour
         damage = slashDamage;
         gearCategoryId = categoryId;
         slashed.Clear();
+        startPosition = owner.Position;
     }
 
     private void Update()
@@ -94,17 +97,26 @@ internal sealed class DashRunner : MonoBehaviour
         if (player == null || left <= 0f) return;
         try
         {
+            if (!player.Alive)
+            {
+                player = null;
+                return;
+            }
             var dt = Mathf.Min(Time.deltaTime, left);
             left -= dt;
             var controller = player.PlayerCharacterController;
             var from = player.Position;
             controller?.Move(direction * (KatanaDash.Distance / KatanaDash.Seconds) * dt);
             Slash(from);
-            if (left <= 0f) player = null;
+            if (left <= 0f)
+            {
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Katana dash done: moved {Vector3.Distance(startPosition, player.Position):0.0} m of {KatanaDash.Distance} m, slashed {slashed.Count}.");
+                player = null;
+            }
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons Katana dash step failed: {e.Message}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons Katana dash step failed: {e.Message}");
             player = null;
         }
     }

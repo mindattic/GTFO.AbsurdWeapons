@@ -4,7 +4,7 @@ using Gear;
 using HarmonyLib;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// Lengthens this mod's melee blades by scaling the weapon model's head part (the blade) along
@@ -48,7 +48,7 @@ internal static class BladeStretcher
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons failed to stretch a blade: {e}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons failed to stretch a blade: {e}");
         }
     }
 
@@ -68,7 +68,7 @@ internal static class BladeStretcher
 
         if (!TryGetLocalBounds(blade, out var bounds))
         {
-            Plugin.Logger.LogWarning($"GTFO.Weapons: blade '{blade.name}' has no mesh to measure - leaving it unstretched.");
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: blade '{blade.name}' has no mesh to measure - leaving it unstretched.");
             return;
         }
 
@@ -85,7 +85,7 @@ internal static class BladeStretcher
 
         if (Mathf.Approximately(factor, 1f))
         {
-            Plugin.Logger.LogInfo($"GTFO.Weapons {weapon} ({holder.name}): {(onePiece ? "one-piece model" : "blade")} '{blade.name}' is {length:0.000} m along {axisName}, unstretched. Model size {Describe(bounds.size)}.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons {weapon} ({holder.name}): {(onePiece ? "one-piece model" : "blade")} '{blade.name}' is {length:0.000} m along {axisName}, unstretched. Model size {Describe(bounds.size)}.");
             return;
         }
 
@@ -118,7 +118,7 @@ internal static class BladeStretcher
         blade.localScale = scale;
         blade.position += anchorBefore - blade.TransformPoint(anchor);
 
-        Plugin.Logger.LogInfo($"GTFO.Weapons {weapon} ({holder.name}): {(onePiece ? "one-piece model" : "blade")} '{blade.name}' {length:0.000} m -> {length * factor:0.000} m (x{factor} along {axisName}). Model size {Describe(bounds.size)}.");
+        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons {weapon} ({holder.name}): {(onePiece ? "one-piece model" : "blade")} '{blade.name}' {length:0.000} m -> {length * factor:0.000} m (x{factor} along {axisName}). Model size {Describe(bounds.size)}.");
     }
 
     // Bounds of every mesh under the blade, in the blade's own (unscaled) space.

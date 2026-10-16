@@ -8,10 +8,10 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Player;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// The Tentacle Cannon: a full-auto gun whose every round is a striker's tentacle - the game's
+/// The Tentacle Rifle: a full-auto gun whose every round is a striker's tentacle - the game's
 /// own, drawn by its GPU tentacle renderer. Each round's tentacle hunts an enemy near its line of
 /// fire (one not already taken by another tentacle fired the same frame, if the gun ever fires
 /// several at once). It snakes out of the barrel, bites (damage and a heavy stagger, through the
@@ -21,14 +21,18 @@ namespace GTFO.Weapons;
 /// </summary>
 internal static class TentacleCannon
 {
+    // The guns that fire tentacles: the Tentacle Pistol and the Tentacle Rifle.
+    internal static bool IsTentacleGun(uint id) => id is GunInjector.TentacleRifleId or GunInjector.TentaclePistolId;
+
     private const float LockConeDegrees = 15f; // around each tentacle's own line
+    private const float EngageConeDegrees = 60f; // any enemy this close to the aim (and in range) draws every tentacle
     private const float FanSideDegrees = 30f;  // each tentacle leaves up to this far left or right of the aim...
     private const float FanUpDownDegrees = 5f; // ...but stays close to the aim's height: a wide, level fan
     private const float SpawnBehind = 0.05f;   // a touch behind the muzzle point, so they emerge from inside the barrel
     private const float LockRange = 25f;
     private const float MissReach = 15f; // how far an unlocked lash reaches
     private const float StaggerMulti = 5f;
-    private const string LashEvent = "MindAttic.GTFO.Weapons.TentacleLash";
+    private const string LashEvent = "MindAttic.GTFO.AbsurdWeapons.TentacleLash";
 
     // Enemies already claimed by a tentacle of the shot being fired (a shot's pellets all come in
     // the same frame).
@@ -66,12 +70,27 @@ internal static class TentacleCannon
             break;
         }
 
+        // An enemy anywhere in front of you takes every tentacle: none wanders off to grab a crate
+        // or a wall while there's something to bite. Nearest the crosshair first; if every one in
+        // view already has a tentacle this frame, they double up.
+        if (target == null)
+        {
+            var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees, LockRange);
+            foreach (var enemy in nearby)
+            {
+                if (!claimed.Add(enemy.Pointer)) continue;
+                target = enemy;
+                break;
+            }
+            if (target == null && nearby.Count > 0) target = nearby[0];
+        }
+
         var end = target != null ? target.AimTarget.position : SomethingToGrab(eye, pellet);
 
         if (DiagnosticShots > 0)
         {
             DiagnosticShots--;
-            Plugin.Logger.LogInfo($"GTFO.Weapons Tentacle Cannon pellet: muzzle {(muzzle != null ? "found" : "missing")} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Rifle pellet: muzzle {(muzzle != null ? "found" : "missing")} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
         }
 
         TentacleLash.Spawn(start, muzzle, end, target, owner, damage, StaggerMulti, gearCategoryId, SpawnBehind);
@@ -193,13 +212,13 @@ internal sealed class TentacleLash : MonoBehaviour
     {
         if (!GPUCurvyManager.TryAllocateGPUCurvy(GPUCurvyType.Striker, out var curvy) || curvy == null)
         {
-            Plugin.Logger.LogWarning("GTFO.Weapons: no free tentacle to lash with (the game's tentacle pool gave none).");
+            Plugin.Logger.LogWarning("GTFO.AbsurdWeapons: no free tentacle to lash with (the game's tentacle pool gave none).");
             return;
         }
         if (TentacleCannon.DiagnosticShots >= 0 && diagnosticLashes-- > 0)
-            Plugin.Logger.LogInfo($"GTFO.Weapons tentacle allocated: id {curvy.GPUC_ID}, {curvy.m_pointCount} control points, visible {curvy.IsVisible}, from {start} to {end}.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons tentacle allocated: id {curvy.GPUC_ID}, {curvy.m_pointCount} control points, visible {curvy.IsVisible}, from {start} to {end}.");
 
-        var go = new GameObject("GTFO.Weapons Tentacle Lash");
+        var go = new GameObject("GTFO.AbsurdWeapons Tentacle Lash");
         var lash = go.AddComponent<TentacleLash>();
         lash.curvy = curvy;
         lash.points = new Il2CppStructArray<GPUC_ControlPoint>(curvy.m_pointCount > 1 ? curvy.m_pointCount : FallbackPointCount);
@@ -254,7 +273,7 @@ internal sealed class TentacleLash : MonoBehaviour
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons tentacle lash failed: {e.Message}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons tentacle lash failed: {e.Message}");
             Destroy(gameObject);
         }
     }
@@ -300,7 +319,7 @@ internal sealed class TentacleLash : MonoBehaviour
         {
             loggedMidLash = true;
             curvy.GetHeadPos(extend, out var head, out _);
-            Plugin.Logger.LogInfo($"GTFO.Weapons tentacle mid-lash: visible {curvy.IsVisible}, head at {head}, start {start}, end {end}, extend {extend:0.##}, body tiles {curvy.CurrentBodyTileCount}.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons tentacle mid-lash: visible {curvy.IsVisible}, head at {head}, start {start}, end {end}, extend {extend:0.##}, body tiles {curvy.CurrentBodyTileCount}.");
         }
     }
 
@@ -345,7 +364,7 @@ internal sealed class TentacleLash : MonoBehaviour
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogWarning($"GTFO.Weapons couldn't return a tentacle: {e.Message}");
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't return a tentacle: {e.Message}");
         }
         curvy = null;
     }

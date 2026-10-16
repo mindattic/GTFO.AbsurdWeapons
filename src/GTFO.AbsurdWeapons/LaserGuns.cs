@@ -11,7 +11,7 @@ using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
 
-namespace GTFO.Weapons;
+namespace GTFO.AbsurdWeapons;
 
 /// <summary>How one laser gun's beam reaches and looks.</summary>
 internal sealed record LaserKind(byte Id, uint GunId, float Range, float Width);
@@ -34,11 +34,13 @@ internal static class LaserGuns
     internal static LaserKind? ForGun(uint id) => id == Pistol.GunId ? Pistol : id == Rifle.GunId ? Rifle : null;
     private static LaserKind? ForId(byte id) => id == Pistol.Id ? Pistol : id == Rifle.Id ? Rifle : null;
 
-    private const string BeamEvent = "MindAttic.GTFO.Weapons.LaserBeam";
+    private const string BeamEvent = "MindAttic.GTFO.AbsurdWeapons.LaserBeam";
 
     // The bullet tracers of laser guns that have fired: muted, so every tick doesn't also streak a
     // vanilla tracer down the beam (it reads as a new laser spawning 20 times a second).
-    private static readonly HashSet<IntPtr> mutedTracers = new();
+    // Held by reference (not just pointer) so a tracer can't be freed and its address handed to
+    // some other FeedbackPlayer, which would then be muted too.
+    private static readonly Dictionary<IntPtr, FeedbackPlayer> mutedTracers = new();
 
     internal static void Init()
     {
@@ -57,17 +59,17 @@ internal static class LaserGuns
         try
         {
             var tracer = weapon.m_vfxTracer;
-            if (tracer != null) mutedTracers.Add(tracer.Pointer);
+            if (tracer != null) mutedTracers[tracer.Pointer] = tracer;
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogWarning($"GTFO.Weapons couldn't mute a laser gun's tracer: {e.Message}");
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't mute a laser gun's tracer: {e.Message}");
         }
     }
 
     [HarmonyPatch(typeof(FeedbackPlayer), nameof(FeedbackPlayer.DoPlay))]
     [HarmonyPrefix]
-    private static bool BeforeFeedbackPlay(FeedbackPlayer __instance) => !mutedTracers.Contains(__instance.Pointer);
+    private static bool BeforeFeedbackPlay(FeedbackPlayer __instance) => !mutedTracers.ContainsKey(__instance.Pointer);
 
     // Where the beam visibly starts, relative to the eye: low and to the right, where the gun sits
     // on screen. The first-person gun is drawn with its own camera settings, so its muzzle's real
@@ -75,14 +77,20 @@ internal static class LaserGuns
     // eye and shrinks to a dot.
     private const float BeamDown = 0.22f, BeamRight = 0.12f, BeamForward = 0.45f;
 
-    // The beam from `eye` along `aim`: where it starts on screen, where it lands, what it hit.
-    internal static (Vector3 start, Vector3 end, BeamHit hit, Vector3 normal, RaycastHit ray) Trace(LaserKind kind, Vector3 eye, Vector3 aim)
+    // Where a beam fired from `eye` along `aim` appears to leave the gun on screen.
+    internal static Vector3 ScreenStart(Vector3 eye, Vector3 aim)
     {
         var right = Vector3.Cross(Vector3.up, aim);
         if (right.sqrMagnitude < 0.001f) right = Vector3.right;
         right.Normalize();
         var down = -Vector3.Cross(aim, right).normalized;
-        var start = eye + aim * BeamForward + right * BeamRight + down * BeamDown;
+        return eye + aim * BeamForward + right * BeamRight + down * BeamDown;
+    }
+
+    // The beam from `eye` along `aim`: where it starts on screen, where it lands, what it hit.
+    internal static (Vector3 start, Vector3 end, BeamHit hit, Vector3 normal, RaycastHit ray) Trace(LaserKind kind, Vector3 eye, Vector3 aim)
+    {
+        var start = ScreenStart(eye, aim);
         if (!Physics.Raycast(eye, aim, out var hit, kind.Range, LayerManager.MASK_BULLETWEAPON_RAY))
             return (start, eye + aim * kind.Range, BeamHit.None, -aim, hit);
         var enemy = hit.collider.GetComponent<Dam_EnemyDamageLimb>() != null;
@@ -165,11 +173,11 @@ internal sealed class LaserBeam : MonoBehaviour
     {
         if (!beams.TryGetValue(player, out var beam) || beam == null)
         {
-            var go = new GameObject("GTFO.Weapons Laser Beam");
+            var go = new GameObject("GTFO.AbsurdWeapons Laser Beam");
             beam = go.AddComponent<LaserBeam>();
             beam.line = NewLine(go);
 
-            var spot = new GameObject("GTFO.Weapons Laser Burn");
+            var spot = new GameObject("GTFO.AbsurdWeapons Laser Burn");
             spot.transform.SetParent(go.transform, false);
             beam.hotSpot = NewLine(spot);
             beam.glow = spot.AddComponent<EffectLight>();
@@ -229,7 +237,7 @@ internal sealed class LaserBeam : MonoBehaviour
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.Weapons laser beam failed: {e.Message}");
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons laser beam failed: {e.Message}");
             if (line != null) line.enabled = false;
         }
     }
@@ -280,7 +288,7 @@ internal sealed class LaserBeam : MonoBehaviour
         catch (Exception e)
         {
             sparkFailed = true;
-            Plugin.Logger.LogWarning($"GTFO.Weapons laser sparks unavailable: {e.Message}");
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons laser sparks unavailable: {e.Message}");
         }
     }
 
@@ -318,7 +326,7 @@ internal sealed class LaserBeam : MonoBehaviour
         if (!materialLogged)
         {
             materialLogged = true;
-            Plugin.Logger.LogInfo($"GTFO.Weapons laser beam material: {source}, shader '{material.shader?.name}'.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons laser beam material: {source}, shader '{material.shader?.name}'.");
         }
         return material;
     }

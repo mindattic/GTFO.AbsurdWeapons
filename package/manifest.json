@@ -1,8 +1,8 @@
 {
-  "name": "GtfoWeapons",
+  "name": "GtfoAbsurdWeapons",
   "version_number": "1.0.0",
-  "website_url": "https://github.com/mindattic/GTFO.Weapons",
-  "description": "Thirteen new weapons: Glaive, Katana, Mjolnir, Warhammer, a stealth Shadow Dagger, Doom plasma, Titanfall smart and laser beam guns (pistol and rifle each), and a striker Tentacle Cannon.",
+  "website_url": "https://github.com/mindattic/GTFO.AbsurdWeapons",
+  "description": "Twenty new weapons marked (!): Tanto to Odachi swords, a Gravity Hammer, plasma, smart, laser and tentacle guns, a Railgun, Chain Lightning and a lock-melter Grenade Launcher. Swap them mid-level with Page Up/Down.",
   "dependencies": [
     "BepInEx-BepInExPack_GTFO-3.2.3"
   ]
