@@ -1,8 +1,8 @@
 # GTFO.Weapons
 
-Dev repo for **GTFO.Weapons**, a BepInEx IL2CPP plugin for GTFO that adds eleven new weapons: six
-melee weapons that put one weapon's model on another's moves (Glaive, Katana, Mjolnir, Rapier,
-Warhammer, Shadow Dagger), and five guns built from enemy attacks (Plasma Pistol/Rifle, Hive Pistol/Rifle, Tentacle Cannon). See
+Dev repo for **GTFO.Weapons**, a BepInEx IL2CPP plugin for GTFO that adds thirteen new weapons: five
+melee weapons that put one weapon's model on another's moves (Glaive, Katana, Mjolnir, Warhammer,
+Shadow Dagger), and eight guns (Plasma, Hive and Laser Pistol/Rifle, Tentacle Cannon). See
 `package/README.md` for the player-facing breakdown and stat tables.
 
 Not yet published on Thunderstore (the package name will be `GtfoWeapons`).
@@ -22,16 +22,18 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Weapon | Id | Archetype from | Category from | Model (gear) from | Changes |
 |---|---|---|---|---|---|
 | Glaive | 1001 | `Spear` | `MeleeSpear` | `Spear_02` (IsoCo Stinger) | hammer's animation/SFX sets, damage, stagger, hit width, third-person movement; spear's reach and cleave; hold-thrust off |
-| Katana | 1002 | `Bat` | `MeleeBat` | `Knife` (Mastaba Fixed Blade, like the Rapier) | reach 3.2 (bat 1.75) to match the 7.5x-stretched blade |
+| Katana | 1002 | `Bat` | `MeleeBat` | `Knife` (Mastaba Fixed Blade) | reach 3.2 (bat 1.75) to match the 7.5x-stretched blade; the dash is runtime (`KatanaDash`) |
 | Mjolnir | 1003 | `Bat` | `MeleeBat` | `Mallet` (Santonian Mallet) | none beyond id and name; the thunderclap is runtime (`ImpactBursts`) |
-| Rapier | 1004 | `Spear` | `MeleeSpear` | `Knife` (Mastaba Fixed Blade) | none beyond id and name (keeps the spear's 3.2 reach) |
-| Warhammer | 1005 | `Hammer` | `MeleeSledgehammer` | `Sledgehammer` (Kovac) | hammer's own animation set and charge; charged 500 / light 6, stagger x55 charged / x11 light, environment x10, hit width 0.6, reach 2.4, cleaves, half speed charging; the shockwave is runtime (`ImpactBursts`) |
+| ~~Rapier~~ | 1004 | - | - | - | removed (it never worked); the id stays retired so old loadouts can't pick up a different weapon |
+| Warhammer | 1005 | `Hammer` | `MeleeSledgehammer` | `Sledgehammer` (Kovac) | hammer's own animation set and charge; charged 500 / light 6, stagger x55 charged / x11 light, environment x10, hit width 0.6, reach 2.4, cleaves, half speed charging; the shockwave and knockback are runtime (`ImpactBursts`, `Knockback`) |
 | Shadow Dagger | 1006 | `Knife` | `MeleeKnife` | `Knife` (Mastaba Fixed Blade) | none beyond id and name; the stealth is runtime (`Stealth`) |
 | Plasma Pistol | 1101 | the Steigro's archetype for its fire mode | the Steigro's (`Pistol_Stagger`) | `Autopistol staggering` (Raptus Steigro, main, no sight) | `AddPlasma`: `FireMode` Auto, damage 22.5 (display; rolled per hit), shot delay 3/35 s, clip 100, own kickless `RecoilDataBlock` 1101 |
 | Hive Pistol | 1102 | the S49's archetype for its fire mode | the S49's (`Pistol`) | `PistolSemi` (Shelling S49, main, no sight) | `AddHive`: `FireMode` Auto, damage 1, shot delay 0.12 s, clip 30, own kickless `RecoilDataBlock` 1102 |
 | Hive Rifle | 1104 | the HXC's archetype for its fire mode | the HXC's (`RifleHeavy`) | `RifleHeavyAuto` (Malatack HXC, special) | `AddHive`: damage 1, shot delay 0.09 s, kickless recoil 1104 |
 | Plasma Rifle | 1105 | the LRG's archetype for its fire mode | the LRG's (`Gauss_Rifle`) | `HELRifleSemi` (Omneco LRG, special) | `AddPlasma`: shot delay 2/35 s, kickless recoil 1105 |
-| Tentacle Cannon | 1103 | the Arid 5's archetype for its fire mode (semi) | the Arid 5's (`HighCalPistol`) | `HighCalPistol` (Shelling Arid 5, special, no sight) | `FireMode` Auto, damage 10 (per tentacle), shot delay 0.12 s, no spin-up, own kickless `RecoilDataBlock` 1103, infinite ammo; every fire mode -> 1103; the lashes are runtime (`TentacleCannon`) |
+| Tentacle Cannon | 1103 | the XDist2's archetype for its fire mode | the XDist2's | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `FireMode` Auto, 1 pellet, no cone or spread, damage 10 (per tentacle), shot delay 0.235 s, `ShellCasingSize` 0, clip 60, no spin-up, own kickless `RecoilDataBlock` 1103, own first-person hold `ItemFPSSettingsDataBlock` 1103 (`AddFarLowHold`: vanilla `Shotgun` pushed lower and further out, aim FOV 30); the lashes are runtime (`TentacleCannon`) |
+| Laser Pistol | 1106 | the Treffen 2's archetype for its fire mode | the Treffen 2's | `Pistolauto` (Raptus Treffen 2, main, no sight) | `AddLaser`: `FireMode` Auto, damage 1.2 per tick, shot delay 0.05 s (20 ticks/s), clip 100, no spread, `ShellCasingSize` 0, kickless recoil 1106, hold swapped to `ItemFPSSettings` 48 (`Pistol_Chunky`, 10 cm lower) so the beam shows; the beam is runtime (`LaserGuns`) |
+| Laser Rifle | 1107 | the DEL P1's archetype for its fire mode | the DEL P1's | `Precision_Rifle` (Drekker DEL P1, special) | `AddLaser`: damage 2 per tick, kickless recoil 1107, model's own hold |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
 uses an id, that weapon isn't added and an error is logged. The rest still load. Vanilla names,
@@ -62,7 +64,7 @@ The approach follows Dinorush's ExtraWeaponCustomization (EWC). Vanilla `Project
 homes onto and damages players only, so it can't be used as-is.
 - **Firing:** `BulletWeapon.Fire`/`Shotgun.Fire` prefixes record which archetype is firing. A
   prefix on `Weapon.CastWeaponRay` (4-arg overload) swallows our guns' hitscan rays (`maxRayDist =
-  0`, return false), so ammo, recoil, muzzle flash and sound stay vanilla. Each ray, one per
+  0`, return false), so ammo, recoil, muzzle flash and sound stay vanilla. Plasma guns set `ShellCasingSize` 0, so no brass. Each ray, one per
   shotgun pellet, becomes a seeker with the pellet's spread applied.
 - **Projectile:** `ProjectileManager.SpawnProjectileType` spawns the real enemy projectile for its
   model, glow and trail. Its `ProjectileBase` is fired with no target, silenced and disabled.
@@ -98,18 +100,26 @@ homes onto and damages players only, so it can't be used as-is.
 ### Tentacle Cannon (`TentacleCannon`, `TentacleLash`)
 
 - **Firing:** `SeekerGuns`' `CastWeaponRay` prefix swallows the Tentacle Cannon's rays too, one per
-  round. For the local shooter each ray calls `TentacleCannon.FirePellet` with that round's
-  direction. (A shotgun model doesn't work here: pellet hit data has no `owner`, so the shooter
-  falls back to the firing weapon's `Owner` - kept, but the cannon is now a single-round gun.) It picks an enemy with `SeekerGuns.FindLocks` around the pellet's line (15°, 25 m, line
-  of sight) that no other tentacle fired the same frame has claimed. With none, it lashes
-  along the line at the first surface (`MASK_BULLETWEAPON_RAY`, 15 m).
+  round. Shotgun pellet hit data has no `owner`, so the shooter falls back to the firing weapon's
+  `Owner`. For the local shooter each ray calls `TentacleCannon.FirePellet`, which turns the aim into
+  that tentacle's own line with `Fan` (random yaw up to 30°, pitch up to 5°: a wide, level fan). It
+  picks an enemy with `SeekerGuns.FindLocks` around that line (15°, 25 m, line of sight) that no
+  other tentacle fired the same frame has claimed. With none, `SomethingToGrab` casts 10 probes in a
+  flat fan (35° sideways, 8° up/down, 12 m, `MASK_BULLETWEAPON_RAY`) and latches onto the nearest
+  hit; with nothing in reach it flails 15 m out along its line.
+- **Start point (`BarrelOnScreen`):** the first-person gun is drawn by `FPSCamera.m_itemCamera` with
+  its own FOV, so the muzzle's world position doesn't match the barrel on screen. The lash starts
+  where the item camera shows the muzzle (5 cm behind it), re-projected through the world camera at
+  the same depth, every frame.
 - **The tentacle:** `GPUCurvyManager.TryAllocateGPUCurvy(GPUCurvyType.Striker)` borrows a striker
   tentacle from the game's GPU tentacle pool, so no enemy or prefab is needed. `TentacleLash` is an
   injected MonoBehaviour. Every frame it lays the control points (`GPUC_ControlPoint[]`, the
-  curvy's `m_pointCount`) along a snake from the muzzle to the target's `AimTarget`: an upward arc
-  plus a rippling side-to-side wave that's zero at both ends. It feeds them with
+  curvy's `m_pointCount`) along a snake from the barrel to the target's `AimTarget`: a big
+  side-to-side wave and a small vertical one in a plane within 20° of level, both zero at both ends,
+  rippling at their own random speeds and pulsing in strength, plus a slight random bow. It forces
+  `m_isVisible` (an enemy's tentacle has its owner do that), feeds the points with
   `FeedControlPositions`, then `FeedSettings(extend, glow 1)` and `CalculateEndPointsAndUpdateGPU`.
-  It extends over 0.18 s, hangs 0.22 s and retracts over 0.2 s, then `DeallocateGPUCurvy`.
+  It shoots out in 0.04 s, hangs 0.5 s thrashing and retracts over 0.2 s, then `DeallocateGPUCurvy`.
 - **Damage:** the bite lands at full extension: `BulletDamage(10, stagger x5)` on the target's
   limb nearest the tip, on the shooter's game only.
 - **Multiplayer:** teammates get `MindAttic.GTFO.Weapons.TentacleLash` (start and end) per tentacle
@@ -119,6 +129,34 @@ homes onto and damages players only, so it can't be used as-is.
   prefix there multiplies it by `[Tentacles] PoolMultiplier` (default 4) for every type, so the
   cannon's volleys and enemy tentacles stop competing for slots. The log lists each type's
   before and after.
+
+### Laser guns (`LaserGuns`, `LaserBeam`)
+
+- **Firing:** the `CastWeaponRay` prefix swallows the lasers' rays too. Each one, 20 a second while
+  the trigger is held, is a damage tick for the local shooter: `LaserGuns.Tick` raycasts from the
+  eye (`MASK_BULLETWEAPON_RAY`, 40 / 70 m) and calls `BulletDamage` on any enemy limb it hits.
+- **One beam:** each player has one `LaserBeam` (an injected MonoBehaviour with a `LineRenderer`
+  using the trip mine's laser material). Ticks keep it lit; it goes off 0.15 s after they stop. The
+  shooter's own beam re-traces from `FPSCamera` every frame, so it stays on the gun and crosshair
+  between ticks. It starts low and right of the eye, where the gun sits on screen.
+- **No tracer:** `BulletWeapon.Fire`'s prefix adds a laser gun's `m_vfxTracer` (`FeedbackPlayer`)
+  to a muted set, and a prefix on `FeedbackPlayer.DoPlay` skips it, so ticks don't streak vanilla
+  tracers down the beam.
+- **Burn:** where the beam lands, a second short `LineRenderer` is a flickering white-hot spot, an
+  `EffectLight` flickers orange, and every 0.06 s `FX_Manager.PlayEffect` plays `Impact_Metal`
+  (sparks; a decal every 6th) and on enemies, every third, `Impact_EnemyBody`.
+- **Multiplayer:** each tick is sent as `MindAttic.GTFO.Weapons.LaserBeam` (start, end, hit kind,
+  surface normal); teammates draw the same beam and burn.
+
+### Katana dash (`KatanaDash`, `DashRunner`)
+
+A postfix on `MeleeWeaponFirstPerson.ChangeState` times the local player's Katana charge (from a
+charge-up state to a charge-release state). If it was held at least 95% of the animation set's
+`MaxDamageChargeTime`, `DashRunner` (an injected MonoBehaviour) moves the player 40 m along the aim,
+flattened, over 0.6 s through `PlayerCharacterController.Move`, so collision stops it and position
+syncs like any movement. Each frame it sweeps an `OverlapCapsule` (1.2 m) from the last position to
+the new one, so nothing is skipped at ~67 m/s, and slashes each enemy once per dash with the
+archetype's `ChargedAttackDamage` and x3 stagger through `BulletDamage`.
 
 ### Hammer impact bursts (`ImpactBursts`)
 
@@ -136,6 +174,13 @@ gets `BulletDamage`, the bullet path, so it syncs. Stagger is damage x stagger m
 shockwave's 1 x 100 knocks back anything that isn't stagger-immune. The flash is a fading
 `EffectLight` (`BurstFlash`, an injected MonoBehaviour), sent to teammates over
 `MindAttic.GTFO.Weapons.ImpactBurst`.
+
+**Knockback (`Knockback`, `KnockbackSlides`):** the Warhammer's bursts also shove enemies: the
+struck one 1.5 m along the swing (4 m charged), the rest of the burst 2 m out from the impact. The
+slide eases out over a short time and is clipped by `NavMesh.Raycast`, so it stops at walls and
+ledges. Enemy positions belong to the host: a client sends `MindAttic.GTFO.Weapons.Knockback`
+(position, direction, distance) and the host finds the enemy there and slides it; the game's own
+position sync shows it to everyone.
 
 ### Shadow Dagger stealth (`Stealth`, `StealthVisuals`)
 
@@ -169,14 +214,17 @@ shockwave's 1 x 100 knocks back anything that isn't stagger-immune. The flash is
 src/GTFO.Weapons/       the plugin project (BepInEx/Il2Cpp - needs the game installed to build)
   Plugin.cs             entry point: config, Il2Cpp type registration, network event, Harmony
   DataBlocks.cs         shared clone / lookup / gear-JSON rewrite helpers
-  MeleeInjector.cs      Glaive, Katana, Mjolnir, Rapier, Warhammer datablocks
-  GunInjector.cs        Plasma/Hive pistol and rifle, Tentacle Cannon datablocks
+  MeleeInjector.cs      Glaive, Katana, Mjolnir, Warhammer, Shadow Dagger datablocks
+  GunInjector.cs        Plasma/Hive/Laser pistol and rifle, Tentacle Cannon datablocks, holds, kickless recoil
   BladeStretcher.cs     blade / head scaling on model spawn
   WeaponSettings.cs     per-weapon config (BladeLength, BladeLengthAxis, Reach)
   SeekerGuns.cs         fire hooks, seeker kinds, network message
   SeekerProjectile.cs   the player-fired homing projectile
   ShadowDagger.cs       Shadow Dagger fast stabs, stealth (enemy AI patches, sync) and its shimmer
-  TentacleCannon.cs     Tentacle Cannon volleys and the GPU tentacle lash that draws them
+  TentacleCannon.cs     Tentacle Cannon fan, surface grab and the GPU tentacle lash that draws them
+  LaserGuns.cs          laser beam ticks, the persistent beam, its burn and the muted tracer
+  KatanaDash.cs         the Katana's full-charge dash-slash
+  Knockback.cs          host-side physical knockback slides (Warhammer)
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
   ImpactBursts.cs       hammer impact bursts (Mjolnir thunderclap, Warhammer shockwave) and their flash
 package/                exactly what ships to Thunderstore / gets zipped for sharing
@@ -216,7 +264,7 @@ show one "added the ..." line per weapon and, while you look at the melee weapon
 length lines.
 
 Still to verify in-game:
-- All eleven weapons appear in the loadout screen in the right slots. If not, their categories may
+- All thirteen weapons appear in the loadout screen in the right slots. If not, their categories may
   also need adding to `GearCategoryFilterDataBlock` (14 "MeleeWeapons" for melee).
 - How each model sits in the hand under its borrowed animations.
 - `BladeLength`:
@@ -231,11 +279,11 @@ Still to verify in-game:
   teammates, and nothing happens through walls.
 - Warhammer: every landed hit staggers everything within 6 m, including the struck enemy; check
   which heavies shrug it off.
-- Tentacle Cannon:
-  - The striker tentacle actually draws when not attached to an enemy.
-  - It lies along the snake from the barrel, not at the world origin.
-  - Its extend (`FeedSettings` position-over-length) behaves as out and back.
-  - The bite lands, and teammates see the lashes.
+- Tentacle Cannon (tentacles draw and bite, confirmed):
+  - The level fan reads as wild without going up or down.
+  - Lashes start at the barrel on screen with the new hold.
+  - Tentacles with no enemy grab nearby surfaces.
+  - Teammates see the lashes.
 - Shadow Dagger, as host and as a client:
   - Quick stabs are visibly faster and the charge-up isn't.
   - Only a fully charged hit hides you (the log notes partial charges): enemies stop chasing you
@@ -244,7 +292,11 @@ Still to verify in-game:
   - The 10-a-second shimmer shows for you and for teammates and fills back in over the last
     second.
   - Everything comes back when the 6 s run out.
-- Katana and Rapier: hits land at the tip of the ~2.2 m blades (3.2 m reach).
+- Katana: hits land at the tip of the ~2.2 m blade (3.2 m reach). The full-charge dash (confirmed
+  working at 4 m) now goes 40 m in 0.6 s: check it feels right and slashes everything it passes.
+- Warhammer knockback: enemies slide and stop at walls and ledges, as host and as client.
+- Lasers: one steady beam while held (no per-tick tracer streaks), sparks and glow where it lands,
+  no brass; teammates see the beam and burn.
 - Seeker guns:
   - The disabled enemy projectile stays quiet (no player homing, sound or self-destruct).
   - Seekers hit enemies, are blocked by walls and doors, and never hurt players.
