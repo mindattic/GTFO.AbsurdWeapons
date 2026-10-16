@@ -40,6 +40,7 @@ public class Plugin : BasePlugin
         ChainLightning.Bind(Config);
         TentacleCannon.Bind(Config);
         GrenadeLauncher.Bind(Config);
+        CFoamGun.Bind(Config);
         FlameThrower.Bind(Config);
         FlakCannon.Bind(Config);
         VictoryBanner.Bind(Config);
@@ -76,6 +77,7 @@ public class Plugin : BasePlugin
         AddComponent<InfiniteAmmo>();
         AddComponent<FlameAfterburn>();
         AddComponent<VictoryBannerBuff>();
+        AddComponent<CFoamTicker>();
         MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }

@@ -18,7 +18,8 @@
     fire with heavy range falloff, stacking afterburn that outlives the stream, fire that spreads
     between enemies standing close together, and an Aim-triggered fuel bomb for reach), Flak Cannon
     (Unreal Tournament style: bouncing shrapnel shards, or hold Aim to fire one ball that explodes
-    into a radial shrapnel burst on contact).
+    into a radial shrapnel burst on contact), C-Foam Pistol/Rifle (the C-Foam Launcher's hardening
+    foam sprayed full-auto - barely any damage, but enough stacks holds an enemy in place).
   - **Tools:** Grenade Launcher (the C-Foam launcher firing lock-melter grenades that blow on an
     enemy or bounce and blow after 3 s, flashing red faster and faster; infinite ammo), Victory
     Banner (set it down like a turret, pick it up like one too; heals everyone in its ring and buffs

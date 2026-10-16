@@ -3,7 +3,7 @@
 *(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-A BepInEx plugin for GTFO that adds **twenty-three new weapons**: nine melee weapons, twelve guns
+A BepInEx plugin for GTFO that adds **twenty-five new weapons**: nine melee weapons, fourteen guns
 and two tools. No game files are shipped or edited. Every weapon is built at load time from the game's own
 data, so they pick up vanilla balance changes, and nothing vanilla is modified.
 
@@ -47,6 +47,8 @@ first; balance comes later.
 | **Chain Lightning Gun** | Special | Omneco exp1 | Lightning that leaps from enemy to enemy, up to five jumps |
 | **Flamethrower** | Special | TechMan Veruta XII | A short cone of fire, devastating up close; afterburn keeps ticking after the stream, and fire spreads between enemies standing close together. Hold Aim to lob a fuel bomb instead |
 | **Flak Cannon** | Special | Bataldo J 300 | A cone of bouncing shrapnel, devastating point-blank. Hold Aim to fire one compressed ball instead that explodes into a radial shrapnel burst on contact |
+| **C-Foam Pistol** | Main | Shelling Arid 5 | Sprays the C-Foam Launcher's own hardening foam full-auto: enough stacks on one enemy and it's held in place |
+| **C-Foam Rifle** | Special | Accrat ND6 | The same foam spray |
 
 ### Tools
 
@@ -197,6 +199,13 @@ walls up to twice before it burns out. **Hold Aim** instead and the whole shot c
 single slow ball: it explodes on the first thing it touches (no fuse) for a blast plus a **radial
 burst of secondary shrapnel**, catching things just past the edge of it - the classic Unreal
 Tournament flak trick.
+
+### C-Foam Pistol (main) and C-Foam Rifle (special)
+
+The C-Foam Launcher's own hardening foam, sprayed full-auto instead of lobbed. Barely any direct
+damage - every round instead **stacks foam** on the enemy it hits. Enough stacks and they're fully
+**encased**: held in place by a heavy stagger pulse every half second for as long as the foam
+holds, even if you stop shooting them, until it runs out without a fresh hit to top it back up.
 
 ## Tools
 

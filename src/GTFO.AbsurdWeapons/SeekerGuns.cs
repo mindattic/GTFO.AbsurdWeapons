@@ -287,6 +287,28 @@ internal static class SeekerGuns
                 return false;
             }
 
+            if (firingArchetype == GunInjector.CFoamPistolId || weaponRayData.gearCategoryId == GunInjector.CFoamPistolId
+                || firingArchetype == GunInjector.CFoamRifleId || weaponRayData.gearCategoryId == GunInjector.CFoamRifleId)
+            {
+                ours = true;
+                weaponRayData.maxRayDist = 0f;
+                __result = false;
+                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
+                if (shooter != null && shooter.IsLocallyOwned
+                    && Physics.Raycast(originPos, weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward,
+                        out var cfoamHit, 70f, LayerManager.MASK_BULLETWEAPON_RAY))
+                {
+                    var limb = cfoamHit.collider.GetComponent<Dam_EnemyDamageLimb>();
+                    var enemy = limb?.m_base?.Owner;
+                    if (limb != null && enemy != null && enemy.Alive)
+                    {
+                        var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
+                        CFoamGun.Hit(limb, enemy, shooter, cfoamHit.point, aim, weaponRayData.damage, weaponRayData.gearCategoryId);
+                    }
+                }
+                return false;
+            }
+
             if (firingArchetype == GunInjector.FlakCannonId || weaponRayData.gearCategoryId == GunInjector.FlakCannonId)
             {
                 ours = true;

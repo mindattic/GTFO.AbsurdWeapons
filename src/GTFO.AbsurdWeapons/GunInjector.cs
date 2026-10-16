@@ -43,6 +43,8 @@ internal static class GunInjector
     internal const uint TentaclePistolId = 1110;
     internal const uint FlamethrowerId = 1111;
     internal const uint FlakCannonId = 1112;
+    internal const uint CFoamPistolId = 1113;
+    internal const uint CFoamRifleId = 1114;
     internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
     internal const uint VictoryBannerId = 1202;   // a tool: same reason
 
@@ -117,6 +119,9 @@ internal static class GunInjector
         TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
         TryAdd("Flamethrower", FlamethrowerId, AddFlamethrower);
         TryAdd("Flak Cannon", FlakCannonId, AddFlakCannon);
+        const string cfoam = "The C-Foam Launcher's own hardening foam, sprayed full-auto: every round stacks foam on an enemy, and enough of it holds them in place, barely any damage done.";
+        TryAdd("C-Foam Pistol", CFoamPistolId, (name, id) => AddCFoam(name, id, "HighCalPistol", cfoam)); // Shelling Arid 5, main slot
+        TryAdd("C-Foam Rifle", CFoamRifleId, (name, id) => AddCFoam(name, id, "SMGHeavyAuto", cfoam));    // Accrat ND6, special slot
         TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
         TryAdd("Victory Banner", VictoryBannerId, AddVictoryBanner);
     }
@@ -172,6 +177,26 @@ internal static class GunInjector
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
             "A classic flak cannon: a cone of bouncing shrapnel shards, devastating point-blank. Hold Aim to fire a single compressed ball instead - it explodes into a radial burst of shrapnel the instant it touches anything.");
+    }
+
+    // A full-auto foam sprayer on the given model: low direct damage, high rate of fire. What each
+    // round actually does - stacking and holding foam on an enemy - is runtime (CFoamGun).
+    private static void AddCFoam(string name, uint id, string model, string description)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>(model);
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Auto;
+        archetype.ShotgunBulletCount = 1;
+        archetype.Damage = CFoamGun.GunDamage.Value;
+        archetype.ShotDelay = CFoamGun.GunShotDelay.Value;
+        archetype.DefaultClipSize = CFoamGun.GunClipSize.Value;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.ShellCasingSize = 0f; // foam, not bullets: no brass ejected
+        archetype.SpecialChargetupTime = 0f;
+        archetype.SpecialCooldownTime = 0f;
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, category, gear, description);
     }
 
     // The TechMan Veruta XII machine gun, full-auto, firing FlameThrower's cone instead of bullets:

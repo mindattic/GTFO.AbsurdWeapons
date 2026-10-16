@@ -1,9 +1,9 @@
 # GTFO.AbsurdWeapons
 
-Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty-three new weapons, each shown with "(!)"
+Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty-five new weapons, each shown with "(!)"
 after its name: nine melee weapons that put one weapon's model on another's moves (Yari, Tanto,
-Wakizashi, Katana, Odachi, Mjolnir, Warhammer, Gravity Hammer, Shadow Dagger), twelve guns (Plasma,
-Hive, Laser and Tentacle Pistol/Rifle, Railgun, Chain Lightning Gun, Flamethrower, Flak Cannon) and two tools (Grenade Launcher, Victory Banner).
+Wakizashi, Katana, Odachi, Mjolnir, Warhammer, Gravity Hammer, Shadow Dagger), fourteen guns (Plasma,
+Hive, Laser, Tentacle and C-Foam Pistol/Rifle, Railgun, Chain Lightning Gun, Flamethrower, Flak Cannon) and two tools (Grenade Launcher, Victory Banner).
 Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. See
 `package/README.md` for the player-facing breakdown and stat tables.
 
@@ -44,6 +44,8 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Chain Lightning Gun | 1109 | the exp1's archetype for its fire mode | the exp1's (`MachineGun_LowRPM`) | `HELGun` (Omneco exp1, special) | `AddChainLightning`: Auto, damage 10 (first strike), shot delay 0.15 s, clip 60, no spread or spin-up, no brass, kickless recoil 1109; the bolts are runtime (`ChainLightning`) |
 | Flamethrower | 1111 | the Veruta XII's archetype for its fire mode | the Veruta XII's (`MachinegunAuto`) | `MachinegunAuto` (TechMan Veruta XII, special) | `AddFlamethrower`: Auto, damage 6 (per tick, before falloff), shot delay 1/15 s, clip 150, no spread, no brass, kickless recoil 1111; the cone, afterburn, fire spread and fuel bomb are runtime (`FlameThrower`) |
 | Flak Cannon | 1112 | the J 300's archetype for its fire mode | the J 300's (`ShotgunHEL`) | `ShotgunHEL` (Bataldo J 300, special) | `AddFlakCannon`: Semi, 9 pellets, cone/spread 5, damage 7 (per shard, before falloff), shot delay 0.85 s, clip 6, no brass, kickless recoil 1112; the bouncing shards and the Aim-held ball are runtime (`FlakCannon`) |
+| C-Foam Pistol | 1113 | the Arid 5's archetype for its fire mode | the Arid 5's (`HighCalPistol`) | `HighCalPistol` (Shelling Arid 5, main) | `AddCFoam`: Auto, damage 1, shot delay 0.08 s, clip 80, no brass, kickless recoil 1113; the foam stacking and hold are runtime (`CFoamGun`) |
+| C-Foam Rifle | 1114 | the ND6's archetype for its fire mode | the ND6's (`SMGHeavyAuto`) | `SMGHeavyAuto` (Accrat ND6, special) | `AddCFoam`: same stats as the C-Foam Pistol, kickless recoil 1114 |
 | Tentacle Pistol | 1110 | the XDist2's archetype (shared with the Tentacle Rifle) | the 3RB's (`RevolverStandard`) | `RevolverHEL` (Bataldo 3RB, main) | `AddTentacle`: same stats as the Tentacle Rifle, kickless recoil 1110, model's own hold |
 | Grenade Launcher | 1201 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddGrenadeLauncher`: category and gear only; the launcher's own prefab drives pressure and bursts; the grenades are runtime (`GrenadeLauncher`) |
 | Victory Banner | 1202 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddVictoryBanner`: category and gear only; placing, picking up, healing and the damage buff are runtime (`VictoryBanner`) |
@@ -234,6 +236,16 @@ past the blast's edge. The ball's flight is sent to teammates
 (`MindAttic.GTFO.AbsurdWeapons.FlakBallLaunch`); only the shooter's own copy (`owner != null`) deals
 damage.
 
+### C-Foam Pistol and Rifle (`CFoamGun`, `CFoamTicker`)
+
+The `CastWeaponRay` prefix swallows their ray too: a plain raycast (70 m, same mask as the laser
+beams) stands in for a round. Each hit does its (tiny) direct damage and stacks foam on that enemy
+in `CFoamGun`'s dictionary, refreshing a duration rather than adding to it. Once an enemy has
+`StackThreshold` stacks, `CFoamTicker` - an always-on `MonoBehaviour`, not gated on the trigger -
+pulses a very heavy stagger on it every `TickSeconds` for as long as the foam holds, so a fully
+encased enemy stays held even after you stop shooting it, until the duration runs out without a
+fresh hit. The spraying player's own game only, like every other weapon here.
+
 ### Grenade Launcher (`GrenadeLauncher`, `LauncherGrenade`, `Explosion`)
 
 - **Firing:** a prefix on `ProjectileManager.WantToFireGlue` checks the owner's wielded item's
@@ -395,6 +407,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   ChainLightning.cs     Chain Lightning Gun strikes, jumps and bolt
   FlameThrower.cs       Flamethrower cone, afterburn, fire spread and the fuel bomb
   FlakCannon.cs         Flak Cannon shrapnel shards and the Aim-held ball
+  CFoamGun.cs           C-Foam Pistol/Rifle foam stacking and hold
   VictoryBanner.cs      Victory Banner placement/pickup, healing and the damage buff
   GrenadeLauncher.cs    Grenade Launcher hook, grenade flight, fuse, blast, infinite tool ammo
   GravityHammer.cs      Gravity Hammer pull and release blast
