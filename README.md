@@ -541,7 +541,8 @@ range (`[Plasma Guns]`/`[Hive Guns]`, alongside the gun stats above), the laser 
 range/width (`[Laser Guns]`), the Railgun's penetration range (`[Railgun]`), Chain Lightning's
 range/jump range/falloff/stagger (`[Chain Lightning Gun]` - jump *count* stays fixed at 5: the
 network message has exactly enough fields for that many), and the Tentacle guns' fan/lock/grab
-cones and stagger (`[Tentacle Guns]`). For
+cones and stagger (`[Tentacle Guns]`). The Grenade Launcher's speed, fuse, blast
+radius/damage/stagger and bounciness are `[Grenade Launcher]`. For
 the Flamethrower, Flak Cannon and Victory Banner, every one of their numbers - gun stats
 (damage, rate of fire, clip, pellet count/spread) included - is its own config entry
 (`[Flamethrower]`, `[Flak Cannon]`, `[Victory Banner]`), read once at `GameDataInit.Initialize` for

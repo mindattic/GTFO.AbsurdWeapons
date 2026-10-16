@@ -45,4 +45,4 @@ _Nothing recorded yet._
 | G.AWPN-T18 | 2026-10-16 | chore | closed | Gravity Hammer's pull, Mjolnir's throw, the hammer-family impact bursts (Thunderclap/Shockwave/GravityBlast radius/damage/stagger/knockback) and Knockback's slam damage all become BepInEx config entries | — |
 | G.AWPN-T19 | 2026-10-16 | chore | closed | Every existing gun's archetype stats in GunInjector (Plasma, Hive, Laser, Tentacle Pistol/Rifle, Railgun, Chain Lightning Gun: damage, rate of fire, clip size, pellet/spread) become BepInEx config entries, same treatment as the Flamethrower/Flak Cannon | — |
 | G.AWPN-T20 | 2026-10-16 | chore | closed | Gun runtime subsystems - SeekerGuns' Plasma/Hive kind definitions, LaserGuns' range/tick damage, Railgun's damage/range, Chain Lightning's jumps/falloff/range, Tentacle Cannon's fan/reach/damage - become BepInEx config entries | — |
-| G.AWPN-T21 | 2026-10-16 | chore | open | Grenade Launcher's speed, fuse, blast radius/damage/stagger become BepInEx config entries | — |
+| G.AWPN-T21 | 2026-10-16 | chore | closed | Grenade Launcher's speed, fuse, blast radius/damage/stagger become BepInEx config entries | — |

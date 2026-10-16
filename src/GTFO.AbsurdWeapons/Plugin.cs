@@ -39,6 +39,7 @@ public class Plugin : BasePlugin
         Railgun.Bind(Config);
         ChainLightning.Bind(Config);
         TentacleCannon.Bind(Config);
+        GrenadeLauncher.Bind(Config);
         FlameThrower.Bind(Config);
         FlakCannon.Bind(Config);
         VictoryBanner.Bind(Config);

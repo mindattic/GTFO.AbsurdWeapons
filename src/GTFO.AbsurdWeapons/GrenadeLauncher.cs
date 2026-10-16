@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AK;
 using AssetShards;
+using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
 using HarmonyLib;
@@ -22,16 +23,28 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class GrenadeLauncher
 {
-    internal const float Speed = 24f;           // launch speed, m/s
-    internal const float FuseSeconds = 3f;
-    internal const float BlastRadius = 5f;
-    internal const float BlastDamage = 40f;     // at the center, falling to 25% at the edge
-    internal const float BlastEdgeFraction = 0.25f;
-    internal const float BlastStagger = 5f;
+    internal static ConfigEntry<float> Speed = null!;           // launch speed, m/s
+    internal static ConfigEntry<float> FuseSeconds = null!;
+    internal static ConfigEntry<float> BlastRadius = null!;
+    internal static ConfigEntry<float> BlastDamage = null!;     // at the center, falling to BlastEdgeFraction at the edge
+    internal static ConfigEntry<float> BlastEdgeFraction = null!;
+    internal static ConfigEntry<float> BlastStagger = null!;
+    internal static ConfigEntry<float> GrenadeBounciness = null!;
     private const float MinSecondsBetween = 0.5f; // one grenade per pull: the launcher's burst extras are dropped
 
     private const string LaunchEvent = "MindAttic.GTFO.AbsurdWeapons.GrenadeLaunch";
     private const string DetonateEvent = "MindAttic.GTFO.AbsurdWeapons.GrenadeDetonate";
+
+    internal static void Bind(ConfigFile config)
+    {
+        Speed = config.Bind("Grenade Launcher", "LaunchSpeed", 24f, "Grenade launch speed, m/s.");
+        FuseSeconds = config.Bind("Grenade Launcher", "FuseSeconds", 3f, "Seconds before a missed grenade explodes on its own.");
+        BlastRadius = config.Bind("Grenade Launcher", "BlastRadius", 5f, "Metres the blast reaches.");
+        BlastDamage = config.Bind("Grenade Launcher", "BlastDamage", 40f, "Damage at the blast's center.");
+        BlastEdgeFraction = config.Bind("Grenade Launcher", "BlastEdgeFraction", 0.25f, "Share of damage left at the blast's edge.");
+        BlastStagger = config.Bind("Grenade Launcher", "BlastStagger", 5f, "Blast stagger multiplier.");
+        GrenadeBounciness = config.Bind("Grenade Launcher", "GrenadeBounciness", 0.55f, "Speed kept per bounce off the world.");
+    }
 
     private static float lastLaunch = -10f;
     private static uint nextId;
@@ -90,7 +103,7 @@ internal static class GrenadeLauncher
             lastLaunch = Time.time;
 
             var aim = owner.FPSCamera != null ? owner.FPSCamera.Forward : velocity.normalized;
-            var launch = aim * Speed;
+            var launch = aim * Speed.Value;
             var id = ((uint)(owner.Owner?.PlayerSlotIndex() ?? 0) << 24) | (++nextId & 0xFFFFFF);
             LauncherGrenade.Spawn(id, owner, pos, launch);
             NetworkAPI.InvokeEvent(LaunchEvent, new LaunchMessage(id, pos, launch));
@@ -167,7 +180,6 @@ internal sealed class LauncherGrenade : MonoBehaviour
 {
     private const float Radius = 0.12f;
     private const float Gravity = 9.81f;
-    private const float Bounciness = 0.55f;
     private const float RestSpeed = 1.2f;
     private const float RemoteGraceSeconds = 0.75f; // a teammate's copy waits this long past the fuse for the detonation message
     private static readonly Color FlashColor = new(1f, 0.05f, 0.05f, 1f);
@@ -253,7 +265,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
             age += dt;
             Flash();
 
-            if (owner == null ? age >= GrenadeLauncher.FuseSeconds + RemoteGraceSeconds : age >= GrenadeLauncher.FuseSeconds)
+            if (owner == null ? age >= GrenadeLauncher.FuseSeconds.Value + RemoteGraceSeconds : age >= GrenadeLauncher.FuseSeconds.Value)
             {
                 Explode();
                 return;
@@ -291,7 +303,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
         if (Physics.SphereCast(position, Radius, direction, out var hit, distance, LayerManager.MASK_WORLD))
         {
             transform.position = hit.point + hit.normal * (Radius + 0.01f);
-            velocity = Vector3.Reflect(velocity, hit.normal) * Bounciness;
+            velocity = Vector3.Reflect(velocity, hit.normal) * GrenadeLauncher.GrenadeBounciness.Value;
             spinSpeed *= 0.7f;
             if (velocity.magnitude > 2f && age - lastBounceSound > 0.1f)
             {
@@ -316,8 +328,8 @@ internal sealed class LauncherGrenade : MonoBehaviour
     [HideFromIl2Cpp]
     private void Flash()
     {
-        var progress = Mathf.Clamp01(age / GrenadeLauncher.FuseSeconds);
-        var interval = Formulas.GrenadeFlashInterval(age, GrenadeLauncher.FuseSeconds);
+        var progress = Mathf.Clamp01(age / GrenadeLauncher.FuseSeconds.Value);
+        var interval = Formulas.GrenadeFlashInterval(age, GrenadeLauncher.FuseSeconds.Value);
         if (age >= nextFlash)
         {
             nextFlash = age + interval;
@@ -358,8 +370,8 @@ internal sealed class LauncherGrenade : MonoBehaviour
         }
         GrenadeLauncher.SendDetonate(id, position);
         Explosion.Show(position);
-        AreaDamage.Apply(position, GrenadeLauncher.BlastRadius, GrenadeLauncher.BlastDamage, GrenadeLauncher.BlastEdgeFraction,
-            GrenadeLauncher.BlastStagger, owner.Cast<Agents.Agent>(), null, GunInjector.GrenadeLauncherId);
+        AreaDamage.Apply(position, GrenadeLauncher.BlastRadius.Value, GrenadeLauncher.BlastDamage.Value, GrenadeLauncher.BlastEdgeFraction.Value,
+            GrenadeLauncher.BlastStagger.Value, owner.Cast<Agents.Agent>(), null, GunInjector.GrenadeLauncherId);
     }
 
     // The lock melter's meshes, copied onto the grenade - just the look, none of the prefab's
