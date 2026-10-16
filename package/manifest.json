@@ -2,7 +2,7 @@
   "name": "GtfoWeapons",
   "version_number": "1.0.0",
   "website_url": "https://github.com/mindattic/GTFO.Weapons",
-  "description": "Adds the Glaive: a new melee weapon - a razor-edged spear blade swung overhead like a sledgehammer. Long reach, cleaves through crowds. Everyone in the lobby needs it.",
+  "description": "Thirteen new weapons: Glaive, Katana, Mjolnir, Warhammer, a stealth Shadow Dagger, Doom plasma, Titanfall smart and laser beam guns (pistol and rifle each), and a striker Tentacle Cannon.",
   "dependencies": [
     "BepInEx-BepInExPack_GTFO-3.2.3"
   ]

@@ -41,4 +41,9 @@
     <Reference Remove="$(BepInEx)\interop\netstandard.dll" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- GTFO-API: network messages so teammates see the seeker guns' projectiles. -->
+    <Reference Include="$(BepInEx)\plugins\GTFO-API.dll" Private="false" />
+  </ItemGroup>
+
 </Project>
