@@ -29,8 +29,12 @@ internal static class TentacleCannon
     private static ConfigEntry<float> LockConeDegrees = null!; // around each tentacle's own line
     private static ConfigEntry<float> EngageConeDegrees = null!; // any enemy this close to the aim (and in range) draws every tentacle
     private static ConfigEntry<float> SpewConeDegrees = null!;   // each tentacle leaves within this many degrees of the aim: a cone straight ahead
+    private static ConfigEntry<float> WideSpewConeDegrees = null!; // the occasional tentacle's much wider cone, for variety
+    private static ConfigEntry<float> WideSpewChance = null!;      // the share of tentacles that get the wide cone instead
     private static ConfigEntry<float> IdleReach = null!;   // how far out a tentacle wriggles with no enemy to reach
     private static ConfigEntry<float> BarrelOffset = null!; // how far past the muzzle (along its facing) a tentacle starts
+    private static ConfigEntry<float> StartJitterDegrees = null!; // each tentacle's own start angle, below the barrel point
+    private static ConfigEntry<float> StartJitterRadius = null!;  // how far that jittered start sits from the barrel point
     internal static ConfigEntry<float> StaggerMulti = null!;
 
     // How far a tentacle reaches - the strikers' own (EAB_MovingEnemeyTentacle's
@@ -43,9 +47,13 @@ internal static class TentacleCannon
         LockConeDegrees = config.Bind("Tentacle Guns", "LockConeDegrees", 15f, "Cone around each tentacle's own line that counts as a lock.");
         EngageConeDegrees = config.Bind("Tentacle Guns", "EngageConeDegrees", 15f, "Any enemy this close to the aim (and in reach) draws every tentacle.");
         SpewConeDegrees = config.Bind("Tentacle Guns", "SpewConeDegrees", 8f, "Half-angle of the cone the tentacles spew out in, straight ahead of the gun.");
+        WideSpewConeDegrees = config.Bind("Tentacle Guns", "WideSpewConeDegrees", 35f, "Half-angle of the wide cone the occasional tentacle spews out in instead, for variety.");
+        WideSpewChance = config.Bind("Tentacle Guns", "WideSpewChance", 0.2f, "Chance (0-1) each tentacle spews wide instead of in the tight forward cone.");
         StaggerMulti = config.Bind("Tentacle Guns", "StaggerMulti", 5f, "Stagger multiplier per bite.");
         IdleReach = config.Bind("Tentacle Guns", "IdleReach", 4f, "Metres a tentacle wriggles out when no enemy is in reach (it reaches its full length only for an enemy).");
         BarrelOffset = config.Bind("Tentacle Guns", "BarrelOffset", 0.3f, "Metres past the muzzle a tentacle starts, so it visibly comes out of the barrel (negative = back inside the gun).");
+        StartJitterDegrees = config.Bind("Tentacle Guns", "StartJitterDegrees", 25f, "Each tentacle's start point swings up to this many degrees off straight-down from the barrel, so a burst doesn't start from one single spot.");
+        StartJitterRadius = config.Bind("Tentacle Guns", "StartJitterRadius", 0.1f, "Metres that jittered start point sits from the barrel point.");
         FallbackReach = config.Bind("Tentacle Guns", "FallbackReach", 25f, "Reach used until a real striker's is found in the level.");
     }
     private static float reach;
@@ -106,10 +114,15 @@ internal static class TentacleCannon
             claimed.Clear();
         }
 
-        // Spew: every tentacle takes its own random line within a tight cone straight ahead.
+        // Spew: every tentacle takes its own random line within a tight cone straight ahead - except
+        // the occasional one (WideSpewChance), which goes wide instead, for variety.
         var aim = pellet;
-        pellet = Cone(pellet, SpewConeDegrees.Value);
+        var coneDegrees = UnityEngine.Random.value < WideSpewChance.Value ? WideSpewConeDegrees.Value : SpewConeDegrees.Value;
+        pellet = Cone(pellet, coneDegrees);
         var start = muzzle != null ? BarrelOnScreen(owner, muzzle, -BarrelOffset.Value) : eye + aim * 0.5f;
+        // Each tentacle starts from its own slightly different angle below the barrel point - out of
+        // the player's view - so a burst doesn't read as spewing from one single spot.
+        start = JitteredStart(start, aim);
         EnemyAgent? target = null;
         var range = Reach;
         foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees.Value, range))
@@ -162,6 +175,21 @@ internal static class TentacleCannon
         var up = Vector3.Cross(forward, right);
         var offset = UnityEngine.Random.insideUnitCircle * degrees;
         return (Quaternion.AngleAxis(offset.x, up) * Quaternion.AngleAxis(offset.y, right) * forward).normalized;
+    }
+
+    // Nudges `start` toward a point below `aim`'s line, at its own random angle off straight-down
+    // (StartJitterDegrees either way) and a small distance out (StartJitterRadius) - below the
+    // player's own view, so each tentacle in a burst starts from a slightly different spot instead
+    // of all spewing from the exact same point.
+    private static Vector3 JitteredStart(Vector3 start, Vector3 aim)
+    {
+        var right = Vector3.Cross(Vector3.up, aim);
+        if (right.sqrMagnitude < 0.001f) right = Vector3.right;
+        right.Normalize();
+        var down = -Vector3.Cross(aim, right).normalized;
+        var angle = UnityEngine.Random.Range(-StartJitterDegrees.Value, StartJitterDegrees.Value);
+        var direction = Quaternion.AngleAxis(angle, aim) * down;
+        return start + direction * StartJitterRadius.Value;
     }
 
     // The world point that appears on screen where the gun's muzzle is drawn. GTFO draws the
