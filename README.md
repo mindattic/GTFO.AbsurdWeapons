@@ -1,9 +1,8 @@
 # GTFO.AbsurdWeapons
 
-Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds twenty-five new weapons, each shown with "(!)"
-after its name: nine melee weapons that put one weapon's model on another's moves (Yari, Tanto,
-Wakizashi, Katana, Odachi, Mjolnir, Warhammer, Gravity Hammer, Shadow Dagger), fourteen guns (Plasma,
-Hive, Laser, Tentacle and C-Foam Pistol/Rifle, Railgun, Chain Lightning Gun, Flamethrower, Flak Cannon) and two tools (Grenade Launcher, Victory Banner).
+Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds seventeen new weapons, each shown with "(!)"
+after its name: four melee weapons that put one weapon's model on another's moves (Katana, Mjolnir, Warhammer, Shadow Dagger), eleven guns (Plasma,
+Hive, Laser and Grenade Pistol/Rifle, Tentacle Cannon, Railgun, Chain Lightning Gun), a tool (Victory Banner) and a consumable (Hand Grenade).
 Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. See
 `package/README.md` for the player-facing breakdown and stat tables.
 
@@ -23,32 +22,25 @@ category and renamed. The model's own gear entry also decides the inventory slot
 
 | Weapon | Id | Archetype from | Category from | Model (gear) from | Changes |
 |---|---|---|---|---|---|
-| Yari (was Glaive) | 1001 | `Spear` | `MeleeSpear` | `Spear_02` (IsoCo Stinger) | hammer's animation/SFX sets, damage, stagger, hit width, third-person movement; spear's reach and cleave; hold-thrust off |
-| Katana | 1002 | `Bat` | `MeleeBat` | `Knife` (Mastaba Fixed Blade, blade x2.6 = 70 cm) | light 4 / charged 14, reach 2.3, cleaves; the dash is runtime (`KatanaDash`) |
+| Katana | 1002 | `Bat` | `MeleeBat` | `Knife` (Mastaba Fixed Blade, blade x6.9 = ~1.85 m) | light 4 / charged 14, reach 3.5, cleaves; the dash is runtime (`KatanaDash`) |
 | Mjolnir | 1003 | `Bat` | `MeleeBat` | `Mallet` (Santonian Mallet) | none beyond id and name; the thunderclap is runtime (`ImpactBursts`) |
 | ~~Rapier~~ | 1004 | - | - | - | removed (it never worked); the id stays retired so old loadouts can't pick up a different weapon |
 | Warhammer | 1005 | `Hammer` | `MeleeSledgehammer` | `Sledgehammer` (Kovac) | hammer's own animation set and charge; charged 500 / light 6, stagger x55 charged / x11 light, environment x10, hit width 0.6, reach 2.4, cleaves, half speed charging; the shockwave and knockback are runtime (`ImpactBursts`, `Knockback`) |
 | Shadow Dagger | 1006 | `Knife` | `MeleeKnife` | `Knife` (Mastaba Fixed Blade) | none beyond id and name; the stealth is runtime (`Stealth`) |
-| Wakizashi | 1007 | `Knife` | `MeleeKnife` | `Knife` (blade x1.87 = 50 cm) | light 3 / charged 9, reach 2.0; light attacks x1.25 (`SwordTempo`) |
-| Odachi | 1008 | `Hammer` | `MeleeSledgehammer` | `Knife` (blade x8.4 = 2.26 m) | light 6 / charged 9999, reach 3.5, sphere 0.4, cleaves, 70% speed charging; light attacks x0.85 |
-| Tanto | 1009 | `Knife` | `MeleeKnife` | `Knife` (blade x0.93 = 25 cm) | light 2 / charged 6, reach 1.6; light attacks x1.6 |
-| Gravity Hammer | 1010 | `Hammer`, on its own `MeleeAnimationSetDataBlock` 1010 (the hammer's with `AutoAttackTime` pushed out of reach) | `MeleeSledgehammer` | `Maul` (Omneco Maul) | light 4 / charged 30, charged stagger x20, sphere 0.5, reach 2.2, cleaves, 60% speed charging; the pull and blast are runtime (`GravityHammer`) |
+
 | Plasma Pistol | 1101 | the LRG's archetype (shared with the Plasma Rifle) | the Steigro's (`Pistol_Stagger`) | `Autopistol staggering` (Raptus Steigro, main, no sight) | `AddPlasma`: `FireMode` Auto, damage 22.5 (display; rolled per hit), shot delay 2/35 s, clip 100, own kickless `RecoilDataBlock` 1101 |
-| Hive Pistol | 1102 | the HXC's archetype (shared with the Hive Rifle) | the S49's (`Pistol`) | `PistolSemi` (Shelling S49, main, no sight) | `AddHive`: `FireMode` Auto, damage 1, shot delay 0.09 s, clip 30, own kickless `RecoilDataBlock` 1102 |
+| Hive Pistol | 1102 | the HXC's archetype (shared with the Hive Rifle) | the S49's (`Pistol`) | `PistolSemi` (Shelling S49, main, no sight) | `AddHive`: `FireMode` Auto, damage 1, shot delay 0.09, clip 30 s, clip 30, own kickless `RecoilDataBlock` 1102 |
 | Hive Rifle | 1104 | the HXC's archetype | the HXC's (`RifleHeavy`) | `RifleHeavyAuto` (Malatack HXC, special) | `AddHive`: same stats as the Hive Pistol, kickless recoil 1104 |
 | Plasma Rifle | 1105 | the LRG's archetype | the LRG's (`Gauss_Rifle`) | `HELRifleSemi` (Omneco LRG, special) | `AddPlasma`: same stats as the Plasma Pistol, kickless recoil 1105 |
-| Tentacle Rifle (was Tentacle Cannon) | 1103 | the XDist2's archetype (shared with the Tentacle Pistol) | the XDist2's | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `AddTentacle`: `FireMode` Auto, 1 pellet, no cone or spread, damage 11 (per tentacle), shot delay 0.235 s, `ShellCasingSize` 0, clip 60, no spin-up, own kickless `RecoilDataBlock` 1103, own first-person hold `ItemFPSSettingsDataBlock` 1103 (`AddFarLowHold`: vanilla `Shotgun` pushed lower and further out, aim FOV 30); the lashes are runtime (`TentacleCannon`) |
+| Tentacle Cannon | 1103 | the XDist2's archetype | the XDist2's | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `AddTentacle`: `FireMode` Auto, 1 pellet, no cone or spread, damage 11 (per tentacle), shot delay 0.235 s, `ShellCasingSize` 0, clip 60, no spin-up, own kickless `RecoilDataBlock` 1103, own first-person hold `ItemFPSSettingsDataBlock` 1103 (`AddFarLowHold`: vanilla `Shotgun` pushed lower and further out, aim FOV 30); the lashes are runtime (`TentacleCannon`) |
 | Laser Pistol | 1106 | the DEL P1's archetype (shared with the Laser Rifle) | the Treffen 2's | `Pistolauto` (Raptus Treffen 2, main, no sight) | `AddLaser`: `FireMode` Auto, damage 2 per tick, beam 70 m, shot delay 0.05 s (20 ticks/s), clip 100, no spread, `ShellCasingSize` 0, kickless recoil 1106, hold swapped to `ItemFPSSettings` 48 (`Pistol_Chunky`, 10 cm lower) so the beam shows; the beam is runtime (`LaserGuns`) |
-| Laser Rifle | 1107 | the DEL P1's archetype | the DEL P1's | `Precision_Rifle` (Drekker DEL P1, special) | `AddLaser`: same stats as the Laser Pistol, kickless recoil 1107, model's own hold |
-| Railgun | 1108 | the PR 11's archetype for its fire mode | the PR 11's (`Sniper`) | `SniperSemi` (Koning PR 11, special) | `AddRailgun`: Semi, damage 60 (to every enemy on the line), shot delay 1.0 s, clip 5, no spread, `ShellCasingSize` 0, the sniper's own recoil and scope; the slug is runtime (`Railgun`) |
+| Laser Rifle | 1107 | the DEL P1's archetype | the ND6's | `SMGHeavyAuto` (Accrat ND6, special, no animated parts) | `AddLaser`: same stats as the Laser Pistol, kickless recoil 1107, model's own hold |
+| Railgun | 1108 | the PR 11's archetype for its fire mode | the PR 11's (`Sniper`) | `SniperSemi` (Koning PR 11, special) | `AddRailgun`: Semi, damage 150 (to every enemy on the line), shot delay 1.5.0 s, clip 5, no spread, `ShellCasingSize` 0, the sniper's own recoil and scope; the slug is runtime (`Railgun`) |
 | Chain Lightning Gun | 1109 | the exp1's archetype for its fire mode | the exp1's (`MachineGun_LowRPM`) | `HELGun` (Omneco exp1, special) | `AddChainLightning`: Auto, damage 10 (first strike), shot delay 0.15 s, clip 60, no spread or spin-up, no brass, kickless recoil 1109; the bolts are runtime (`ChainLightning`) |
-| Flamethrower | 1111 | the Veruta XII's archetype for its fire mode | the Veruta XII's (`MachinegunAuto`) | `MachinegunAuto` (TechMan Veruta XII, special) | `AddFlamethrower`: Auto, damage 6 (per tick, before falloff), shot delay 1/15 s, clip 150, no spread, no brass, kickless recoil 1111; the cone, afterburn, fire spread and fuel bomb are runtime (`FlameThrower`) |
-| Flak Cannon | 1112 | the J 300's archetype for its fire mode | the J 300's (`ShotgunHEL`) | `ShotgunHEL` (Bataldo J 300, special) | `AddFlakCannon`: Semi, 9 pellets, cone/spread 5, damage 7 (per shard, before falloff), shot delay 0.85 s, clip 6, no brass, kickless recoil 1112; the bouncing shards and the Aim-held ball are runtime (`FlakCannon`) |
-| C-Foam Pistol | 1113 | the Arid 5's archetype for its fire mode | the Arid 5's (`HighCalPistol`) | `HighCalPistol` (Shelling Arid 5, main) | `AddCFoam`: Auto, damage 1, shot delay 0.08 s, clip 80, no brass, kickless recoil 1113; the foam stacking and hold are runtime (`CFoamGun`) |
-| C-Foam Rifle | 1114 | the ND6's archetype for its fire mode | the ND6's (`SMGHeavyAuto`) | `SMGHeavyAuto` (Accrat ND6, special) | `AddCFoam`: same stats as the C-Foam Pistol, kickless recoil 1114 |
-| Tentacle Pistol | 1110 | the XDist2's archetype (shared with the Tentacle Rifle) | the 3RB's (`RevolverStandard`) | `RevolverHEL` (Bataldo 3RB, main) | `AddTentacle`: same stats as the Tentacle Rifle, kickless recoil 1110, model's own hold |
-| Grenade Launcher | 1201 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddGrenadeLauncher`: category and gear only; the launcher's own prefab drives pressure and bursts; the grenades are runtime (`GrenadeLauncher`) |
+| Grenade Pistol | 1115 | the Arid 5's archetype (shared with the Grenade Rifle) | the 3RB's | `RevolverHEL` (Bataldo 3RB, main) | `AddGrenadeGun`: Semi, 1 round, no spread, damage shown 40 (the blast), shot delay 0.6 s, clip 6, no brass, the Arid 5's recoil; each round is a grenade (`GrenadeLauncher`) |
+| Grenade Rifle | 1116 | same archetype as the Grenade Pistol | the Veruta XII's | `MachinegunAuto` (TechMan Veruta XII, special) | `AddGrenadeGun`: same stats as the Grenade Pistol |
 | Victory Banner | 1202 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddVictoryBanner`: category and gear only; placing, picking up, healing and the damage buff are runtime (`VictoryBanner`) |
+| Hand Grenade | 1203 (an `ItemDataBlock`, not gear) | - | - | the glowstick's item, found by name/prefab | `HandGrenade.AddItem`: the glowstick's `ItemDataBlock` cloned and renamed; the look, fuse, blast, infinite stack and handing it out are runtime (`HandGrenade`) |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
 uses an id, that weapon isn't added and an error is logged. The rest still load. Vanilla names,
@@ -95,12 +87,14 @@ homes onto and damages players only, so it can't be used as-is.
     and every impact adds a 1.25 m `AreaDamage` shock like Mjolnir's (6 falling to 40%, stagger x3,
     a small 2 m blue flash). The tint sets every `Color` property of every material on the
     projectile, and logs the first one's renderers/shaders/color slots once for diagnosis.
-  - **Hive** is Titanfall's Smart Pistol on a `SemiTargetingQuick` (the Hybrid's). `SmartLock`: at
-    the trigger, `NextLock` gathers living, visible enemies within 35° of the crosshair and 60 m,
-    nearest the crosshair first, and successive shots cycle through up to 6. The round spawns at
-    the weapon's `MuzzleAlign` and flies a quadratic Bezier (muzzle -> a control point 40% of the
+  - **Hive** is Titanfall's Smart Pistol on a `SemiTargetingQuick` (the Hybrid's), full-auto.
+    `SmartLock`: at the trigger, `NextLock` gathers living, visible enemies within 35° of the
+    crosshair and 60 m, nearest the crosshair first, and successive shots cycle through up to 6.
+    The round leaves the barrel and flies a quadratic Bezier (barrel -> a control point 40% of the
     way along the aim -> the target's `AimTarget`, re-read every frame) at a constant 45 m/s. With
     no lock, or once its target dies, it homes normally (1500°/s, 120° search cone, 50 m).
+    `HiveLocks` marks those same enemies with camera-facing diamonds that build from orange to red
+    (one per 40 health, up to 3) - the look only.
   - `Shard` (split seekers) is still defined but nothing uses it right now.
   - Every impact flashes a small `EffectLight`. Teammates' visual copies fly and flash on their
     own; a smart round's message carries its target's position, which the copy curves to.
@@ -114,16 +108,17 @@ homes onto and damages players only, so it can't be used as-is.
   (`MindAttic.GTFO.AbsurdWeapons.SeekerShot`). They spawn a visual-only copy that deals no damage.
   GTFO-API ships inside BepInExPack_GTFO, so it isn't a separate dependency.
 
-### Tentacle Pistol and Rifle (`TentacleCannon`, `TentacleLash`)
+### Tentacle Cannon (`TentacleCannon`, `TentacleLash`)
 
 - **Firing:** `SeekerGuns`' `CastWeaponRay` prefix swallows the tentacle guns' rays too, one per
   round. Shotgun pellet hit data has no `owner`, so the shooter falls back to the firing weapon's
   `Owner`. For the local shooter each ray calls `TentacleCannon.FirePellet`, which turns the aim into
-  that tentacle's own line with `Fan` (random yaw up to 30°, pitch up to 5°: a wide, level fan). It
+  that tentacle's own line with `Cone` (a random direction within 8° of the aim: a tight cone straight ahead). It
   picks an enemy with `SeekerGuns.FindLocks` around that line (15°, `Reach`, line of sight) that no
-  other tentacle fired the same frame has claimed; failing that, any enemy within 60° of the aim and `Reach` (nearest the crosshair first, doubling up if all are claimed), so no tentacle wanders to a surface while an enemy is in view. With no enemy at all, `SomethingToGrab` casts 10 probes in a
-  flat fan (35° sideways, 8° up/down, `Reach`, `MASK_BULLETWEAPON_RAY`) and latches onto the nearest
-  hit; with nothing in reach it flails `Reach` out along its line.
+  other tentacle fired the same frame has claimed; failing that, any enemy within 15° of the aim and `Reach` (nearest the crosshair first, doubling up if all are claimed), so no tentacle wanders to a surface while an enemy is in view. With no enemy at all, `SomethingToGrab` sends it a short way (`IdleReach`, 4 m) straight out
+  along its own line, or to the first surface on that line, with a tighter, faster wriggle - it only
+  reaches out to full length, and curves, for an enemy. The hold (`AddFarLowHold`) carries it very
+  low at the waist like a minigun, tipped up at the crosshair.
 - **Reach:** the strikers' own tentacle length, `EAB_MovingEnemeyTentacle.m_absoluteMaxDistanceToHitTarget`,
   read (longest found) from the level's strikers via `FindObjectsOfType`, retried every 5 s until
   one exists (25 m until then) and logged. A lash whose target moves out of reach is cut to it.
@@ -155,16 +150,19 @@ homes onto and damages players only, so it can't be used as-is.
 
 ### Laser guns (`LaserGuns`, `LaserBeam`)
 
-- **Firing:** the `CastWeaponRay` prefix swallows the lasers' rays too. Each one, 20 a second while
-  the trigger is held, is a damage tick for the local shooter: `LaserGuns.Tick` raycasts from the
-  eye (`MASK_BULLETWEAPON_RAY`, 40 / 70 m) and calls `BulletDamage` on any enemy limb it hits.
+- **No shots at all:** prefixes skip the laser guns' archetype trigger logic (`BulletWeaponArchetype.Update`,
+  `OnStartFiring`, `OnFireShot`, `BWA_Auto.OnFireShot` - the firing, fire animation and recoil) and
+  `BulletWeapon.Fire` (and `BulletWeaponSynced.Fire`), so they never fire - no bullet, muzzle flash, brass or kick. Their hold
+  (`AddSteadyHold`, an `ItemFPSSettingsDataBlock` at the gun's id cloned from the model's) never
+  relaxes and has no `RecoilAnimation`, so they sit raised at hip height.
+- **Trigger-driven:** `LaserDriver` (an injected MonoBehaviour) reads `InputAction.Fire` while a
+  laser gun is wielded and, every archetype `ShotDelay` (0.05 s), calls `LaserGuns.Tick`: a raycast
+  from the eye (`MASK_BULLETWEAPON_RAY`, 70 m) - the beam's end - and `BulletDamage` (archetype
+  damage) on any enemy limb there.
 - **One beam:** each player has one `LaserBeam` (an injected MonoBehaviour with a `LineRenderer`
   using the trip mine's laser material). Ticks keep it lit; it goes off 0.15 s after they stop. The
   shooter's own beam re-traces from `FPSCamera` every frame, so it stays on the gun and crosshair
   between ticks. It starts low and right of the eye, where the gun sits on screen.
-- **No tracer:** `BulletWeapon.Fire`'s prefix adds a laser gun's `m_vfxTracer` (`FeedbackPlayer`)
-  to a muted set, and a prefix on `FeedbackPlayer.DoPlay` skips it, so ticks don't streak vanilla
-  tracers down the beam.
 - **Burn:** where the beam lands, a second short `LineRenderer` is a flickering white-hot spot, an
   `EffectLight` flickers orange, and every 0.06 s `FX_Manager.PlayEffect` plays `Impact_Metal`
   (sparks; a decal every 6th) and on enemies, every third, `Impact_EnemyBody`.
@@ -175,11 +173,14 @@ homes onto and damages players only, so it can't be used as-is.
 
 A postfix on `MeleeWeaponFirstPerson.ChangeState` times the local player's Katana charge (from a
 charge-up state to a charge-release state). If it was held at least 95% of the animation set's
-`MaxDamageChargeTime`, `DashRunner` (an injected MonoBehaviour) moves the player 40 m along the aim,
+`MaxDamageChargeTime`, a `ChangeState` prefix holds that release back (the swing waits) and
+`DashRunner` (an injected MonoBehaviour) moves the player up to 10 m along the aim,
 flattened, over 0.6 s through `PlayerCharacterController.Move`, so collision stops it and position
-syncs like any movement. Each frame it sweeps an `OverlapCapsule` (1.2 m) from the last position to
-the new one, so nothing is skipped at ~67 m/s, and slashes each enemy once per dash with the
-archetype's `ChargedAttackDamage` and x3 stagger through `BulletDamage`.
+syncs like any movement. Each frame a `SphereCast` (1.2 m) ahead finds the first living enemy in the
+way and cuts the step short to reach it. Contact - that enemy, any enemy within reach of the swept
+`OverlapCapsule`, or a wall that stops most of a step - or the end of the distance releases the held
+swing (`ChangeState` to the release state, let through by `KatanaDash.Releasing`), so the charged cut
+lands right there. If the release won't take, a `BulletDamage` cut stands in.
 
 ### Railgun (`Railgun`, `RailBeam`)
 
@@ -191,9 +192,13 @@ first 80 m (0.6 m a turn, 12 points a turn) that spin, widen and fade over 0.8 s
 `EffectLight`. `Impact_Metal` sparks play at every wall the line crosses. Teammates get
 `MindAttic.GTFO.AbsurdWeapons.RailShot`.
 
-### Chain Lightning Gun (`ChainLightning`, `LightningBolt`)
+### Chain Lightning Gun (`ChainLightning`, `ChainLightningDriver`, `LightningBolt`)
 
-The `CastWeaponRay` prefix swallows its ray too. `ChainLightning.Fire` takes the enemy the ray hits
+It never fires: the same `BulletWeapon.Fire` prefix that stops the lasers skips it (no shot, flash
+or kick). `ChainLightningDriver` reads `InputAction.Fire` while it's wielded and calls
+`ChainLightning.Fire` every 0.08 s, each strike's damage the archetype's scaled by
+`0.08 / ShotDelay` (same damage per second as one shot per `ShotDelay`). A bolt lasts 0.16 s, so
+successive ticks overlap into one continuous arc. Each tick takes the enemy a ray from the eye hits
 (`MASK_BULLETWEAPON_RAY`, 40 m) or, failing that, `SeekerGuns.FindLocks` within 6°. Each strike is
 `BulletDamage` (x2 stagger); the next target is the nearest unstruck living enemy within 8 m of the
 last strike with a clear `MASK_WORLD` line, up to five jumps at 75% of the previous damage.
@@ -201,60 +206,13 @@ last strike with a clear `MASK_WORLD` line, up to five jumps at 75% of the previ
 `BurstFlash` and `Impact_Electronics` sparks at each strike. The path (up to 7 points) goes to
 teammates as `MindAttic.GTFO.AbsurdWeapons.ChainLightning`.
 
-### Flamethrower (`FlameThrower`, `FlameAfterburn`, `FireBombProjectile`)
+### Grenade Pistol and Rifle (`GrenadeLauncher`, `LauncherGrenade`, `Explosion`)
 
-The `CastWeaponRay` prefix swallows its ray too, once a tick (15/s). `FlameThrower.Tick` checks
-`InputMapper.GetButtonKeyMouse(InputAction.Aim, ...)` for the local shooter: held, it lobs a fuel
-bomb instead of streaming (`FireBomb`, rate-limited to one every 1.25 s); otherwise `Stream` fans 5
-raycasts across a 12°-either-side cone out to 8 m and calls `BulletDamage` on whatever enemy each
-hits, falling off with distance (`Formulas.AreaFalloff`). A landed hit also `Ignite`s that enemy: an
-afterburn stack (capped at 5, `Formulas.AfterburnStacks`) that expires 3 s after the last hit.
-`FlameAfterburn`, an always-running `MonoBehaviour` (not gated on the trigger), ticks every burning
-enemy every 0.5 s for `AfterburnDamagePerStack x stacks` through the bullet path, and each tick also
-checks other living enemies within 3 m in sight and ignites them too, so fire spreads through a
-cluster. `FireBomb` spawns a `FireBombProjectile` that flies by hand (gravity, a sphere cast each
-step) and explodes on the first enemy or wall it touches - no fuse, no bounce - leaving a
-`FlameThrower.PoolState` that `FlameAfterburn` also ticks: `AreaDamage.Apply` every 0.5 s for 4 s,
-igniting anything it catches. Everything above is the igniting player's own game only (damage
-already syncs through the bullet path, same as every other weapon here); the bomb's flight is sent
-to teammates (`MindAttic.GTFO.AbsurdWeapons.FlameBombLaunch`) so they see it thrown and explode, but
-the afterburn ticks and the fire pool are not synced - a teammate doesn't see the lingering flames.
-
-### Flak Cannon (`FlakCannon`, `ShrapnelShard`, `FlakBall`)
-
-The `CastWeaponRay` prefix swallows each pellet of the shotgun's blast. `FlakCannon.FirePellet`
-checks `InputMapper.GetButtonKeyMouse(InputAction.Aim, ...)`: not held, every pellet becomes a
-`ShrapnelShard` - a physical shard flown by hand that sphere-casts each step for an enemy
-(`BulletDamage`, falling off with distance travelled) or the world (bounce, `ShardBounciness`, up to
-2 bounces) and expires after 1.2 s; shards are the shooter's own game only (a shotgun's worth of
-bouncing debris, every shot, isn't worth the network traffic). Held, only the shot's first pellet
-(`FlakCannon.ResetShot`, called from `SeekerGuns.BeginFire`) spawns a `FlakBall` instead - the rest
-are swallowed with no effect - a slower, lightly-lobbed orb that explodes on the first enemy or wall
-it touches: one `AreaDamage.Apply` blast plus ten radial raycasts in random directions
-(`BallShrapnelRays`) for a burst of secondary shrapnel hits layered over it, catching things just
-past the blast's edge. The ball's flight is sent to teammates
-(`MindAttic.GTFO.AbsurdWeapons.FlakBallLaunch`); only the shooter's own copy (`owner != null`) deals
-damage.
-
-### C-Foam Pistol and Rifle (`CFoamGun`, `CFoamTicker`)
-
-The `CastWeaponRay` prefix swallows their ray too: a plain raycast (70 m, same mask as the laser
-beams) stands in for a round. Each hit does its (tiny) direct damage and stacks foam on that enemy
-in `CFoamGun`'s dictionary, refreshing a duration rather than adding to it. Once an enemy has
-`StackThreshold` stacks, `CFoamTicker` - an always-on `MonoBehaviour`, not gated on the trigger -
-pulses a very heavy stagger on it every `TickSeconds` for as long as the foam holds, so a fully
-encased enemy stays held even after you stop shooting it, until the duration runs out without a
-fresh hit. The spraying player's own game only, like every other weapon here. The first hit on an
-enemy also spawns a tinted blob stuck to them (a plain primitive, no new assets) that grows with
-each stack; `[C-Foam Guns] FoamColor` picks White/Tan/Orange/Blue/Green/Purple, or `Random` for a
-fresh hue (any enemy, any shot) each time a new one starts getting foamed.
-
-### Grenade Launcher (`GrenadeLauncher`, `LauncherGrenade`, `Explosion`)
-
-- **Firing:** a prefix on `ProjectileManager.WantToFireGlue` checks the owner's wielded item's
-  `GearCategoryData`; for the launcher it spawns a grenade instead of glue and returns false. One
-  grenade per 0.5 s, so the launcher's burst extras are dropped. A `GlueGun.UpdateLocal` postfix
-  keeps the class (tool) ammo full while it's held.
+- **Firing:** plain semi-auto guns (Bataldo 3RB, main / TechMan Veruta XII, special) sharing the Arid 5's stats,
+  so a shot does the same from either; each keeps its own model's recoil. The `CastWeaponRay`
+  prefix swallows their ray and, for the local shooter, calls `GrenadeLauncher.Launch`: a grenade
+  from that model's barrel as drawn on screen (`Barrel.Shot`), aimed at the crosshair point, at 24 m/s.
+  Infinite ammo like every gun here; no brass.
 - **Flight:** `LauncherGrenade` flies by hand - gravity, `SphereCast` against
   `MASK_ENEMY_DAMAGABLE` (shooter's game only: explode) and `MASK_WORLD` (reflect, x0.55, settle on
   floors) - so it never touches players. The look is the lock melter's meshes copied from its loaded
@@ -265,20 +223,53 @@ fresh hue (any enemy, any shot) each time a new one starts getting foamed.
   `FRAGGRENADEEXPLODE`. Teammates get launch and detonate messages; their copies only bounce and
   explode when told (or 0.75 s after the fuse).
 
-### Gravity Hammer (`GravityHammer`, `GravityPull`)
+### Hand Grenade (`HandGrenade`, `HandGrenadeFuse`, `HandGrenadeSupply`)
 
-A `MeleeWeaponFirstPerson.ChangeState` postfix marks the local player as holding while the Gravity
-Hammer is in a charge-up state. `GravityPull` (an injected MonoBehaviour) then, every 0.2 s, pushes
-each living enemy within 12 m that it can see 1.2 m toward the player through `Knockback.Push`,
-stopping at 2.5 m, and pulses a violet `EffectLight`. A charge release held at least 95% of the
-animation set's `MaxDamageChargeTime` calls `ImpactBursts.Release(ImpactBurst.GravityBlast)` 2.5 m in
-front: 8 m, 15 damage, x100 stagger, 5 m knockback out, flash sent to teammates.
+A consumable, thrown like a glowstick. `HandGrenade.AddItem` (a `GameDataInit.Initialize` postfix)
+clones the glowstick's `ItemDataBlock` (the consumable whose name or instance prefab says
+"glowstick", preferring the uncolored one) as item 1203, so `ThrowingWeapon`'s wind-up throw, the
+thrown item's rigidbody bounce and its replication all stay vanilla.
+- **Look:** a `ThrowingWeapon.OnWield` postfix and a `GlowstickInstance.Setup` postfix hide the
+  glowstick's renderers and lights and add the lock melter's meshes (`LauncherGrenade.BuildModel`).
+  The thrown copy's `GlowstickInstance` is disabled, so it never glows. Third-person and pickup
+  models are still the glowstick's.
+- **Fuse:** `HandGrenadeFuse`, added to every client's thrown copy, blinks red faster and faster
+  and at 3 s shows `Explosion` everywhere; the item's `Owner` (or the host, if it has none) deals
+  `AreaDamage` (6 m, 60 falling to 25%, x6 stagger). The host then despawns the item
+  (`ItemReplicationManager.DeSpawn`); other games hide it until that arrives.
+- **Infinite / supply:** `HandGrenadeSupply` keeps the consumable ammo full while the local
+  consumable slot holds item 1203, and on the host gives every player a stack of 99 (`StackSize`) straight into their consumable
+  slot once per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`).
+All of it is `[Hand Grenade]`.
+
+### Sounds (`Sounds`, `LoopSounds`)
+
+Every weapon's sounds are the game's own Wwise events, chosen to match what it is and does, each a
+`[Sounds]` config entry holding the event name (empty = silent, or the gun's own sound for a shot).
+Guns with a shot override have their vanilla fire audio suppressed (prefixes on `BulletWeapon`'s
+`Trigger*FireAudio` / `TriggerSynced*PerShotAudio`) and play the override once per shot from the
+ray hook, on every client; "2D" events play for the shooter only. Defaults: Plasma
+`GAUSSPISTOLBODYA3D`, Railgun `GAUSSPISTOLFIRE2D_RANDOM`, Grenade Pistol/Rifle
+`FLAREGUNFIRE`, Tentacle Cannon
+`SNATCHERTENTACLESHOOT` (+ `SNATCHERTENTACLEHIT` on the bite). The trigger-driven guns never fire,
+so they have no gunshot: the laser runs a `FREEZERLOOP` (the freeze thrower's beam loop) at the gun while the trigger is held and
+Chain Lightning a `TERMINAL_CREEPY_STATIC_LOOP` with `FLUORESCENT_LIGHT_CRACKLE` at the strikes
+(`LoopSounds` stops a loop 0.25 s after its last tick). Mjolnir's thunderclap adds
+`ELEVATOR_THUNDER`; the Hand Grenade throws with `FRAGGRENADETHROW` (its `m_throwSoundEvent`) and
+bounces with `FRAGGRENADEBOUNCE`; the Victory Banner plants with `SENTRYGUN_DEPLOY`.
+
+### Warhammer slam (`WarhammerSlam`)
+
+A `ChangeState` postfix times the local player's Warhammer charge; a release held at least 95% of
+`MaxDamageChargeTime` schedules a slam `SlamDelaySeconds` (0.25 s) later - the swing's hit moment. Unless
+the swing's own hit already burst since the release (`ImpactBursts.LastBurstTime`), it finds the floor
+`SlamReach` (1.8 m) ahead (short of a wall) and calls `ImpactBursts.Release(ImpactBurst.Shockwave)` there:
+stagger and knockback all around, the flash (sent to teammates) and an `Impact_Concrete` dust burst.
 
 ### Light-attack tempo (`MeleeInjector.WithLightAttackTempo`, `SwordTempo`)
 
 The `MeleeSpeedModifier` getter is never called natively (IL2CPP inlined it), so patching it does
-nothing. Instead the Tanto (x1.6), Wakizashi (x1.25), Odachi (x0.85) and Shadow Dagger (x2.5) each
-get their own copy of their `MeleeAnimationSetDataBlock` (id = the weapon's id) whose light-attack
+nothing. Instead the Shadow Dagger (x2.5) gets its own copy of their `MeleeAnimationSetDataBlock` (id = the weapon's id) whose light-attack
 `MeleeAttackData` (miss and hit, left and right - copied, never edited in place) has every `*Time`
 divided by the speed, and a `ChangeState` postfix sets `WeaponAnimator.speed` to match during
 light attacks (1 otherwise). Charge-ups keep their timing, which the full-charge checks use.
@@ -337,7 +328,7 @@ shockwave's 1 x 100 knocks back anything that isn't stagger-immune. The flash is
 **Knockback (`Knockback`, `KnockbackSlides`):** the Warhammer's bursts also shove enemies: the
 struck one 4 m along the swing (12 m charged), the rest of the burst 6 m out from the impact. The
 slide eases out over a short time and is clipped by `NavMesh.Raycast`, so it stops at walls and
-ledges. **Wall slam:** a burst's `SlamDamagePerMeter` (Warhammer 5, Gravity Blast 3) turns the
+ledges. **Wall slam:** a burst's `SlamDamagePerMeter` (Warhammer 5) turns the
 distance a slide didn't get to travel when it hit the edge (minus 1 free metre) into damage and a
 x3 stagger on the limb nearest the wall, dealt on the host but credited to the player (and weapon) that knocked it back, with an
 `Impact_Concrete` puff. Enemy positions belong to the host: a client sends
@@ -373,16 +364,21 @@ shows it to everyone.
 
 ### Victory Banner (`VictoryBanner`, `BannerPylon`, `VictoryBannerBuff`)
 
-The C-Foam launcher's `WantToFireGlue` hook is reused a third time: it toggles instead of firing a
-projectile. Nothing active for the owner: a raycast down from just in front of them places a
-`BannerPylon` right there (no throw), sent to teammates (`...BannerPlant`). One already active:
-that pull instead retires it (`...BannerPickUp`) - the same message also fires automatically,
+The C-Foam launcher's `WantToFireGlue` hook toggles instead of firing a projectile, and logs each
+plant and pickup. The planted `BannerPylon` is a flag built from primitives (base, 2.1 m pole,
+finial, a green banner with a white emblem on a pivot that waves) with a permanent aura: a
+breathing green ground ring at `Radius` and an `EffectLight` filling it, both flaring on each heal
+pulse alongside the expanding pulse ring. Nothing active for the owner: a raycast down from just in front of them places a
+`BannerPylon` right there (no throw), sent to teammates (`...BannerPlant`), and switches them to
+their main weapon. Like a sentry, it's picked up by the owner walking within 2.5 m, looking at it
+and pressing Use (`InteractionLayer.SetInteractPrompt` shows "Pick up Victory Banner"), which retires it
+(`...BannerPickUp`) and wields the tool slot again - the same message also fires automatically,
 from the owner's own game, when `BannerPylon.StillInToolSlot` (checked twice a second, reading
 `PlayerBackpackManager.LocalBackpack`'s `GearClass` slot the same way `GearCycler` does) finds the
 Victory Banner is no longer what's actually equipped there - PageUp/PageDown, picking something
 else, or Home's restore. Every client runs the same planted `BannerPylon` independently: a pulsing
 ring every `PulseSeconds` out to `Radius`, and each client's own local player self-heals
-(`ReceiveAddHealth`, like Shadow Dagger's per-client decisions) if they're standing in it - no
+(`AddHealth`, `HealPercentPerPulse` of max health - the game's own synced heal, like Shadow Dagger's per-client decisions) if they're standing in it - no
 cross-client authority needed. `VictoryBannerBuff`, an always-on ticker, separately tracks whether
 the local player is in *any* active banner's ring; while they are, a `Dam_EnemyDamageLimb.
 BulletDamage` prefix multiplies every hit they deal - any weapon, this mod's or vanilla, since
@@ -398,25 +394,24 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   Pure/Formulas.cs      the weapons' numbers (no game types; unit tested)
   Plugin.cs             entry point: config, Il2Cpp type registration, network event, Harmony
   DataBlocks.cs         shared clone / lookup / gear-JSON rewrite helpers
-  MeleeInjector.cs      melee datablocks (Yari, swords, hammers, Shadow Dagger), Gravity Hammer animation set
-  GunInjector.cs        gun and Grenade Launcher datablocks, holds, kickless recoil
+  MeleeInjector.cs      melee datablocks (Katana, hammers, Shadow Dagger)
+  GunInjector.cs        gun and tool datablocks, holds, kickless recoil
   BladeStretcher.cs     blade / head scaling on model spawn
   WeaponSettings.cs     per-weapon config (BladeLength, BladeLengthAxis, Reach)
   SeekerGuns.cs         fire hooks, seeker kinds, network message
   SeekerProjectile.cs   the player-fired homing projectile
   ShadowDagger.cs       Shadow Dagger fast stabs, stealth (enemy AI patches, sync) and its shimmer
-  TentacleCannon.cs     Tentacle Pistol/Rifle fan, targeting, surface grab and the GPU tentacle lash
+  TentacleCannon.cs     Tentacle Cannon cone, targeting, surface grab and the GPU tentacle lash
   Railgun.cs            Railgun slug and its double-helix beam
-  ChainLightning.cs     Chain Lightning Gun strikes, jumps and bolt
-  FlameThrower.cs       Flamethrower cone, afterburn, fire spread and the fuel bomb
-  FlakCannon.cs         Flak Cannon shrapnel shards and the Aim-held ball
-  CFoamGun.cs           C-Foam Pistol/Rifle foam stacking and hold
+  ChainLightning.cs     Chain Lightning Gun's trigger-driven stream (no shots), strikes, jumps and bolt
+  HiveLocks.cs          Hive guns' Titanfall-style lock-on: pips, markers, locked-target cycling
   VictoryBanner.cs      Victory Banner placement/pickup, healing and the damage buff
-  GrenadeLauncher.cs    Grenade Launcher hook, grenade flight, fuse, blast, infinite tool ammo
-  GravityHammer.cs      Gravity Hammer pull and release blast
+  GrenadeLauncher.cs    Grenade Pistol/Rifle launch, grenade flight, fuse, blast
+  HandGrenade.cs        Hand Grenade consumable: item clone, lock-melter look, fuse, infinite stack, hand-out
   SwordTempo.cs         the swords' light-attack speeds
   GearCycler.cs         PageUp/PageDown in-level weapon swapping, Home restores the starting loadout
-  LaserGuns.cs          laser beam ticks, the persistent beam, its burn and the muted tracer
+  LaserGuns.cs          trigger-driven laser beam (no shots), its ticks and burn
+  Sounds.cs             per-weapon sound choices, vanilla shot audio suppression, loop sounds
   KatanaDash.cs         the Katana's full-charge dash-slash
   Knockback.cs          host-side physical knockback slides (Warhammer)
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
@@ -472,7 +467,7 @@ by launching the game after `build.ps1`. `BepInEx/LogOutput.log` should show one
 line per weapon and, while you look at the melee weapons, the blade length lines.
 
 Still to verify in-game:
-- All twenty weapons appear in the loadout screen in the right slots. If not, their categories may
+- All the weapons appear in the loadout screen in the right slots. If not, their categories may
   also need adding to `GearCategoryFilterDataBlock` (14 "MeleeWeapons" for melee).
 - How each model sits in the hand under its borrowed animations.
 - `BladeLength`:
@@ -487,27 +482,15 @@ Still to verify in-game:
   teammates, and nothing happens through walls.
 - Warhammer: every landed hit staggers everything within 6 m, including the struck enemy; check
   which heavies shrug it off.
-- New since the last in-game test: Grenade Launcher (tool slot, model, bounce, fuse, flash,
-  blast), Railgun, Chain Lightning Gun, Gravity Hammer (charge never auto-swings, pull, blast),
-  Tanto/Wakizashi/Odachi sizes and tempo, Tentacle Pistol, PageUp/PageDown swapping mid-level.
-- Flamethrower: the cone falls off with range and the stagger reads as "uncontrollable" up close;
-  afterburn keeps ticking after you stop firing or switch weapons and stacks/refreshes correctly;
-  fire visibly catches between enemies standing close together; holding Aim lobs a fuel bomb that
-  explodes on first contact (no fuse) and leaves a damaging patch rather than one blast. Known gap:
-  afterburn ticks and the fuel bomb's fire pool are the igniting player's own game only - a
-  teammate doesn't see your flame's impact flashes or the lingering ground fire, only the gun firing
-  and the enemy reacting (which does sync).
-- Flak Cannon: not aiming scatters bouncing shrapnel that reads as devastating up close and weak
-  across a room; holding Aim fires one ball instead that explodes into a visible radial burst of
-  shrapnel on whatever it touches first (enemy or wall), never a fuse. Known gap: the primary
-  shards aren't sent to teammates (only the ball is), so they only see your muzzle flash and the
-  enemies reacting, not the bouncing debris itself.
+- New since the last in-game test: Grenade Pistol/Rifle (model, bounce, fuse, flash,
+  blast), Railgun, Chain Lightning Gun, PageUp/PageDown swapping mid-level.
+
 - Victory Banner: fires it sets one down right in front of you (no throw); firing again picks it
   back up; PageUp/PageDown away from it, re-equipping another tool, or Home's restore all despawn
   it on their own within half a second. The ring heals everyone standing in it and the damage buff
   shows up on your own hits (any weapon) while you're inside it, climbing as you get kills without
   leaving, resetting the moment you step out.
-- Tentacle Rifle (tentacles draw and bite, confirmed):
+- Tentacle Cannon (tentacles draw and bite, confirmed):
   - The level fan reads as wild without going up or down.
   - Lashes start at the barrel on screen with the new hold.
   - Tentacles with no enemy grab nearby surfaces.
@@ -521,7 +504,8 @@ Still to verify in-game:
     second.
   - Everything comes back when the 6 s run out.
 - Katana: hits land at the tip of the ~2.2 m blade (3.2 m reach). The full-charge dash (confirmed
-  working at 4 m) now goes 40 m in 0.6 s: check it feels right and slashes everything it passes.
+  working at 4 m) now goes up to 10 m in 0.6 s and stops at the first enemy it reaches: check it
+  stops on contact and slashes that enemy.
 - Warhammer knockback: enemies slide and stop at walls and ledges, as host and as client.
 - Lasers: one steady beam while held (no per-tick tracer streaks), sparks and glow where it lands,
   no brass; teammates see the beam and burn.
@@ -530,7 +514,7 @@ Still to verify in-game:
   - Seekers hit enemies, are blocked by walls and doors, and never hurt players.
   - Damage registers when fired by the host and when fired by a client.
   - Teammates see the shots.
-  - The Plasma Pistol and Rifle fire ~17.5 blue balls a second, straight, with no recoil; the blue tint takes
+  - The Plasma Pistol and Rifle fire ~11.7 blue balls a second, straight, with no recoil; the blue tint takes
     on the whole projectile (glow, trail, particle core).
   - Hive Pistol/Rifle rounds leave the muzzle (not the camera) and curve onto locked enemies, cycling
     between them.
@@ -547,22 +531,23 @@ just ignores it). `BladeLength` is re-read whenever a model is built, so it can 
 restarting; everything else here is baked in at `GameDataInit.Initialize`, so it needs a restart.
 Shadow Dagger's stealth duration/bonus-per-kill/cap (`[Shadow Dagger] StealthSeconds` etc.) and the
 Katana's dash distance/time/slash radius/stagger (`[Katana] Dash...`) are their own entries, read
-live. Also config now: Gravity Hammer's pull (`[Gravity Hammer] Pull...`), the hammer-family impact
-bursts - Mjolnir's thunderclap, the Warhammer's shockwave and the Gravity Hammer's release blast
-(`[Mjolnir] Thunderclap...`, `[Warhammer] Shockwave...`, `[Gravity Hammer] Blast...`) - Mjolnir's
+live. Also config now: the hammer-family impact
+bursts - Mjolnir's thunderclap and the Warhammer's shockwave
+(`[Mjolnir] Thunderclap...`, `[Warhammer] Shockwave...`) - Mjolnir's
 throw (`[Mjolnir] Throw...`) and the shared physical-knockback tuning (`[Knockback]`). The ten original guns' damage, rate of fire and clip size are config too (`[Plasma Guns]`,
 `[Hive Guns]`, `[Laser Guns]`, `[Railgun]`, `[Chain Lightning Gun]`, `[Tentacle Guns]` - one section
-covers both the pistol and rifle of a pair, since they share stats); their other runtime numbers are config too: the Plasma/Hive seeker kinds' speed, damage and lock
+covers both guns of a pistol/rifle pair, since they share stats); their other runtime numbers are config too: the Plasma/Hive seeker kinds' speed, damage and lock
 range (`[Plasma Guns]`/`[Hive Guns]`, alongside the gun stats above), the laser beam's
 range/width (`[Laser Guns]`), the Railgun's penetration range (`[Railgun]`), Chain Lightning's
 range/jump range/falloff/stagger (`[Chain Lightning Gun]` - jump *count* stays fixed at 5: the
-network message has exactly enough fields for that many), and the Tentacle guns' fan/lock/grab
-cones and stagger (`[Tentacle Guns]`). The Grenade Launcher's speed, fuse, blast
-radius/damage/stagger and bounciness are `[Grenade Launcher]`. For
-the Flamethrower, Flak Cannon and Victory Banner, every one of their numbers - gun stats
+network message has exactly enough fields for that many), and the Tentacle guns' spew/engage/lock
+cones and stagger (`[Tentacle Guns]`). The Grenade Pistol/Rifle's speed, fuse, blast
+radius/damage/stagger, bounciness, shot delay and clip are `[Grenade Launcher]`; the Hand Grenade's fuse, blast and hand-out
+are `[Hand Grenade]`. For
+the Victory Banner, every one of its numbers - gun stats
 (damage, rate of fire, clip, pellet count/spread) included - is its own config entry
-(`[Flamethrower]`, `[Flak Cannon]`, `[Victory Banner]`), read once at `GameDataInit.Initialize` for
-the gun stats and live for the runtime behaviour (ranges, radii, afterburn, the damage buff), so
+(`[Victory Banner]`), read once at `GameDataInit.Initialize` for
+the gun stats and live for the runtime behaviour (ranges, radii, the damage buff), so
 most of it can be dialed in without restarting.
 
 ## Versioning

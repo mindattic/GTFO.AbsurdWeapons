@@ -3,8 +3,8 @@
 *(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-A BepInEx plugin for GTFO that adds **twenty-five new weapons**: nine melee weapons, fourteen guns
-and two tools. No game files are shipped or edited. Every weapon is built at load time from the game's own
+A BepInEx plugin for GTFO that adds **seventeen new weapons**: four melee weapons, eleven guns,
+a tool and a consumable. No game files are shipped or edited. Every weapon is built at load time from the game's own
 data, so they pick up vanilla balance changes, and nothing vanilla is modified.
 
 They show up in the loadout screen next to the vanilla weapons, in their normal slots. Every one of
@@ -17,14 +17,9 @@ can swap between them without going back to the lobby (see [Swapping weapons in 
 
 | Weapon | Model | Handles like | In one line |
 |---|---|---|---|
-| **Yari** | IsoCo Stinger (spear) | Sledgehammer | A spear blade brought down overhead; long reach, cleaves |
-| **Tanto** | Mastaba Fixed Blade, real tanto size | Knife, faster | The fastest, shortest sword |
-| **Wakizashi** | Mastaba Fixed Blade, real wakizashi size | Knife, a bit faster | A short sword with a little more reach and weight |
-| **Katana** | Mastaba Fixed Blade, real katana size | Bat | Wide cuts through everything in the arc; a full charge dashes you 40 m |
-| **Odachi** | Mastaba Fixed Blade, Norimitsu Odachi size | Sledgehammer, slower | Huge overhead cuts; a full charge kills anything it reaches |
+| **Katana** | Mastaba Fixed Blade, real katana size | Bat | Wide cuts through everything in the arc; a full charge dashes you up to 10 m with the swing held - it cuts the moment you reach an enemy or a wall |
 | **Mjolnir** | Santonian Mallet | Bat | Every hit releases a thunderclap; a full charge throws it, crackling chain lightning |
 | **Warhammer** | Kovac Sledgehammer, 3x head | Sledgehammer | 500-damage blow; every hit flings enemies, and walls hurt them |
-| **Gravity Hammer** | Omneco Maul | Sledgehammer | Hold the charge forever to drag enemies in; release to blast them out |
 | **Shadow Dagger** | Mastaba Fixed Blade | Knife, faster | A fully charged hit makes you unseen for 6 seconds |
 
 ### Guns
@@ -40,54 +35,39 @@ first; balance comes later.
 | **Hive Pistol** | Main | Shelling S49 | Titanfall's Smart Pistol: rounds curve onto locked enemies, 1 damage each |
 | **Hive Rifle** | Special | Malatack HXC | The same curving smart rounds |
 | **Laser Pistol** | Main | Raptus Treffen 2 | One continuous beam out to 70 m while the trigger is held; burns and sparks where it lands |
-| **Laser Rifle** | Special | Drekker DEL P1 | The same beam |
-| **Tentacle Pistol** | Main | Bataldo 3RB | A stream of striker tentacles that bite whatever they reach |
-| **Tentacle Rifle** | Special | Buckland XDist2 | The same tentacle stream |
+| **Laser Rifle** | Special | Accrat ND6 | The same beam |
+| **Tentacle Cannon** | Special | Buckland XDist2 | A stream of striker tentacles that bite whatever they reach |
+| **Grenade Pistol** | Main | Bataldo 3RB | Quake-style lobbed lock-melter grenades: instant on an enemy, else bounce and blow after 2.5 s |
+| **Grenade Rifle** | Special | TechMan Veruta XII | The same grenades, from its own barrel with its own kick |
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
-| **Chain Lightning Gun** | Special | Omneco exp1 | Lightning that leaps from enemy to enemy, up to five jumps |
-| **Flamethrower** | Special | TechMan Veruta XII | A short cone of fire, devastating up close; afterburn keeps ticking after the stream, and fire spreads between enemies standing close together. Hold Aim to lob a fuel bomb instead |
-| **Flak Cannon** | Special | Bataldo J 300 | A cone of bouncing shrapnel, devastating point-blank. Hold Aim to fire one compressed ball instead that explodes into a radial shrapnel burst on contact |
-| **C-Foam Pistol** | Main | Shelling Arid 5 | Sprays the C-Foam Launcher's own hardening foam full-auto: enough stacks on one enemy and it's held in place |
-| **C-Foam Rifle** | Special | Accrat ND6 | The same foam spray |
+| **Chain Lightning Gun** | Special | Omneco exp1 | A continuous stream of lightning that leaps from enemy to enemy, up to five jumps |
 
 ### Tools
 
 | Weapon | Model | In one line |
 |---|---|---|
-| **Grenade Launcher** | Stalwart Flow G2 (C-Foam launcher) | Lobs lock-melter grenades: instant on an enemy, else bounce and blow after 3 s; infinite ammo |
-| **Victory Banner** | Stalwart Flow G2 (C-Foam launcher) | Sets a banner down in front of you; fire again to pick it up. Heals and buffs everyone standing in its ring |
+| **Victory Banner** | Stalwart Flow G2 (C-Foam launcher) | Put a flag down in front of you, like a sentry, with a glowing healing aura; walk up and press Use to pick it up. Heals everyone inside and buffs your damage |
+
+### Consumables
+
+| Item | Model | In one line |
+|---|---|---|
+| **Hand Grenade** | Lock melter (thrown like a glowstick) | Hold to wind up, release to throw; bounces, then blows after 3 s. Everyone starts each level with 99, and they never run out |
 
 ## Melee weapons
 
 "Handles like" means everything except the model comes from that weapon: animations, sounds,
 reach, stamina costs, and the swing teammates see, unless a stat below says otherwise.
 
-### The Japanese swords: Tanto, Wakizashi, Katana, Odachi
+### Katana
 
-All four are the Mastaba Fixed Blade with the blade sized to the real sword (the grip stays
-knife-sized). They're a ladder: each step up is slower, hits harder and reaches further.
+The Mastaba Fixed Blade with a ~1.85 m blade (a real katana's is ~70 cm; the grip stays knife-sized),
+on the bat's moves: 4 / 14 damage, 3.5 m reach, cutting every enemy in the arc.
 
-| | **Tanto** | **Wakizashi** | **Katana** | **Odachi** |
-|---|---|---|---|---|
-| Real blade length | ~25 cm | ~50 cm | ~70 cm | 2.26 m (the Norimitsu Odachi) |
-| Moves | knife | knife | bat | sledgehammer |
-| Light-attack speed | x1.6 | x1.25 | x1 | x0.85 |
-| Light / charged damage | 2 / 6 | 3 / 9 | 4 / 14 | 6 / **9999** |
-| Reach | 1.6 m | 2.0 m | 2.3 m | 3.5 m |
-| Hits | one enemy | one enemy | every enemy in the arc | every enemy in the arc |
-| Special | - | - | full-charge dash | a full charge kills anything |
-
-**Katana dash-slash:** release a fully charged swing and you dash up to **40 m** forward along your
-aim (kept level) in 0.6 s. Every enemy you pass within 1.2 m takes the charged swing's damage with
-a x3 stagger, once each. Walls and props stop the dash short.
-
-**Odachi:** charge damage scales with how long you hold, so even a partly charged cut is
-devastating.
-
-### Yari
-
-A Japanese spear's long blade brought down overhead like a splitting maul: the spear's 3.2 m reach
-and cleave with the sledgehammer's swing, sounds and 3 / 20 damage.
+**Katana dash-slash:** release a fully charged swing and, instead of swinging, you dash up to
+**10 m** forward along your aim (kept level) in 0.6 s **with the swing held**. The moment you make
+contact - an enemy within reach, or a wall or prop that stops you - the charged cut is released
+right there, twice as fast as a normal charged swing. If you reach nothing, it swings at the end of the dash.
 
 ### Mjolnir
 
@@ -99,33 +79,20 @@ A short-hafted war hammer on the bat's moveset.
 - **Throw:** release a full charge and a Mjolnir flies from your hand, tumbling end over end, out
   to 25 m (or the first wall), then comes back to you (one throw at a time; the one in your hand
   stays put). It hits every enemy it passes through (20
-  damage, x4 stagger, once each way) and every 0.12 s throws a lightning pulse at the nearest enemy
-  within 6 m, which jumps on to two more (6 damage, 75% per jump).
+  damage, x4 stagger, once each way) and whenever an enemy is within 3 m of it, it casts chain lightning at
+  the nearest one (every 0.12 s while one's that close), which jumps on to two more (6 damage, 75% per jump).
 
 ### Warhammer
 
 A sledgehammer with a head the size of a crate. Charged 500 / light 6 damage, x55 / x11 stagger,
 x10 to doors and locks on a charged hit, 2.4 m reach, hits several enemies. **Shockwave:** every hit that lands
-staggers everything within 6 m (1 damage, x100 stagger). **Knockback:** enemies are flung across
+staggers everything within 6 m (1 damage, x100 stagger). **Slam:** a fully charged swing always comes
+down on the ground in front of you with the shockwave, dust and a flash - and flings everything
+around away - even if it hits nothing. **Knockback:** enemies are flung across
 the floor: the one you hit 4 m (**12 m** on a charged hit), the rest 6 m out from the impact. Walls
 and ledges stop the slide. **Wall slam:** an enemy that hits a wall with fling still to go takes
 "sideways fall damage": 5 per metre it didn't get to travel (the first metre is free), with a
 stagger and a puff of dust. A charged hit into a nearby wall does about 50.
-
-### Gravity Hammer
-
-The Omneco Maul on the sledgehammer's swing, with a charge that **never swings by itself**: hold it
-as long as you like. While you hold it:
-
-- Every enemy within 12 m that it can see is dragged toward you, 1.2 m at a time, five times a
-  second, stopping 2.5 m away.
-- A violet glow pulses in front of you, brighter as the charge builds. You move at 60% speed.
-
-**Release a full charge** and it lets go 2.5 m in front of you (or just short of a wall):
-everything within 8 m is staggered (x100, 15 damage falling to half at the edge) and thrown 5 m
-back out, taking 3 per metre
-of wall slam. The swing itself still hits (30 damage, cleaves). An
-early release is just a normal swing.
 
 ### Shadow Dagger
 
@@ -145,34 +112,48 @@ visible again.
 ### Plasma Pistol (main) and Plasma Rifle (special)
 
 Doom's plasma gun: a rapid stream of blue plasma balls (real enemy projectiles, tinted) that fly
-straight and stop at walls and doors. Each does **5 × 1d8 (5–40)** and a small 1.25 m electric
-splash (6 damage falling to 40% at the edge, x3 stagger). ~17.5 a second. No recoil, no brass.
+dead straight at twice Doom's speed, with no spread at all - every ball goes exactly where the
+crosshair is - and stop at walls and doors. Each does **5 × 1d8 (5–40)** and a small 1.25 m electric
+splash (6 damage falling to 40% at the edge, x3 stagger). One every 3 tics, ~11.7 a second, like Doom. No recoil, no brass.
 
 ### Hive Pistol (main) and Hive Rifle (special)
 
-Titanfall's Smart Pistol: each locks onto up to 6 enemies within 35° of your crosshair (60 m), and
-every round bends out of the barrel onto one of them, taking turns. Every round lands but does only
-**1 damage**. ~11 a second. No recoil.
+Titanfall's Smart Pistol: each locks onto up to 6 enemies within 35° of your crosshair (60 m) -
+you see a lock marker build up on each - and every round bends out of the barrel onto one of them,
+taking turns. Every round lands but does only **1 damage**. ~11 a second. No recoil.
 
 ### Laser Pistol (main) and Laser Rifle (special)
 
 One continuous red beam from the barrel to whatever your crosshair is on, for as long as you hold
 the trigger. Where it lands it **burns**: a white-hot spot, an orange glow, sparks and scorch marks.
-40 damage a second out to 70 m. No recoil, no brass.
+They don't shoot: it's one constant beam, and its end burns whatever enemy it's on, 40 damage a
+second out to 70 m. No bullets, no muzzle flash, no kickback.
 
-### Tentacle Pistol (main) and Tentacle Rifle (special)
+### Tentacle Cannon (special)
 
-Every round is a striker's own tentacle, mouth and all. They burst out in a **wide, level fan** (up
-to 30° left or right, 5° up or down) thrashing side to side. **While any enemy is in front of you**
-(within 60° of your aim, out to a striker's own tentacle length) every tentacle goes for one; only with no enemy around do they grab
-the nearest crate, wall or floor. Each bite does 11 and staggers hard (x5); ~4.3 a second.
+Every round is a striker's own tentacle, mouth and all. They spew out in a **tight cone straight ahead** (within 8° of
+your aim), thrashing as they go. **While any enemy is in front of you**
+(within 15° of your aim, out to a striker's own tentacle length) every tentacle reaches out and curves onto one; with no enemy in reach they just wriggle tightly a few
+metres out in a narrow cone. It's carried very low at the waist, like a minigun. Each bite does 22 and staggers hard (x5); ~4.3 a second.
+
+### Grenade Pistol (main) and Grenade Rifle (special)
+
+Plain semi-auto launchers on heavy guns - the Bataldo 3RB revolver (main) and the TechMan Veruta XII (special). A shot does
+exactly the same from either; each just looks like its own gun firing - its own barrel, its own kick. Every shot is a **lock melter rigged to blow**, with infinite ammo.
+
+- **Hits an enemy:** explodes instantly.
+- **Misses:** bounces off walls and floors, losing half its speed each time, and explodes **2.5 seconds** after firing.
+- While it's out it **flashes red faster and faster** (with a beep each flash) as the fuse burns.
+- It's lobbed: launched fast with a little upward lift, so it arcs out a long way.
+- The blast does 75 damage at the center, falling to a third at 5.2 m, with a heavy stagger (x5). It
+  never hurts players.
 
 ### Railgun (special)
 
 The Köning PR 11, semi-auto, one shot a second. Each shot is an instant slug with **infinite
 penetration**: it goes through every enemy and every wall out to 200 m, doing **60 to each enemy**
 on the line (headshots still count). It's drawn as a white-hot beam wrapped in a spinning double
-helix, with sparks wherever it punches through a wall. Keeps the sniper's scope and kick.
+helix, with sparks wherever it punches through a wall. Slow but devastating, like Quake's rail: **150 damage** to everything on the line, one shot every 1.5 s. Keeps the sniper's scope, with no kickback; the beam starts well out ahead of you.
 
 ### Chain Lightning Gun (special)
 
@@ -181,57 +162,16 @@ The Omneco exp1, full-auto at ~6.7 bolts a second. Each bolt strikes the enemy u
 hasn't hit, up to 5 jumps. Damage is 10 to the first, then 75% of the last on each jump. Jumps need
 a clear line. No recoil, no brass.
 
-### Flamethrower (special)
-
-The TechMan Veruta XII, full-auto, 15 ticks a second. Each tick is a short 8 m cone that falls off
-hard with range - devastating up close, nearly useless across a room. An enemy it touches catches
-**afterburn**: a damage-over-time that keeps ticking for 3 seconds after the stream leaves them
-(stacks up to 5x, refreshed by the next hit), and a burning enemy's own ticks can set off any other
-living enemy within 3 m of it, so a cluster goes up together. **Hold Aim** instead of firing to lob
-a fuel bomb: it explodes on the first thing it touches - no fuse - and leaves a lingering patch of
-fire rather than one instant blast.
-
-### Flak Cannon (special)
-
-The Bataldo J 300, semi-auto, scattering 9 pellets a shot. Not aiming, every pellet becomes a
-**bouncing shard of shrapnel** - devastating up close, falling off hard with distance, bouncing off
-walls up to twice before it burns out. **Hold Aim** instead and the whole shot compresses into a
-single slow ball: it explodes on the first thing it touches (no fuse) for a blast plus a **radial
-burst of secondary shrapnel**, catching things just past the edge of it - the classic Unreal
-Tournament flak trick.
-
-### C-Foam Pistol (main) and C-Foam Rifle (special)
-
-The C-Foam Launcher's own hardening foam, sprayed full-auto instead of lobbed. Barely any direct
-damage - every round instead **stacks foam** on the enemy it hits. Enough stacks and they're fully
-**encased**: held in place by a heavy stagger pulse every half second for as long as the foam
-holds, even if you stop shooting them, until it runs out without a fresh hit to top it back up.
-The foam shows up as a tinted blob on the enemy that grows with every stack - pick its color in
-the config (`[C-Foam Guns] FoamColor`), or set it to `Random` for a different color each time.
-
-## Tools
-
-### Grenade Launcher
-
-The C-Foam launcher, but every glob it would fire is a **lock melter rigged to blow**. One grenade
-per trigger pull, with **infinite tool ammo**.
-
-- **Hits an enemy:** explodes instantly.
-- **Misses:** bounces off walls and floors, losing speed, and explodes **3 seconds** after firing.
-- While it's out it **flashes red faster and faster** (with a beep each flash) as the fuse burns.
-- The blast does 40 damage at the center, falling to 25% at 5 m, with a heavy stagger (x5). It
-  never hurts players.
-
 ### Victory Banner
 
-The C-Foam launcher, but firing it **sets a banner down right in front of you** instead of throwing
-anything. Fire again while yours is still up and you **pick it back up** instead of planting a
-second one. Switching your tool slot away from it - PageUp/PageDown, equipping something else, or
+You carry the flag itself. Press fire and it's **planted right in front of you** at once - a pole
+with a green banner waving from it - no charging up. Like a sentry, you **pick it back up** by walking up to it, looking at it and pressing **Use** (a
+prompt shows) - planting switches you to your main weapon meanwhile. Switching your tool slot away from it - PageUp/PageDown, equipping something else, or
 pressing Home to restore your starting loadout - **retires it on its own**, no need to pick it up
 first.
 
-While it's up it pulses an expanding ring every couple of seconds out to **8 m**, **healing**
-everyone standing inside it, and giving **you** a damage bonus (any weapon, this mod's or vanilla)
+While it's up, a **glowing green aura** lies on the ground around it out to **8 m**. Every couple of
+seconds it pulses, **healing** everyone standing inside it 8% of their max health, and giving **you** a damage bonus (any weapon, this mod's or vanilla)
 while you're in it: **+15%**, climbing toward **+25%** the more enemies you kill without leaving the
 ring, reset the moment you step out.
 
@@ -254,9 +194,9 @@ One section per melee weapon:
 
 | Setting | Default | What it does |
 |---|---|---|
-| `BladeLength` | Tanto 0.93, Wakizashi 1.87, Katana 2.6, Odachi 8.4, Warhammer 3, others 1 | How much the blade (or hammer head) is stretched; 1 is the model's own size. Re-read whenever the weapon is rebuilt (loadout screen, re-equip), so you can tune it without restarting. |
+| `BladeLength` | Katana 6.9, Warhammer 3, others 1 | How much the blade (or hammer head) is stretched; 1 is the model's own size. Re-read whenever the weapon is rebuilt (loadout screen, re-equip), so you can tune it without restarting. |
 | `BladeLengthAxis` | Y (Warhammer: All) | Which of the model's axes is "length". All scales it evenly, so a head gets bigger instead of longer. |
-| `Reach` | 0 (built-in: Yari 3.2, Tanto 1.6, Wakizashi 2.0, Katana 2.3, Odachi 3.5, Warhammer 2.4, Gravity Hammer 2.2) | How far hits land, in meters. Takes effect on restart. |
+| `Reach` | 0 (built-in: Katana 3.5, Warhammer 2.4) | How far hits land, in meters. Takes effect on restart. |
 
 `[Gear Cycling]`:
 
@@ -277,14 +217,20 @@ One section per melee weapon:
 Everyone in the lobby needs this mod. Weapons sync between players by an id that only exists for
 players who have it installed. The player who fires deals the damage through the normal bullet
 path, so health, stagger and kills stay in sync. Teammates are sent every shot, beam, tentacle,
-bolt, grenade, flash and stealth, and see the same thing. Knockback and the Gravity Hammer's pull
-are done by the host, who owns enemy positions.
+bolt, grenade, flash and stealth, and see the same thing. Knockback is done by the host, who owns enemy positions.
+
+## Sounds
+
+Every weapon sounds like what it is: no gunshots from the lightning or laser guns (a crackling electric
+loop and a continuous beam hum instead), a gauss crack from the Railgun, a hollow thump from the grenade guns,
+tentacle lashes and bites, thunder from Mjolnir. Every one is the game's own
+sound, and each can be swapped for any other game sound by name in the config (`[Sounds]`).
 
 ## Compatibility
 
 - **GTFO.EZ:** compatible, in either load order. Weapons are built after EZ's tuning, so each
   starts from EZ's version of the weapon it's copied from. Stats this mod sets itself stay fixed.
-- **Other mods that add weapons** at the same ids (1001-1010 melee, 1101-1110 guns, 1201 tool): if
+- **Other mods that add weapons** at the same ids (1001-1010 melee, 1101-1116 guns, 1202 tool, 1203 consumable): if
   one already uses an id, that weapon isn't added and `LogOutput.log` says so. The rest still load.
   The mod also adds melee animation sets 1006-1010, recoil profiles 1101-1110 and first-person hold
   1103; a clash there drops that weapon (animation sets) or leaves it its model's recoil.

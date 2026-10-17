@@ -78,7 +78,7 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
 
     internal static void Bind(ConfigFile config)
     {
-        var plasmaSpeed = config.Bind("Plasma Guns", "BallSpeed", 28.6f, "Plasma ball speed, m/s.");
+        var plasmaSpeed = config.Bind("Plasma Guns", "BallSpeed", 57.2f, "Plasma ball speed, m/s (twice Doom's 28.6).");
         var plasmaDamageDie = config.Bind("Plasma Guns", "DamageDie", 8, "Each hit rolls DamageScale x 1dDamageDie.");
         var plasmaDamageScale = config.Bind("Plasma Guns", "DamageScale", 5f, "Each hit rolls DamageScale x 1dDamageDie.");
         var plasmaBlastRadius = config.Bind("Plasma Guns", "BlastRadius", 1.25f, "Metres of the small shock on impact.");
@@ -141,8 +141,6 @@ internal static class SeekerGuns
     private static uint firingArchetype;
     private static BulletWeapon? firingWeapon;
 
-    // Smart lock: the enemy the last smart round went to, so the next takes the one after it.
-    private static IntPtr lastLock;
 
     internal static void Init()
     {
@@ -158,6 +156,50 @@ internal static class SeekerGuns
     [HarmonyPatch(typeof(BulletWeapon), nameof(BulletWeapon.Fire))]
     [HarmonyFinalizer]
     private static void AfterBulletFire(BulletWeapon __instance, uint __state) => EndFire(__instance, __state);
+
+    // The laser guns and the Chain Lightning Gun never fire at all - no shot, muzzle flash, brass or
+    // kick. Their beam / lightning stream is driven straight from the trigger (LaserDriver,
+    // ChainLightningDriver); the lasers' steady hold keeps them raised at hip height.
+    [HarmonyPatch(typeof(BulletWeapon), nameof(BulletWeapon.Fire))]
+    [HarmonyPrefix]
+    private static bool SkipStreamFire(BulletWeapon __instance) => !FiresAStream(__instance.ArchetypeData?.persistentID ?? 0);
+
+    [HarmonyPatch(typeof(BulletWeaponSynced), nameof(BulletWeaponSynced.Fire))]
+    [HarmonyPrefix]
+    private static bool SkipSyncedStreamFire(BulletWeaponSynced __instance) => !FiresAStream(__instance.ArchetypeData?.persistentID ?? 0);
+
+    private static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId;
+
+    // For the lasers even the archetype's trigger logic is skipped - it runs the gun's firing, fire
+    // animation and recoil before Fire is ever reached - so a held trigger does nothing to the gun
+    // itself; the beam is LaserDriver's.
+    [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.Update))]
+    [HarmonyPrefix]
+    private static bool SkipLaserTrigger(BulletWeaponArchetype __instance) => !IsLaserArchetype(__instance);
+
+    [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.OnFireShot))]
+    [HarmonyPrefix]
+    private static bool SkipLaserShot(BulletWeaponArchetype __instance) => !IsLaserArchetype(__instance);
+
+    [HarmonyPatch(typeof(BWA_Auto), nameof(BWA_Auto.OnFireShot))]
+    [HarmonyPrefix]
+    private static bool SkipLaserAutoShot(BWA_Auto __instance) => !IsLaserArchetype(__instance);
+
+    [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.OnStartFiring))]
+    [HarmonyPrefix]
+    private static bool SkipLaserStartFiring(BulletWeaponArchetype __instance) => !IsLaserArchetype(__instance);
+
+    private static bool IsLaserArchetype(BulletWeaponArchetype archetype)
+    {
+        try
+        {
+            return LaserGuns.ForGun(archetype.m_archetypeData?.persistentID ?? 0) != null;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
 
     [HarmonyPatch(typeof(Shotgun), nameof(Shotgun.Fire))]
     [HarmonyPrefix]
@@ -193,8 +235,7 @@ internal static class SeekerGuns
         if (LaserGuns.ForGun(firingArchetype) != null || firingArchetype is GunInjector.RailgunId or GunInjector.ChainLightningId)
             LaserGuns.MuteTracer(weapon);
         if (TentacleCannon.IsTentacleGun(firingArchetype) && TentacleCannon.DiagnosticShots > 0)
-            Plugin.Logger.LogInfo("GTFO.AbsurdWeapons Tentacle Rifle: Fire() called.");
-        if (firingArchetype == GunInjector.FlakCannonId) FlakCannon.ResetShot();
+            Plugin.Logger.LogInfo("GTFO.AbsurdWeapons Tentacle Cannon: Fire() called.");
     }
 
     private static void EndFire(BulletWeapon weapon, uint previous)
@@ -228,19 +269,15 @@ internal static class SeekerGuns
         var ours = false;
         try
         {
+            // Our guns' own shot sound, where it replaces the vanilla one (Sounds), once per shot.
+            Sounds.Shot(firingWeapon, firingArchetype != 0 ? firingArchetype : weaponRayData.gearCategoryId, originPos);
             var laser = LaserGuns.ForGun(firingArchetype) ?? LaserGuns.ForGun(weaponRayData.gearCategoryId);
             if (laser != null)
             {
                 ours = true;
                 weaponRayData.maxRayDist = 0f;
                 __result = false;
-                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
-                if (shooter != null && shooter.IsLocallyOwned)
-                {
-                    var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
-                    LaserGuns.Tick(laser, shooter, firingWeapon?.MuzzleAlign, originPos, aim, weaponRayData.damage,
-                        weaponRayData.staggerMulti, weaponRayData.precisionMulti, weaponRayData.gearCategoryId);
-                }
+                // Swallowed and nothing more: the beam (and its damage) is LaserDriver's.
                 return false;
             }
 
@@ -273,7 +310,8 @@ internal static class SeekerGuns
                 return false;
             }
 
-            if (firingArchetype == GunInjector.FlamethrowerId || weaponRayData.gearCategoryId == GunInjector.FlamethrowerId)
+            if (firingArchetype is GunInjector.GrenadePistolId or GunInjector.GrenadeRifleId
+                || weaponRayData.gearCategoryId is GunInjector.GrenadePistolId or GunInjector.GrenadeRifleId)
             {
                 ours = true;
                 weaponRayData.maxRayDist = 0f;
@@ -282,44 +320,8 @@ internal static class SeekerGuns
                 if (shooter != null && shooter.IsLocallyOwned)
                 {
                     var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
-                    FlameThrower.Tick(shooter, originPos, aim, weaponRayData.damage, weaponRayData.gearCategoryId);
-                }
-                return false;
-            }
-
-            if (firingArchetype == GunInjector.CFoamPistolId || weaponRayData.gearCategoryId == GunInjector.CFoamPistolId
-                || firingArchetype == GunInjector.CFoamRifleId || weaponRayData.gearCategoryId == GunInjector.CFoamRifleId)
-            {
-                ours = true;
-                weaponRayData.maxRayDist = 0f;
-                __result = false;
-                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
-                if (shooter != null && shooter.IsLocallyOwned
-                    && Physics.Raycast(originPos, weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward,
-                        out var cfoamHit, 70f, LayerManager.MASK_BULLETWEAPON_RAY))
-                {
-                    var limb = cfoamHit.collider.GetComponent<Dam_EnemyDamageLimb>();
-                    var enemy = limb?.m_base?.Owner;
-                    if (limb != null && enemy != null && enemy.Alive)
-                    {
-                        var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
-                        CFoamGun.Hit(limb, enemy, shooter, cfoamHit.point, aim, weaponRayData.damage, weaponRayData.gearCategoryId);
-                    }
-                }
-                return false;
-            }
-
-            if (firingArchetype == GunInjector.FlakCannonId || weaponRayData.gearCategoryId == GunInjector.FlakCannonId)
-            {
-                ours = true;
-                weaponRayData.maxRayDist = 0f;
-                __result = false;
-                // Shotgun pellets come without an owner in the hit data: fall back to the gun's.
-                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
-                if (shooter != null && shooter.IsLocallyOwned)
-                {
-                    FlakCannon.FirePellet(shooter, firingWeapon?.MuzzleAlign, originPos, PelletDirection(alignTransform, weaponRayData),
-                        weaponRayData.damage, weaponRayData.gearCategoryId);
+                    var (from, toCrosshair) = Barrel.Shot(shooter, firingWeapon?.MuzzleAlign, originPos, aim);
+                    GrenadeLauncher.Launch(shooter, from, toCrosshair, weaponRayData.gearCategoryId);
                 }
                 return false;
             }
@@ -328,7 +330,7 @@ internal static class SeekerGuns
             {
                 ours = true;
                 if (TentacleCannon.DiagnosticShots > 0)
-                    Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Rifle ray: archetype {firingArchetype}, category {weaponRayData.gearCategoryId}, owner {(weaponRayData.owner != null ? "set" : "null")}.");
+                    Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Cannon ray: archetype {firingArchetype}, category {weaponRayData.gearCategoryId}, owner {(weaponRayData.owner != null ? "set" : "null")}.");
                 weaponRayData.maxRayDist = 0f;
                 __result = false;
                 // Shotgun pellets come without an owner in the hit data: fall back to the gun's.
@@ -355,15 +357,12 @@ internal static class SeekerGuns
             if (owner == null || !owner.IsLocallyOwned) return false;
 
             var direction = PelletDirection(alignTransform, weaponRayData);
-            var position = originPos + direction * 0.5f; // clear of the shooter's own body
+            // Out of this model's own barrel (as drawn on screen); a straight shot is aimed from
+            // there at whatever the crosshair is on, so it still lands where you point.
+            var (position, fromBarrel) = Barrel.Shot(owner, firingWeapon?.MuzzleAlign, originPos, direction);
             EnemyAgent? locked = null;
-            if (kind.SmartLock)
-            {
-                // Out of the barrel, not the eye; the lock is picked from where the crosshair is.
-                var muzzle = firingWeapon?.MuzzleAlign;
-                if (muzzle != null) position = muzzle.position + direction * 0.1f;
-                locked = NextLock(kind, originPos, direction);
-            }
+            if (kind.SmartLock) locked = NextLock(kind, originPos, direction); // picked from the crosshair; the curve does the rest
+            else direction = fromBarrel;
 
             SeekerProjectile.Spawn(kind, position, direction, owner, weaponRayData.damage,
                 weaponRayData.staggerMulti, weaponRayData.precisionMulti, weaponRayData.gearCategoryId,
@@ -382,6 +381,9 @@ internal static class SeekerGuns
         }
     }
 
+    // Smart lock: the enemy the last smart round went to, so the next takes the one after it.
+    private static IntPtr lastLock;
+
     // Titanfall-style lock: the living, visible enemies within the cone around the crosshair,
     // nearest the crosshair first, up to MaxLocks; successive shots take turns between them.
     private static EnemyAgent? NextLock(SeekerKind kind, Vector3 eye, Vector3 aim)
@@ -391,6 +393,7 @@ internal static class SeekerGuns
 
         // The one after the enemy last fired at (nearest the crosshair first if that one's gone).
         var count = Math.Min(locks.Count, kind.MaxLocks);
+        if (count <= 0) return null; // MaxLocks 0: no locks, the round hunts on its own
         var last = locks.FindIndex(0, count, enemy => enemy.Pointer == lastLock);
         var pick = locks[(last + 1) % count];
         lastLock = pick.Pointer;
@@ -463,5 +466,31 @@ internal static class SeekerGuns
             var point = lockPoint ?? Vector3.zero;
             (LockX, LockY, LockZ) = (point.x, point.y, point.z);
         }
+    }
+}
+
+/// <summary>
+/// Where a shot visibly leaves the gun in hand. Each model's barrel sits in its own place (a
+/// pistol's low and close, a rifle's further out), so projectiles and beams start there - where the
+/// first-person camera draws the muzzle (<see cref="TentacleCannon.BarrelOnScreen"/>) - instead of at
+/// the eye. What the shot does is the same whichever model fires it.
+/// </summary>
+internal static class Barrel
+{
+    private const float AimRange = 100f;
+
+    // The muzzle on screen, or a point ahead of the eye when there's no muzzle to use.
+    internal static Vector3 Start(PlayerAgent? owner, Transform? muzzle, Vector3 eye, Vector3 aim) =>
+        muzzle != null ? TentacleCannon.BarrelOnScreen(owner, muzzle, 0f) : eye + aim * 0.5f;
+
+    // A shot's start (just out of the barrel) and its direction from there to whatever the
+    // crosshair is on, so it lands where the player is pointing.
+    internal static (Vector3 Start, Vector3 Direction) Shot(PlayerAgent? owner, Transform? muzzle, Vector3 eye, Vector3 aim)
+    {
+        var start = Start(owner, muzzle, eye, aim);
+        var target = Physics.Raycast(eye, aim, out var hit, AimRange, LayerManager.MASK_BULLETWEAPON_RAY) ? hit.point : eye + aim * AimRange;
+        var toTarget = target - start;
+        var direction = toTarget.sqrMagnitude > 0.25f ? toTarget.normalized : aim; // point-blank: just along the aim
+        return (start + direction * 0.1f, direction);
     }
 }

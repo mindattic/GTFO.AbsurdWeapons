@@ -9,7 +9,6 @@ namespace GTFO.AbsurdWeapons;
 /// Keeps this mod's gun in the local player's hands fully loaded with a full reserve, every frame,
 /// so it never runs dry and a gun just swapped in by <see cref="GearCycler"/> starts loaded.
 /// SeekerGuns also refills the clip after every shot, which covers several shots in one frame.
-/// The Grenade Launcher (a tool) is kept full by GrenadeLauncher.
 /// </summary>
 internal sealed class InfiniteAmmo : MonoBehaviour
 {

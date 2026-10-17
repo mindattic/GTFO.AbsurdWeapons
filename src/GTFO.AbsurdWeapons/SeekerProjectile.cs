@@ -39,6 +39,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
     private EnemyAgent? target;
     private IntPtr ignoredEnemy; // a shard won't chase the enemy its parent just hit
     private bool dead;
+    private bool homing; // off for a plain (unlocked) smart round: it flies straight
 
     // Smart-lock curve (Titanfall's Smart Pistol): a quadratic Bezier from the muzzle, pulled
     // out along the aim, onto the locked enemy's chest - re-aimed at it every frame as it moves.
@@ -54,7 +55,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
     [HideFromIl2Cpp]
     internal static void Spawn(SeekerKind kind, Vector3 position, Vector3 direction, PlayerAgent? owner,
         float damage, float staggerMulti, float precisionMulti, uint gearCategoryId, IntPtr ignoredEnemy = default,
-        EnemyAgent? lockTarget = null, Vector3? lockPoint = null)
+        EnemyAgent? lockTarget = null, Vector3? lockPoint = null, bool homing = true)
     {
         direction = Spread(direction.normalized, kind.SpreadDegrees);
         var go = ProjectileManager.SpawnProjectileType(kind.Projectile, position, Quaternion.LookRotation(direction));
@@ -91,6 +92,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
         seeker.wobbleAxis = Vector3.Cross(direction, UnityEngine.Random.onUnitSphere).normalized;
         seeker.wobblePhase = UnityEngine.Random.value * Mathf.PI * 2f;
         seeker.retargetIn = kind.LaunchSeconds;
+        seeker.homing = homing && kind.Homing;
 
         var end = lockTarget != null ? lockTarget.AimTarget.position : lockPoint;
         if (end.HasValue)
@@ -127,7 +129,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
             return;
         }
 
-        if (kind.Homing && age >= kind.LaunchSeconds)
+        if (homing && age >= kind.LaunchSeconds)
         {
             if (target == null || !target.Alive)
             {
@@ -175,7 +177,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
             {
                 curveEnd = curveTarget.AimTarget.position;
             }
-            else if (kind.Homing)
+            else if (homing)
             {
                 // Its target died: hunt the next one instead of flying on to where it was.
                 curving = false;

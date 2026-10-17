@@ -21,6 +21,7 @@ internal static class Railgun
 {
     internal static ConfigEntry<float> Range = null!;
     private const string ShotEvent = "MindAttic.GTFO.AbsurdWeapons.RailShot";
+    private const float BeamStartAhead = 1.2f; // metres past where the gun sits on screen
 
     internal static void Bind(ConfigFile config) =>
         Range = config.Bind("Railgun", "PenetrationRange", 200f, "Metres the piercing slug reaches.");
@@ -53,7 +54,8 @@ internal static class Railgun
                 allowDirectionalBonus: true, staggerMulti, precisionMulti, gearCategoryId);
         }
 
-        var start = LaserGuns.ScreenStart(eye, aim);
+        // Pushed out ahead of the gun so the beam doesn't start in the player's face.
+        var start = LaserGuns.ScreenStart(eye, aim) + aim * BeamStartAhead;
         var end = eye + aim * Range.Value;
         RailBeam.Spawn(start, end);
         WallSparks(eye, end);
@@ -97,7 +99,7 @@ internal sealed class RailBeam : MonoBehaviour
 {
     private const float Seconds = 0.8f;
     private const float HelixLength = 80f;     // the helix wraps the first stretch; the core runs the full range
-    private const float TurnLength = 0.6f;     // metres per full turn
+    private const float TurnLength = 1.2f;     // metres per full turn (half as many spirals as the first 0.6)
     private const int PointsPerTurn = 12;
     private const float StartRadius = 0.04f, EndRadius = 0.3f;
     private const float SpinPerSecond = 720f;

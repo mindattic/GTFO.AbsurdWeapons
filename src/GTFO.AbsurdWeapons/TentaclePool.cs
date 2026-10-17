@@ -6,7 +6,7 @@ namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// Raises how many tentacles the game can draw at once, for every tentacle type (strikers, tanks,
-/// scouts, wrap-arounds, the Tentacle Rifle's). Each type's GPU tentacle pool is a fixed size
+/// scouts, wrap-arounds, the Tentacle Cannon's). Each type's GPU tentacle pool is a fixed size
 /// (<c>GPUC_Setup.m_globalLimit</c>) that its compute buffers are built from in
 /// <c>GPUC_Setup.Setup</c>, so the limit is multiplied just before that runs. When a pool is full,
 /// new tentacles - an enemy's or ours - simply don't appear.

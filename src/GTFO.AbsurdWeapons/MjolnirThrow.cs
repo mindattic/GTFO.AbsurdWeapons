@@ -16,8 +16,8 @@ namespace GTFO.AbsurdWeapons;
 /// <summary>
 /// Mjolnir's throw: release a full charge and the hammer flies from your hand, tumbling end over
 /// end, out to 25 m (or the first wall), then comes back to you. Along the way it hits every
-/// enemy it passes through and throws lightning pulses - chain lightning from the hammer to the
-/// nearest enemy, jumping on to two more. Damage happens on the thrower's game only, through the
+/// enemy it passes through, and whenever an enemy is within 3 m of it, it casts chain lightning
+/// from the hammer to the nearest one, jumping on to two more. Damage happens on the thrower's game only, through the
 /// bullet path; teammates are sent the throw and see the same hammer (and the bolts, which
 /// ChainLightning sends).
 /// </summary>
@@ -50,7 +50,7 @@ internal static class MjolnirThrow
         HitDamage = config.Bind("Mjolnir", "ThrowHitDamage", 20f, "Damage per enemy hit, each way.");
         HitStagger = config.Bind("Mjolnir", "ThrowHitStagger", 4f, "Stagger multiplier per hit.");
         PulseSeconds = config.Bind("Mjolnir", "ThrowPulseSeconds", 0.12f, "Seconds between the flying hammer's lightning pulses.");
-        PulseRange = config.Bind("Mjolnir", "ThrowPulseRange", 6f, "Metres each pulse reaches for its first target.");
+        PulseRange = config.Bind("Mjolnir", "ThrowPulseRange", 3f, "The flying hammer casts chain lightning whenever an enemy is within this many metres of it.");
         PulseDamage = config.Bind("Mjolnir", "ThrowPulseDamage", 6f, "Damage of a pulse's first strike.");
         PulseJumps = config.Bind("Mjolnir", "ThrowPulseJumps", 2, "Chain-lightning jumps per pulse, after the first strike.");
     }
@@ -248,9 +248,19 @@ internal sealed class ThrownHammer : MonoBehaviour
     }
 
     // The held hammer's meshes (positioned relative to the weapon's root), drawn on the default
-    // layer; a stand-in block if there's nothing to copy (a teammate's game).
+    // layer; a stand-in block if there's nothing to copy (a teammate's game). They go under a
+    // holder of their own, turned so the hammer tumbles end over end (OrientEndOverEnd).
     [HideFromIl2Cpp]
     private static void CopyModel(GameObject? source, Transform parent)
+    {
+        var model = new GameObject("Model").transform;
+        model.SetParent(parent, false);
+        CopyParts(source, model);
+        OrientEndOverEnd(model);
+    }
+
+    [HideFromIl2Cpp]
+    private static void CopyParts(GameObject? source, Transform parent)
     {
         var copied = 0;
         if (source != null)
@@ -282,5 +292,83 @@ internal sealed class ThrownHammer : MonoBehaviour
         handle.transform.SetParent(parent, false);
         handle.transform.localPosition = new Vector3(0f, -0.25f, 0f);
         handle.transform.localScale = new Vector3(0.05f, 0.2f, 0.05f);
+    }
+
+    // The hammer spins about its own right (local X) while flying along its forward. For a clean
+    // end-over-end tumble its handle has to lie along local up and its head face the flight
+    // (local forward), so it's seen side-on as it turns. The held weapon's root guarantees neither,
+    // and a box around the whole model in that root's axes is skewed when the handle sits at an
+    // angle - so the axes come from the meshes' own: the handle is the longest extent of any single
+    // mesh, the head the longest extent across it (of the other meshes, or the same one's next
+    // longest). Then the whole thing is centered, so it tumbles about its middle, not the grip.
+    [HideFromIl2Cpp]
+    private static void OrientEndOverEnd(Transform model)
+    {
+        var filters = model.GetComponentsInChildren<MeshFilter>(true);
+        MeshFilter? handleMesh = null;
+        var handle = Vector3.zero;
+        var handleLength = 0f;
+        foreach (var filter in filters)
+        {
+            if (filter.sharedMesh == null) continue;
+            var (axis, length) = LongestAxis(model, filter, null);
+            if (length > handleLength) { handleLength = length; handle = axis; handleMesh = filter; }
+        }
+        if (handleMesh == null) return;
+
+        // The head: the longest extent across the handle, among the other meshes; a one-piece model
+        // uses its own next-longest axis.
+        var head = Vector3.zero;
+        var headLength = 0f;
+        foreach (var filter in filters)
+        {
+            if (filter.sharedMesh == null || filter == handleMesh) continue;
+            var (axis, length) = LongestAxis(model, filter, handle);
+            if (length > headLength) { headLength = length; head = axis; }
+        }
+        if (headLength <= 0f) (head, _) = LongestAxis(model, handleMesh, handle);
+        head = Vector3.ProjectOnPlane(head, handle);
+        if (head.sqrMagnitude < 0.0001f) head = Vector3.Cross(handle, Vector3.right).sqrMagnitude > 0.0001f ? Vector3.Cross(handle, Vector3.right) : Vector3.forward;
+
+        // Handle onto up, head onto forward.
+        var turn = Quaternion.Inverse(Quaternion.LookRotation(head.normalized, handle.normalized));
+        model.localRotation = turn;
+
+        // Center it: the box around every mesh, now that it's turned.
+        var found = false;
+        var bounds = default(Bounds);
+        foreach (var filter in filters)
+        {
+            var mesh = filter.sharedMesh;
+            if (mesh == null) continue;
+            var meshBounds = mesh.bounds;
+            for (var corner = 0; corner < 8; corner++)
+            {
+                var point = meshBounds.center + Vector3.Scale(meshBounds.extents, new Vector3(
+                    (corner & 1) == 0 ? -1 : 1, (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1));
+                var local = model.parent.InverseTransformPoint(filter.transform.TransformPoint(point));
+                if (!found) bounds = new Bounds(local, Vector3.zero);
+                else bounds.Encapsulate(local);
+                found = true;
+            }
+        }
+        if (found) model.localPosition -= bounds.center;
+        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons thrown Mjolnir oriented: handle {handle.normalized} ({handleLength:0.00} m), head {head.normalized} ({headLength:0.00} m), {filters.Length} meshes.");
+    }
+
+    // A mesh's longest axis in its own space (scaled to real size), as a direction in `model`'s
+    // space, and its length. With `across`, only axes not lined up with it count.
+    [HideFromIl2Cpp]
+    private static (Vector3 Axis, float Length) LongestAxis(Transform model, MeshFilter filter, Vector3? across)
+    {
+        var size = filter.sharedMesh.bounds.size;
+        var best = (Axis: Vector3.zero, Length: 0f);
+        foreach (var local in new[] { Vector3.right * size.x, Vector3.up * size.y, Vector3.forward * size.z })
+        {
+            var inModel = model.InverseTransformVector(filter.transform.TransformVector(local));
+            if (across.HasValue && Mathf.Abs(Vector3.Dot(inModel.normalized, across.Value.normalized)) > 0.7f) continue;
+            if (inModel.magnitude > best.Length) best = (inModel, inModel.magnitude);
+        }
+        return best;
     }
 }

@@ -20,11 +20,11 @@ internal sealed record LaserKind(byte Id, uint GunId, float Range, float Width);
 /// <summary>
 /// The Laser Pistol and Laser Rifle: one continuous beam, drawn with the trip mine's own laser
 /// material, from the barrel to whatever the crosshair is on, held for as long as the trigger is.
-/// The gun fires full-auto very fast and every shot is a damage tick: a ray from the eye, damage
-/// (through the enemy limb's normal bullet path, so it syncs) to whatever enemy it touches. The
-/// beam itself is one line that stays up between ticks and follows the gun every frame; the
-/// vanilla bullet tracer is muted so the ticks don't streak. Where it lands it burns and sparks.
-/// Teammates are sent each tick and see the same beam.
+/// They don't shoot: the gun never fires (no bullets, muzzle flash, brass or kick); a steady hold that
+/// never relaxes keeps it raised at hip height (GunInjector.AddSteadyHold). <see cref="LaserDriver"/> reads the trigger instead and, while it's held,
+/// burns whatever enemy the beam's end is on every ShotDelay seconds (through the enemy limb's
+/// normal bullet path, so it syncs). The beam follows the gun every frame; where it lands it burns
+/// and sparks. Teammates are sent each tick and see the same beam.
 /// </summary>
 [HarmonyPatch]
 internal static class LaserGuns
@@ -100,9 +100,12 @@ internal static class LaserGuns
     }
 
     // The beam from `eye` along `aim`: where it starts on screen, where it lands, what it hit.
-    internal static (Vector3 start, Vector3 end, BeamHit hit, Vector3 normal, RaycastHit ray) Trace(LaserKind kind, Vector3 eye, Vector3 aim)
+    // `muzzle`: the gun in hand, so the beam leaves that model's own barrel (else a fixed spot
+    // low and right of the eye).
+    internal static (Vector3 start, Vector3 end, BeamHit hit, Vector3 normal, RaycastHit ray) Trace(LaserKind kind, Vector3 eye, Vector3 aim,
+        PlayerAgent? owner = null, Transform? muzzle = null)
     {
-        var start = ScreenStart(eye, aim);
+        var start = muzzle != null ? Barrel.Start(owner, muzzle, eye, aim) : ScreenStart(eye, aim);
         if (!Physics.Raycast(eye, aim, out var hit, kind.Range, LayerManager.MASK_BULLETWEAPON_RAY))
             return (start, eye + aim * kind.Range, BeamHit.None, -aim, hit);
         var enemy = hit.collider.GetComponent<Dam_EnemyDamageLimb>() != null;
@@ -114,7 +117,7 @@ internal static class LaserGuns
     internal static void Tick(LaserKind kind, PlayerAgent owner, Transform? muzzle, Vector3 eye, Vector3 aim,
         float damage, float staggerMulti, float precisionMulti, uint gearCategoryId)
     {
-        var (start, end, hitKind, normal, hit) = Trace(kind, eye, aim);
+        var (start, end, hitKind, normal, hit) = Trace(kind, eye, aim, owner, muzzle);
         if (hitKind == BeamHit.Enemy)
         {
             var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
@@ -183,6 +186,8 @@ internal sealed class LaserBeam : MonoBehaviour
     [HideFromIl2Cpp]
     internal static void Show(ulong player, LaserKind kind, PlayerAgent? owner, Vector3 start, Vector3 end, BeamHit hit, Vector3 normal)
     {
+        // A continuous beam loop at the gun (where the player hears it) while ticks keep coming.
+        LoopSounds.Touch($"laser:{player}", Sounds.LaserLoopStart.Value, Sounds.LaserLoopStop.Value, start);
         if (!beams.TryGetValue(player, out var beam) || beam == null)
         {
             var go = new GameObject("GTFO.AbsurdWeapons Laser Beam");
@@ -243,7 +248,10 @@ internal sealed class LaserBeam : MonoBehaviour
             // Our own beam follows the gun and crosshair every frame, not just every tick.
             var camera = owner?.FPSCamera;
             if (camera != null)
-                (start, end, hit, normal, _) = LaserGuns.Trace(kind, camera.Position, camera.Forward);
+            {
+                var muzzle = owner!.Inventory?.WieldedItem?.TryCast<BulletWeapon>()?.MuzzleAlign;
+                (start, end, hit, normal, _) = LaserGuns.Trace(kind, camera.Position, camera.Forward, owner, muzzle);
+            }
             Draw();
             Burn();
         }
@@ -341,5 +349,41 @@ internal sealed class LaserBeam : MonoBehaviour
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons laser beam material: {source}, shader '{material.shader?.name}'.");
         }
         return material;
+    }
+}
+
+/// <summary>
+/// Drives the local player's laser beam from the trigger: while a laser gun is in hand and Fire is
+/// held, a damage tick at the beam's end every <c>ShotDelay</c> seconds (the archetype's), at the
+/// archetype's damage. The gun's own firing never runs (see <see cref="LaserGuns"/>).
+/// </summary>
+internal sealed class LaserDriver : MonoBehaviour
+{
+    private float nextTick;
+
+    public LaserDriver(IntPtr ptr) : base(ptr) { }
+
+    private void Update()
+    {
+        try
+        {
+            var player = PlayerManager.GetLocalPlayerAgent();
+            if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
+            var gun = player.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
+            var archetype = gun?.ArchetypeData;
+            var kind = LaserGuns.ForGun(archetype?.persistentID ?? 0);
+            if (gun == null || archetype == null || kind == null) return;
+            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS) || Time.time < nextTick) return;
+            var camera = player.FPSCamera;
+            if (camera == null) return;
+
+            nextTick = Time.time + Mathf.Max(0.02f, archetype.ShotDelay);
+            LaserGuns.Tick(kind, player, gun.MuzzleAlign, camera.Position, camera.Forward, archetype.Damage, 1f, 1f, kind.GunId);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons laser driver failed: {e.Message}");
+            nextTick = Time.time + 1f;
+        }
     }
 }

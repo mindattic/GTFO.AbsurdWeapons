@@ -20,12 +20,10 @@ namespace GTFO.AbsurdWeapons;
 /// <item>Hive Rifle (special) - Malatack HXC, a smart rifle.</item>
 /// <item>Laser Pistol (main) - Raptus Treffen 2, a continuous trip-mine laser beam.</item>
 /// <item>Laser Rifle (special) - Drekker DEL P1, a heavier, longer beam.</item>
-/// <item>Tentacle Pistol (main) - Bataldo 3RB; a slower stream of striker tentacles.</item>
-/// <item>Tentacle Rifle (special) - Buckland XDist2 (iron sights); every round is a striker tentacle.</item>
+/// <item>Tentacle Cannon (special) - Buckland XDist2 (iron sights); every round is a striker tentacle.</item>
 /// <item>Railgun (special) - Koning PR 11; a hitscan slug with infinite penetration (<see cref="Railgun"/>).</item>
 /// <item>Chain Lightning Gun (special) - Omneco exp1; lightning that jumps enemy to enemy (<see cref="ChainLightning"/>).</item>
-/// <item>Grenade Launcher (tool) - the C-Foam launcher firing bouncing lock-melter grenades (<see cref="GrenadeLauncher"/>).</item>
-/// </list>
+/// <item>Grenade Pistol (main) / Grenade Rifle (special) - Bataldo 3RB / TechMan Veruta XII; semi-auto lock-melter grenades (<see cref="GrenadeLauncher"/>).</item>/// </list>
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
 internal static class GunInjector
@@ -33,19 +31,21 @@ internal static class GunInjector
     // Vanilla archetypes run to the low hundreds at most; melee weapons here use 1001+.
     internal const uint PlasmaPistolId = 1101;
     internal const uint HivePistolId = 1102;
-    internal const uint TentacleRifleId = 1103; // was the Tentacle Cannon
+    internal const uint TentacleCannonId = 1103; // the Tentacle Cannon (once named the Tentacle Rifle)
     internal const uint HiveRifleId = 1104;
     internal const uint PlasmaRifleId = 1105;
     internal const uint LaserPistolId = 1106;
     internal const uint LaserRifleId = 1107;
     internal const uint RailgunId = 1108;
     internal const uint ChainLightningId = 1109;
-    internal const uint TentaclePistolId = 1110;
-    internal const uint FlamethrowerId = 1111;
-    internal const uint FlakCannonId = 1112;
-    internal const uint CFoamPistolId = 1113;
-    internal const uint CFoamRifleId = 1114;
-    internal const uint GrenadeLauncherId = 1201; // a tool: uses the tool ammo, so not "ours" for infinite ammo
+    // 1110 was the Tentacle Pistol (removed); left unused so old loadouts never pick up a different gun.
+    // 1111 was the Flamethrower (removed); left unused so old loadouts never pick up a different gun.
+    // 1112 was the Flak Cannon (removed); left unused so old loadouts never pick up a different gun.
+    // 1113 was the C-Foam Pistol (removed); left unused so old loadouts never pick up a different gun.
+    // 1114 was the C-Foam Rifle (removed); left unused so old loadouts never pick up a different gun.
+    internal const uint GrenadePistolId = 1115;
+    internal const uint GrenadeRifleId = 1116;
+    // 1201 was the Grenade Launcher tool (now the Grenade Pistol/Rifle); left unused.
     internal const uint VictoryBannerId = 1202;   // a tool: same reason
 
     // The ten original guns' own stats (0 keeps the built-in value; takes effect on restart - baked
@@ -66,7 +66,7 @@ internal static class GunInjector
     internal static void Bind(ConfigFile config)
     {
         PlasmaDamage = config.Bind("Plasma Guns", "Damage", 22.5f, "Average damage per ball (it's actually rolled, 5 x 1d8).");
-        PlasmaShotDelay = config.Bind("Plasma Guns", "ShotDelay", 2f / 35f, "Seconds between balls.");
+        PlasmaShotDelay = config.Bind("Plasma Guns", "ShotDelay", 3f / 35f, "Seconds between balls (Doom: one every 3 tics, ~11.7 a second).");
         PlasmaClipSize = config.Bind("Plasma Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
         HiveDamage = config.Bind("Hive Guns", "Damage", 1f, "Damage per round.");
         HiveShotDelay = config.Bind("Hive Guns", "ShotDelay", 0.09f, "Seconds between rounds.");
@@ -74,13 +74,13 @@ internal static class GunInjector
         LaserDamage = config.Bind("Laser Guns", "Damage", 2f, "Damage per tick (20 ticks a second).");
         LaserShotDelay = config.Bind("Laser Guns", "ShotDelay", 0.05f, "Seconds between ticks.");
         LaserClipSize = config.Bind("Laser Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
-        RailgunDamage = config.Bind("Railgun", "Damage", 60f, "Damage to every enemy on the line.");
-        RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.0f, "Seconds between shots.");
+        RailgunDamage = config.Bind("Railgun", "Damage", 150f, "Damage to every enemy on the line (Quake's rail kills outright).");
+        RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
         RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Clip size (infinite ammo refills it anyway).");
         ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 10f, "Damage of the first strike (each jump is 75% of the last).");
         ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
         ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
-        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 11f, "Damage per tentacle bite.");
+        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 22f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
         TentacleShotDelay = config.Bind("Tentacle Guns", "ShotDelay", 0.235f, "Seconds between tentacles.");
         TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
     }
@@ -106,29 +106,31 @@ internal static class GunInjector
         TryAdd("Hive Pistol", HivePistolId, (name, id) => AddHive(name, id, "PistolSemi", hive));    // Shelling S49, main slot
         TryAdd("Hive Rifle", HiveRifleId, (name, id) => AddHive(name, id, "RifleHeavyAuto", hive)); // Malatack HXC, special slot
         const string tentacle = "Fires the strikers' own tentacles, full-auto: every round is a tentacle that lashes out at an enemy near your crosshair and bites hard.";
-        TryAdd("Tentacle Pistol", TentaclePistolId, (name, id) => AddTentacle(name, id, "RevolverHEL", null, tentacle)); // Bataldo 3RB, main slot
         // Buckland XDist2: the biggest special-slot gun with no optic, held out low (AddFarLowHold) so the tentacles have room.
-        TryAdd("Tentacle Rifle", TentacleRifleId, (name, id) => AddTentacle(name, id, "ShotgunRanged", AddFarLowHold(name, id), tentacle));
+        TryAdd("Tentacle Cannon", TentacleCannonId, (name, id) => AddTentacle(name, id, "ShotgunRanged", AddFarLowHold(name, id), tentacle));
         const string laser = "A continuous laser beam, like a trip mine's: it burns whatever it's held on, out to 70 metres, for as long as you hold it there.";
         TryAdd("Laser Pistol", LaserPistolId, (name, id) => AddLaser(name, id,
             "Pistolauto", // Raptus Treffen 2: full-auto pistol, no sight, main slot
             48, // held low (ItemFPSSettings "Pistol_Chunky", 10 cm down) so the beam is visible
             laser));
-        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "Precision_Rifle", null, laser)); // Drekker DEL P1, special slot
+        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "SMGHeavyAuto", null, laser));   // Accrat ND6, special slot: no animated parts
         TryAdd("Railgun", RailgunId, AddRailgun);
         TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
-        TryAdd("Flamethrower", FlamethrowerId, AddFlamethrower);
-        TryAdd("Flak Cannon", FlakCannonId, AddFlakCannon);
-        const string cfoam = "The C-Foam Launcher's own hardening foam, sprayed full-auto: every round stacks foam on an enemy, and enough of it holds them in place, barely any damage done.";
-        TryAdd("C-Foam Pistol", CFoamPistolId, (name, id) => AddCFoam(name, id, "HighCalPistol", cfoam)); // Shelling Arid 5, main slot
-        TryAdd("C-Foam Rifle", CFoamRifleId, (name, id) => AddCFoam(name, id, "SMGHeavyAuto", cfoam));    // Accrat ND6, special slot
-        TryAdd("Grenade Launcher", GrenadeLauncherId, AddGrenadeLauncher);
+        const string grenade = "A heavy semi-auto launcher: every shot is a lock melter rigged to blow - it goes off on the first enemy it hits, or bounces around and blows after 3 seconds.";
+        TryAdd("Grenade Pistol", GrenadePistolId, (name, id) => AddGrenadeGun(name, id, "RevolverHEL", grenade));    // Bataldo 3RB (heavy revolver), main slot
+        TryAdd("Grenade Rifle", GrenadeRifleId, (name, id) => AddGrenadeGun(name, id, "MachinegunAuto", grenade)); // TechMan Veruta XII (heavy machine gun), special slot
         TryAdd("Victory Banner", VictoryBannerId, AddVictoryBanner);
     }
 
     // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id,
     // same as the Grenade Launcher - the glob becomes a plantable banner (VictoryBanner) instead.
-    private static void AddVictoryBanner(string name, uint id)
+    private static void AddVictoryBanner(string name, uint id) => AddGlueTool(name, id,
+        "Sets a banner down like a turret; fire again to pick it back up. Pulses healing to every teammate in its ring and buffs your own damage while you're standing in it, climbing the more you kill without leaving.");
+
+    // The C-Foam launcher's category and gear cloned under `id` with a new name and description.
+    // Tools have no archetype - the launcher's own prefab drives its pressure and bursts - so only
+    // those two blocks are added; what each glob becomes is the tool's runtime job.
+    private static void AddGlueTool(string name, uint id, string description)
     {
         var sourceCategory = Lookup<GearCategoryDataBlock>("GlueGun");
         var sourceGear = Lookup<PlayerOfflineGearDataBlock>("Glue_distance");
@@ -144,8 +146,7 @@ internal static class GunInjector
         category.persistentID = id;
         category.name = blockName;
         category.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
-        category.Description = new LocalizedText { Id = 0, UntranslatedText =
-            "Sets a banner down like a turret; fire again to pick it back up. Pulses healing to every teammate in its ring and buffs your own damage while you're standing in it, climbing the more you kill without leaving." };
+        category.Description = new LocalizedText { Id = 0, UntranslatedText = description };
 
         var gear = Clone(sourceGear);
         gear.persistentID = id;
@@ -158,100 +159,26 @@ internal static class GunInjector
         Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons added the {name} (tool; category and gear id {id}).");
     }
 
-    // The Bataldo J 300 shotgun: primary fire scatters bouncing shrapnel shards (FlakCannon); hold
-    // Aim to compress the shot into one ball that explodes into a shrapnel burst on contact.
-    private static void AddFlakCannon(string name, uint id)
-    {
-        var gear = Lookup<PlayerOfflineGearDataBlock>("ShotgunHEL");
-        var (category, archetype) = ModelSource(gear);
-        archetype.FireMode = eWeaponFireMode.Semi;
-        archetype.ShotgunBulletCount = FlakCannon.GunPelletCount.Value;
-        archetype.ShotgunConeSize = FlakCannon.GunConeAndSpread.Value;
-        archetype.ShotgunBulletSpread = FlakCannon.GunConeAndSpread.Value;
-        archetype.HipFireSpread = 0f;
-        archetype.AimSpread = 0f;
-        archetype.Damage = FlakCannon.GunDamagePerShard.Value; // per shard, before FlakCannon's own range falloff
-        archetype.ShotDelay = FlakCannon.GunShotDelay.Value;
-        archetype.DefaultClipSize = FlakCannon.GunClipSize.Value;
-        archetype.ShellCasingSize = 0f; // shrapnel, not shot: no brass ejected
-        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear,
-            "A classic flak cannon: a cone of bouncing shrapnel shards, devastating point-blank. Hold Aim to fire a single compressed ball instead - it explodes into a radial burst of shrapnel the instant it touches anything.");
-    }
-
-    // A full-auto foam sprayer on the given model: low direct damage, high rate of fire. What each
-    // round actually does - stacking and holding foam on an enemy - is runtime (CFoamGun).
-    private static void AddCFoam(string name, uint id, string model, string description)
+    // A grenade launcher on the given (heavy) model: semi-auto, one round a shot, every round a
+    // lock-melter grenade (GrenadeLauncher.Launch). Both models share one set of stats - the
+    // Arid 5's, so a shot does the same from either - but each kicks like its own model (3RB / Veruta XII), and its
+    // grenade leaves its own barrel (Barrel).
+    private static void AddGrenadeGun(string name, uint id, string model, string description)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>(model);
-        var (category, archetype) = ModelSource(gear);
-        archetype.FireMode = eWeaponFireMode.Auto;
+        var archetype = StatsFrom("HighCalPistol");
+        archetype.FireMode = eWeaponFireMode.Semi;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = CFoamGun.GunDamage.Value;
-        archetype.ShotDelay = CFoamGun.GunShotDelay.Value;
-        archetype.DefaultClipSize = CFoamGun.GunClipSize.Value;
+        archetype.ShotgunConeSize = 0;
+        archetype.ShotgunBulletSpread = 0;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
-        archetype.ShellCasingSize = 0f; // foam, not bullets: no brass ejected
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
-        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear, description);
-    }
-
-    // The TechMan Veruta XII machine gun, full-auto, firing FlameThrower's cone instead of bullets:
-    // short range, falls off hard with distance, every tick that lands stacks afterburn. Hold Aim
-    // to lob a fuel bomb instead (FlameThrower.FireBomb).
-    private static void AddFlamethrower(string name, uint id)
-    {
-        var gear = Lookup<PlayerOfflineGearDataBlock>("MachinegunAuto");
-        var (category, archetype) = ModelSource(gear);
-        archetype.FireMode = eWeaponFireMode.Auto;
-        archetype.ShotgunBulletCount = 1;
-        archetype.Damage = FlameThrower.GunDamagePerTick.Value;        // per tick, before FlameThrower's own range falloff
-        archetype.ShotDelay = 1f / FlameThrower.GunTicksPerSecond.Value;
-        archetype.DefaultClipSize = FlameThrower.GunClipSize.Value;
-        archetype.HipFireSpread = 0f;
-        archetype.AimSpread = 0f;
-        archetype.ShellCasingSize = 0f; // fire, not bullets: no brass ejected
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
-        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, category, gear,
-            "A short, brutal cone of fire: devastating up close, nearly useless across a room. Anything it touches keeps burning, and fire catches between enemies standing close together. Hold Aim to lob a fuel bomb instead, for reach.");
-    }
-
-    // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id. Tools
-    // have no archetype - the launcher's own prefab drives its pressure and bursts - so only those
-    // two blocks are added. What it fires is GrenadeLauncher's job.
-    private static void AddGrenadeLauncher(string name, uint id)
-    {
-        var sourceCategory = Lookup<GearCategoryDataBlock>("GlueGun");
-        var sourceGear = Lookup<PlayerOfflineGearDataBlock>("Glue_distance");
-        var gearJson = RewriteGearJson(sourceGear.GearJSON, sourceCategory.persistentID, id, DisplayName(name));
-        if (gearJson == null)
-        {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons: couldn't find category {sourceCategory.persistentID} in '{sourceGear.name}' gear JSON - not adding the {name}.");
-            return;
-        }
-
-        var blockName = name.Replace(" ", "");
-        var category = Clone(sourceCategory);
-        category.persistentID = id;
-        category.name = blockName;
-        category.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
-        category.Description = new LocalizedText { Id = 0, UntranslatedText =
-            "Lobs lock melters rigged to blow: one that hits an enemy goes off at once; one that misses bounces around, flashing red faster and faster, and blows after 3 seconds." };
-
-        var gear = Clone(sourceGear);
-        gear.persistentID = id;
-        gear.name = blockName;
-        gear.GearJSON = gearJson;
-
-        GameDataBlockBase<GearCategoryDataBlock>.AddBlock(category, -1);
-        AddedCategories.Add(id);
-        GameDataBlockBase<PlayerOfflineGearDataBlock>.AddBlock(gear, -1);
-        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons added the {name} (tool; category and gear id {id}).");
+        archetype.Damage = GrenadeLauncher.BlastDamage.Value; // the blast's center damage, for the loadout screen
+        archetype.ShotDelay = GrenadeLauncher.GunShotDelay.Value;
+        archetype.DefaultClipSize = GrenadeLauncher.GunClipSize.Value;
+        archetype.ShellCasingSize = 0f; // grenades, not cartridges: no brass
+        archetype.RecoilDataID = ModelSource(gear).Archetype.RecoilDataID; // the look of the shot: this model's own kick
+        Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
     private static void TryAdd(string name, uint id, Action<string, uint> add)
@@ -289,13 +216,16 @@ internal static class GunInjector
         archetype.ShotDelay = PlasmaShotDelay.Value;
         archetype.DefaultClipSize = PlasmaClipSize.Value;
         archetype.ShellCasingSize = 0f; // plasma, not bullets: no brass ejected
+        archetype.HipFireSpread = 0f;   // extremely tight grouping: every ball goes exactly where the crosshair is
+        archetype.AimSpread = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
     // A Titanfall-style smart gun on the given model: forced full-auto, no recoil; each round
-    // curves onto an enemy locked near the crosshair (SeekerKind.Hive). 1 damage a round: they
-    // never miss, so it takes a stream of them to kill anything. Stats come from the Malatack HXC.
+    // curves onto an enemy locked near the crosshair (SeekerKind.Hive; HiveLocks marks them). 1
+    // damage a round: they never miss, so it takes a stream of them to kill anything. Stats come
+    // from the Malatack HXC.
     private static void AddHive(string name, uint id, string model, string description)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>(model);
@@ -314,7 +244,8 @@ internal static class GunInjector
     // Stats come from the Drekker DEL P1. `hold`, if given, replaces the model's first-person hold.
     private static void AddLaser(string name, uint id, string model, uint? hold, string description)
     {
-        var gear = WithHold(Lookup<PlayerOfflineGearDataBlock>(model), hold);
+        var source = Lookup<PlayerOfflineGearDataBlock>(model);
+        var gear = WithHold(source, AddSteadyHold(name, id, source, hold));
         var archetype = StatsFrom("Precision_Rifle");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
@@ -331,19 +262,20 @@ internal static class GunInjector
     }
 
     // The Koning PR 11 sniper, semi-auto: every shot is one Railgun slug through everything in its
-    // line. It keeps the sniper's own kick and scope.
+    // line. It keeps the sniper's scope, with no kick at all.
     private static void AddRailgun(string name, uint id)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>("SniperSemi");
         var (category, archetype) = ModelSource(gear);
         archetype.FireMode = eWeaponFireMode.Semi;
         archetype.ShotgunBulletCount = 1;
-        archetype.Damage = RailgunDamage.Value;     // to every enemy on the line (sniper 40)
+        archetype.Damage = RailgunDamage.Value;     // to every enemy on the line (sniper 40): slow but devastating, like Quake's rail
         archetype.ShotDelay = RailgunShotDelay.Value; // sniper 0.8
         archetype.DefaultClipSize = RailgunClipSize.Value;
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;  // a slug thrown by magnets: no brass
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
             "A hitscan slug with infinite penetration: it goes through every enemy and every wall in its path.");
     }
@@ -367,7 +299,7 @@ internal static class GunInjector
         archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
-            "Every shot is a bolt of lightning that leaps from enemy to enemy, up to five jumps, weaker with each.");
+            "A continuous stream of lightning while you hold the trigger, leaping from enemy to enemy, up to five jumps, weaker with each.");
     }
 
     // A tentacle gun on the given model, forced full-auto: a tentacle (TentacleCannon) for every
@@ -394,6 +326,28 @@ internal static class GunInjector
         Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
+    // The laser guns' hold: the model's own (or `hold`), but never relaxed - so it sits at hip-fire
+    // height the whole time, as a gun being fired does - and with no recoil animation. The lasers
+    // never fire (their beam is trigger-driven), so this is what keeps them raised, kick-free.
+    // Registered at the gun's id; returns the hold id to use (the source's if that id is taken).
+    private static uint? AddSteadyHold(string name, uint id, PlayerOfflineGearDataBlock gear, uint? hold)
+    {
+        var sourceId = hold ?? GearJson.Component(gear.GearJSON, 4);
+        var source = sourceId.HasValue ? GameDataBlockBase<ItemFPSSettingsDataBlock>.GetBlock(sourceId.Value) : null;
+        if (source == null || GameDataBlockBase<ItemFPSSettingsDataBlock>.HasBlock(id))
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: couldn't give the {name} its steady hold - it keeps its model's.");
+            return hold;
+        }
+        var steady = Clone(source);
+        steady.persistentID = id;
+        steady.name = name.Replace(" ", "") + "_Steady";
+        steady.canRelax = false;    // always up at hip height
+        steady.RecoilAnimation = 0; // no kick animation
+        GameDataBlockBase<ItemFPSSettingsDataBlock>.AddBlock(steady, -1);
+        return id;
+    }
+
     private static PlayerOfflineGearDataBlock WithHold(PlayerOfflineGearDataBlock gear, uint? hold)
     {
         if (!hold.HasValue) return gear;
@@ -402,10 +356,8 @@ internal static class GunInjector
         return held;
     }
 
-    // The Tentacle Rifle's first-person hold (ItemFPSSettingsDataBlock): the XDist2's own
-    // "Shotgun" pose - so the hands and stock sit where a shotgun's do - pushed a little lower and
-    // further out, tipped slightly up, with a lighter aim zoom so aiming doesn't pull it into your
-    // face. Returns the id to use.
+    // The Tentacle Cannon's first-person hold (ItemFPSSettingsDataBlock): the XDist2's own
+    // "Shotgun" pose - so the hands sit where a shotgun's do - carried very low like a minigun. Returns the id to use.
     private static uint AddFarLowHold(string name, uint id)
     {
         if (GameDataBlockBase<ItemFPSSettingsDataBlock>.HasBlock(id))
@@ -417,11 +369,13 @@ internal static class GunInjector
         var hold = Clone(Lookup<ItemFPSSettingsDataBlock>("Shotgun"));
         hold.persistentID = id;
         hold.name = name.Replace(" ", "") + "_Hold";
-        hold.localPosHip = new Vector3(0.08f, -0.105f, 0.46f);  // shotgun (0.076, -0.085, 0.38): lower, further out
-        hold.localPosZoom = new Vector3(0f, -0.175f, 0.45f);    // shotgun (0, -0.154, 0.35)
-        hold.localRotHip = new Vector3(-3f, 0f, 0f);            // tipped slightly up
-        hold.localRotZoom = new Vector3(-3f, 0f, 0f);
-        hold.ItemCameraFOVZoom = 30;                            // shotgun 23: a lighter aim zoom
+        // Held very low at the waist like a minigun, tipped up so the barrel still points at the
+        // crosshair; aiming only draws it in a little, it never comes up to the eye.
+        hold.localPosHip = new Vector3(0.14f, -0.34f, 0.42f);   // shotgun (0.076, -0.085, 0.38): way down at the hip
+        hold.localPosZoom = new Vector3(0.06f, -0.3f, 0.42f);   // shotgun (0, -0.154, 0.35): still low when aiming
+        hold.localRotHip = new Vector3(-9f, -4f, 0f);           // tipped up (and in) toward the crosshair
+        hold.localRotZoom = new Vector3(-8f, -2f, 0f);
+        hold.ItemCameraFOVZoom = 34;                            // shotgun 23: barely any aim zoom
         GameDataBlockBase<ItemFPSSettingsDataBlock>.AddBlock(hold, -1);
         return id;
     }

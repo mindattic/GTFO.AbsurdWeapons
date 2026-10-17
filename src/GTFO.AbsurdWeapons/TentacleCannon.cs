@@ -13,7 +13,7 @@ using UnityEngine;
 namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// The Tentacle Rifle: a full-auto gun whose every round is a striker's tentacle - the game's
+/// The Tentacle Cannon: a full-auto gun whose every round is a striker's tentacle - the game's
 /// own, drawn by its GPU tentacle renderer. Each round's tentacle hunts an enemy near its line of
 /// fire (one not already taken by another tentacle fired the same frame, if the gun ever fires
 /// several at once). It snakes out of the barrel, bites (damage and a heavy stagger, through the
@@ -23,35 +23,30 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class TentacleCannon
 {
-    // The guns that fire tentacles: the Tentacle Pistol and the Tentacle Rifle.
-    internal static bool IsTentacleGun(uint id) => id is GunInjector.TentacleRifleId or GunInjector.TentaclePistolId;
+    // The gun that fires tentacles: the Tentacle Cannon.
+    internal static bool IsTentacleGun(uint id) => id == GunInjector.TentacleCannonId;
 
     private static ConfigEntry<float> LockConeDegrees = null!; // around each tentacle's own line
     private static ConfigEntry<float> EngageConeDegrees = null!; // any enemy this close to the aim (and in range) draws every tentacle
-    private static ConfigEntry<float> FanSideDegrees = null!;  // each tentacle leaves up to this far left or right of the aim...
-    private static ConfigEntry<float> FanUpDownDegrees = null!; // ...but stays close to the aim's height: a wide, level fan
-    private const float SpawnBehind = 0.05f;   // a touch behind the muzzle point, so they emerge from inside the barrel
+    private static ConfigEntry<float> SpewConeDegrees = null!;   // each tentacle leaves within this many degrees of the aim: a cone straight ahead
+    private static ConfigEntry<float> IdleReach = null!;   // how far out a tentacle wriggles with no enemy to reach
+    private static ConfigEntry<float> BarrelOffset = null!; // how far past the muzzle (along its facing) a tentacle starts
     internal static ConfigEntry<float> StaggerMulti = null!;
 
     // How far a tentacle reaches - the strikers' own (EAB_MovingEnemeyTentacle's
     // m_absoluteMaxDistanceToHitTarget), read off the first striker found in the level. Lock range,
     // a miss's reach and a grab's reach are all this, so a lash is never drawn longer than a real one.
     private static ConfigEntry<float> FallbackReach = null!; // until a striker has been found
-    private static ConfigEntry<float> GrabSideDegrees = null!;
-    private static ConfigEntry<float> GrabUpDownDegrees = null!;
-    private static ConfigEntry<int> GrabProbes = null!;
 
     internal static void Bind(ConfigFile config)
     {
         LockConeDegrees = config.Bind("Tentacle Guns", "LockConeDegrees", 15f, "Cone around each tentacle's own line that counts as a lock.");
-        EngageConeDegrees = config.Bind("Tentacle Guns", "EngageConeDegrees", 60f, "Any enemy this close to the aim (and in reach) draws every tentacle.");
-        FanSideDegrees = config.Bind("Tentacle Guns", "FanSideDegrees", 30f, "How far left/right of the aim a tentacle can leave the barrel.");
-        FanUpDownDegrees = config.Bind("Tentacle Guns", "FanUpDownDegrees", 5f, "How far above/below the aim a tentacle can leave the barrel.");
+        EngageConeDegrees = config.Bind("Tentacle Guns", "EngageConeDegrees", 15f, "Any enemy this close to the aim (and in reach) draws every tentacle.");
+        SpewConeDegrees = config.Bind("Tentacle Guns", "SpewConeDegrees", 8f, "Half-angle of the cone the tentacles spew out in, straight ahead of the gun.");
         StaggerMulti = config.Bind("Tentacle Guns", "StaggerMulti", 5f, "Stagger multiplier per bite.");
+        IdleReach = config.Bind("Tentacle Guns", "IdleReach", 4f, "Metres a tentacle wriggles out when no enemy is in reach (it reaches its full length only for an enemy).");
+        BarrelOffset = config.Bind("Tentacle Guns", "BarrelOffset", 0.3f, "Metres past the muzzle a tentacle starts, so it visibly comes out of the barrel (negative = back inside the gun).");
         FallbackReach = config.Bind("Tentacle Guns", "FallbackReach", 25f, "Reach used until a real striker's is found in the level.");
-        GrabSideDegrees = config.Bind("Tentacle Guns", "GrabSideDegrees", 35f, "Surface-grab fan: how far sideways the probes fan out.");
-        GrabUpDownDegrees = config.Bind("Tentacle Guns", "GrabUpDownDegrees", 8f, "Surface-grab fan: how far up/down the probes fan out.");
-        GrabProbes = config.Bind("Tentacle Guns", "GrabProbes", 10, "How many surface-grab probes are cast when nothing's in reach.");
     }
     private static float reach;
     private static float nextReachLookup;
@@ -111,10 +106,10 @@ internal static class TentacleCannon
             claimed.Clear();
         }
 
-        // Fan out: every tentacle takes its own random line within a wide, flat fan around the aim.
+        // Spew: every tentacle takes its own random line within a tight cone straight ahead.
         var aim = pellet;
-        pellet = Fan(pellet, FanSideDegrees.Value, FanUpDownDegrees.Value);
-        var start = muzzle != null ? BarrelOnScreen(owner, muzzle, SpawnBehind) : eye + aim * 0.5f;
+        pellet = Cone(pellet, SpewConeDegrees.Value);
+        var start = muzzle != null ? BarrelOnScreen(owner, muzzle, -BarrelOffset.Value) : eye + aim * 0.5f;
         EnemyAgent? target = null;
         var range = Reach;
         foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees.Value, range))
@@ -139,49 +134,34 @@ internal static class TentacleCannon
             if (target == null && nearby.Count > 0) target = nearby[0];
         }
 
-        var end = target != null ? target.AimTarget.position : SomethingToGrab(eye, pellet, range);
+        // No enemy in reach: it just wriggles a short way out, tight in the cone.
+        var end = target != null ? target.AimTarget.position : SomethingToGrab(eye, pellet, Mathf.Min(range, IdleReach.Value));
 
         if (DiagnosticShots > 0)
         {
             DiagnosticShots--;
-            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Rifle pellet: muzzle {(muzzle != null ? "found" : "missing")} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Cannon pellet: muzzle {(muzzle != null ? "found" : "missing")} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
         }
 
-        TentacleLash.Spawn(start, muzzle, end, target, owner, damage, StaggerMulti.Value, gearCategoryId, SpawnBehind);
+        TentacleLash.Spawn(start, muzzle, end, target, owner, damage, StaggerMulti.Value, gearCategoryId, -BarrelOffset.Value);
         NetworkAPI.InvokeEvent(LashEvent, new LashMessage(start, end));
     }
 
-    // With no enemy to bite, a tentacle reaches for something to grab: it probes a cone around its
-    // line - a flat fan, wide sideways but close to the aim's height - and latches onto the nearest
-    // surface it finds: a crate, a box, a railing, a wall. With nothing in reach it flails out along
-    // its line.
-    private static Vector3 SomethingToGrab(Vector3 eye, Vector3 line, float range)
-    {
-        var best = eye + line * range;
-        var bestDistance = float.MaxValue;
-        for (var i = 0; i < GrabProbes.Value; i++)
-        {
-            var probe = i == 0 ? line : Fan(line, GrabSideDegrees.Value, GrabUpDownDegrees.Value);
-            if (Physics.Raycast(eye, probe, out var hit, range, LayerManager.MASK_BULLETWEAPON_RAY) && hit.distance < bestDistance)
-            {
-                bestDistance = hit.distance;
-                best = hit.point;
-            }
-        }
-        return best;
-    }
+    // With no enemy to bite, a tentacle wriggles straight out along its own line (inside the tight
+    // spew cone) - a short way (`range`), or to the first surface on that line. It never bends off
+    // toward some other surface: only an enemy in range makes it reach out and curve.
+    private static Vector3 SomethingToGrab(Vector3 eye, Vector3 line, float range) =>
+        Physics.Raycast(eye, line, out var hit, range, LayerManager.MASK_BULLETWEAPON_RAY) ? hit.point : eye + line * range;
 
-    // A random direction within a flat fan around `forward`: up to `sideways` degrees left or right,
-    // `upDown` degrees up or down.
-    private static Vector3 Fan(Vector3 forward, float sideways, float upDown)
+    // A random direction within `degrees` of `forward` (a round cone).
+    private static Vector3 Cone(Vector3 forward, float degrees)
     {
         var right = Vector3.Cross(Vector3.up, forward);
         if (right.sqrMagnitude < 0.001f) right = Vector3.right;
         right.Normalize();
         var up = Vector3.Cross(forward, right);
-        var yaw = UnityEngine.Random.Range(-sideways, sideways);
-        var pitch = UnityEngine.Random.Range(-upDown, upDown);
-        return (Quaternion.AngleAxis(yaw, up) * Quaternion.AngleAxis(pitch, right) * forward).normalized;
+        var offset = UnityEngine.Random.insideUnitCircle * degrees;
+        return (Quaternion.AngleAxis(offset.x, up) * Quaternion.AngleAxis(offset.y, right) * forward).normalized;
     }
 
     // The world point that appears on screen where the gun's muzzle is drawn. GTFO draws the
@@ -248,6 +228,7 @@ internal sealed class TentacleLash : MonoBehaviour
     private float planeAngle, freqA, freqB, speedA, speedB, phaseB, sizeScale, arc, pulseHz;
     private uint gearCategoryId;
     private bool bitten;
+    private bool idle; // no enemy to reach: a short, tight wriggle
 
     private static int diagnosticLashes = 5;
     private static int diagnosticDraws = 5;
@@ -276,6 +257,7 @@ internal sealed class TentacleLash : MonoBehaviour
         lash.start = start;
         lash.end = end;
         lash.target = target;
+        lash.idle = target == null;
         lash.owner = owner;
         lash.damage = damage;
         lash.staggerMulti = staggerMulti;
@@ -288,7 +270,7 @@ internal sealed class TentacleLash : MonoBehaviour
         lash.speedA = UnityEngine.Random.Range(10f, 30f) * (UnityEngine.Random.value < 0.5f ? -1f : 1f);
         lash.speedB = UnityEngine.Random.Range(8f, 26f) * (UnityEngine.Random.value < 0.5f ? -1f : 1f);
         lash.phaseB = UnityEngine.Random.value * Mathf.PI * 2f;
-        lash.sizeScale = UnityEngine.Random.Range(0.7f, 1.9f);
+        lash.sizeScale = UnityEngine.Random.Range(0.7f, 1.3f);
         lash.arc = UnityEngine.Random.Range(-0.3f, 0.3f); // a slight bow, either way
         lash.pulseHz = UnityEngine.Random.Range(3f, 9f);
         lash.Draw(0f);
@@ -318,6 +300,7 @@ internal sealed class TentacleLash : MonoBehaviour
             if (!bitten && age >= OutSeconds)
             {
                 bitten = true;
+                Sounds.Play(Sounds.TentacleBite.Value, end, owner != null);
                 Bite();
             }
             Draw(Mathf.Clamp01(extend));
@@ -344,7 +327,9 @@ internal sealed class TentacleLash : MonoBehaviour
         side = Quaternion.AngleAxis(planeAngle, forward) * side.normalized;
         var up = Vector3.Cross(forward, side);
         var pulse = 0.65f + 0.35f * Mathf.Sin(age * pulseHz * Mathf.PI * 2f + seed);
-        var amplitude = Mathf.Min(1f, length * 0.1f) * sizeScale * pulse;
+        // Small enough to stay inside the spew cone: at most ~4% of the length either side.
+        // Reaching for an enemy: a gentle sway that keeps it on course. Idle: a tight, lively wriggle.
+        var amplitude = (idle ? Mathf.Min(0.25f, length * 0.07f) : Mathf.Min(0.4f, length * 0.03f)) * sizeScale * pulse;
 
         // The spline runs through the inner control points only - the first and last just steer its
         // ends (the head was measured landing at 75% of the line with 5 points). So the second point
@@ -355,8 +340,9 @@ internal sealed class TentacleLash : MonoBehaviour
         {
             var t = inner > 0 ? (i - 1) / (float)inner : count > 1 ? i / (float)(count - 1) : 0f;
             var envelope = Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI);
-            var waveA = Mathf.Sin(t * Mathf.PI * freqA - age * speedA + seed);
-            var waveB = Mathf.Sin(t * Mathf.PI * freqB - age * speedB + phaseB);
+            var wriggle = idle ? 1.8f : 1f; // idle tentacles squirm faster
+            var waveA = Mathf.Sin(t * Mathf.PI * freqA - age * speedA * wriggle + seed);
+            var waveB = Mathf.Sin(t * Mathf.PI * freqB - age * speedB * wriggle + phaseB);
             var position = start + line * t
                 + side * (waveA * 1.4f * amplitude * envelope)
                 + up * ((waveB * 0.25f + arc) * amplitude * envelope);

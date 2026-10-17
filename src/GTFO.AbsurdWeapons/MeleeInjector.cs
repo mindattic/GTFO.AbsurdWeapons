@@ -12,15 +12,10 @@ namespace GTFO.AbsurdWeapons;
 /// animation/sound set to use), a gear category pointing at it, and an offline-gear entry (what
 /// appears in the loadout screen, and which model it carries). Nothing vanilla is modified.
 /// <list type="bullet">
-/// <item>Yari - the IsoCo Stinger spear model swung overhead like the sledgehammer.</item>
-/// <item>Tanto - the Mastaba Fixed Blade at a real tanto's size (~25 cm blade): the fastest, shortest sword.</item>
-/// <item>Wakizashi - the Mastaba Fixed Blade at a real wakizashi's size (~50 cm blade), wielded like the knife.</item>
 /// <item>Katana - the Mastaba Fixed Blade at a real katana's size (~70 cm blade), wielded like the bat; full-charge dash.</item>
-/// <item>Odachi - the Mastaba Fixed Blade at the Norimitsu Odachi's size (2.26 m blade), swung like the sledgehammer.</item>
 /// <item>Mjolnir - the Santonian Mallet hammer model wielded exactly like the bat.</item>
 /// <item>Warhammer - the Kovac Sledgehammer with a giant head: enormous hits and knockback.</item>
 /// <item>Shadow Dagger - the Mastaba Fixed Blade as a knife; a fully charged hit makes you unseen for 6 s.</item>
-/// <item>Gravity Hammer - the Omneco Maul; a charge held forever pulls enemies in, released it blasts them out.</item>
 /// </list>
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
@@ -29,16 +24,14 @@ internal static class MeleeInjector
     // Fixed rather than "max existing + 1" so every player in a lobby agrees on them - gear syncs
     // by category id. Vanilla uses 1-4 for melee archetypes and two-digit ids for the rest. Each
     // weapon uses the same id for all three of its blocks.
-    internal const uint YariId = 1001; // was the Glaive
+    // 1001 was the Yari (once the Glaive; removed); left unused so old loadouts never pick up a different weapon.
     internal const uint KatanaId = 1002;
     internal const uint MjolnirId = 1003;
     // 1004 was the Rapier (removed); left unused so old loadouts never pick up a different weapon.
     internal const uint WarhammerId = 1005;
     internal const uint ShadowDaggerId = 1006;
-    internal const uint WakizashiId = 1007;
-    internal const uint OdachiId = 1008;
-    internal const uint TantoId = 1009;
-    internal const uint GravityHammerId = 1010; // also its own melee animation set's id
+    // 1007-1009 were the Wakizashi, Odachi and Tanto (removed); left unused for the same reason.
+    // 1010 was the Gravity Hammer (removed); left unused for the same reason.
 
     // After GTFO.EZ (if installed) has tuned the vanilla weapons, so ours start from its tuned
     // values and EZ - which keys its tuning on vanilla names and ids - never touches ours.
@@ -46,15 +39,10 @@ internal static class MeleeInjector
     [HarmonyAfter(Plugin.GtfoEzGuid)]
     private static void Postfix()
     {
-        TryAdd("Yari", YariId, WeaponSettings.Yari, AddYari);
-        TryAdd("Tanto", TantoId, WeaponSettings.Tanto, AddTanto);
-        TryAdd("Wakizashi", WakizashiId, WeaponSettings.Wakizashi, AddWakizashi);
         TryAdd("Katana", KatanaId, WeaponSettings.Katana, AddKatana);
-        TryAdd("Odachi", OdachiId, WeaponSettings.Odachi, AddOdachi);
         TryAdd("Mjolnir", MjolnirId, WeaponSettings.Mjolnir, AddMjolnir);
         TryAdd("Warhammer", WarhammerId, WeaponSettings.Warhammer, AddWarhammer);
         TryAdd("Shadow Dagger", ShadowDaggerId, WeaponSettings.ShadowDagger, AddShadowDagger);
-        TryAdd("Gravity Hammer", GravityHammerId, WeaponSettings.GravityHammer, AddGravityHammer);
     }
 
     private static void TryAdd(string name, uint id, WeaponSettings settings, Action<string, uint> add)
@@ -87,83 +75,9 @@ internal static class MeleeInjector
         }
     }
 
-    private static void AddYari(string name, uint id)
-    {
-        var spear = Lookup<MeleeArchetypeDataBlock>("Spear");
-        var hammer = Lookup<MeleeArchetypeDataBlock>("Hammer");
-        var spearCategory = Lookup<GearCategoryDataBlock>("MeleeSpear");
-        var hammerCategory = Lookup<GearCategoryDataBlock>("MeleeSledgehammer");
-        var stinger = Lookup<PlayerOfflineGearDataBlock>("Spear_02"); // IsoCo Stinger
-
-        // Stats: the spear's reach and cleave, the hammer's swing, sounds and weight of blow.
-        var archetype = Clone(spear);
-        archetype.MeleeAnimationSet = hammer.MeleeAnimationSet;
-        archetype.MeleeSFXSet = hammer.MeleeSFXSet;
-        archetype.LightAttackDamage = hammer.LightAttackDamage;
-        archetype.ChargedAttackDamage = hammer.ChargedAttackDamage;
-        archetype.ChargedStaggerMulti = hammer.ChargedStaggerMulti;
-        archetype.LightEnvironmentMulti = hammer.LightEnvironmentMulti;
-        archetype.AttackSphereRadius = hammer.AttackSphereRadius;
-        archetype.PlayerRunSpeedMultiWhileCharging = hammer.PlayerRunSpeedMultiWhileCharging;
-        archetype.CameraDamageRayLength = spear.CameraDamageRayLength;
-        archetype.CanHitMultipleEnemies = true;
-        // The spear's hold-to-thrust charge has no matching motion in the hammer's animation set.
-        archetype.EvaluateHoldBeforeAttack = false;
-
-        var category = Clone(spearCategory);
-        category.ThirdPersonFullbodyMovement = hammerCategory.ThirdPersonFullbodyMovement; // teammates see the overhead swing
-
-        Register(name, id, archetype, category, spearCategory.persistentID, stinger,
-            "A Japanese spear's long blade, brought down overhead like a splitting maul. Reaches far and cleaves through a crowd.");
-    }
-
-    // The four Japanese swords are all the Mastaba Fixed Blade: its blade is a separate part, so
-    // BladeStretcher sizes just the blade (see WeaponSettings) and the grip stays knife-sized.
-    // They're a ladder - each step up is slower, hits harder and reaches further:
-    //
-    //            moves   light-attack speed   light / charged   reach   hits
-    //   Tanto    knife   x1.6 (SwordTempo)    2 / 6             1.6 m   one
-    //   Wakizashi knife  x1.25                3 / 9             2.0 m   one
-    //   Katana   bat     x1                   4 / 14            2.3 m   all in the arc (+ dash)
-    //   Odachi   hammer  x0.85                6 / 9999 (kills)  3.5 m   all in the arc
-
-    // A real tanto: ~25 cm blade. The fastest and shortest.
-    private static void AddTanto(string name, uint id)
-    {
-        var knife = Lookup<MeleeArchetypeDataBlock>("Knife");
-        var knifeCategory = Lookup<GearCategoryDataBlock>("MeleeKnife");
-        var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
-
-        var archetype = Clone(knife);
-        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Tanto.LightAttackDamage, 2f);
-        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Tanto.ChargedAttackDamage, 6f);
-        archetype.CameraDamageRayLength = 1.6f; // knife 1.75
-        archetype.name = "Tanto";
-        WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
-
-        Register(name, id, archetype, Clone(knifeCategory), knifeCategory.persistentID, mastaba,
-            "A short Japanese blade: the fastest cuts of any sword, at arm's length.");
-    }
-
-    // A real wakizashi: ~50 cm blade, the samurai's short companion sword.
-    private static void AddWakizashi(string name, uint id)
-    {
-        var knife = Lookup<MeleeArchetypeDataBlock>("Knife");
-        var knifeCategory = Lookup<GearCategoryDataBlock>("MeleeKnife");
-        var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
-
-        var archetype = Clone(knife);
-        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Wakizashi.LightAttackDamage, 3f);
-        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Wakizashi.ChargedAttackDamage, 9f);
-        archetype.CameraDamageRayLength = 2.0f;
-        archetype.name = "Wakizashi";
-        WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
-
-        Register(name, id, archetype, Clone(knifeCategory), knifeCategory.persistentID, mastaba,
-            "The samurai's short companion sword: quick cuts with a little more reach and weight than a tanto.");
-    }
-
-    // A real katana: ~70 cm blade, ~1 m overall. The bat's wide swings, and it cuts through every
+    // The Mastaba Fixed Blade's blade is a separate part, so BladeStretcher sizes just the blade
+    // (see WeaponSettings) and the grip stays knife-sized.
+    // A katana with a ~1.85 m blade (a real one's is ~70 cm). The bat's wide swings, and it cuts through every
     // enemy in the arc. The full-charge dash is runtime (KatanaDash).
     private static void AddKatana(string name, uint id)
     {
@@ -175,34 +89,12 @@ internal static class MeleeInjector
         var archetype = Clone(bat);
         archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Katana.LightAttackDamage, 4f);       // bat 3
         archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Katana.ChargedAttackDamage, 14f);  // bat 12
-        archetype.CameraDamageRayLength = 2.3f; // bat 1.75
+        archetype.CameraDamageRayLength = 3.5f; // bat 1.75; reaches the tip of its ~1.85 m blade
         archetype.CanHitMultipleEnemies = true;
+        WithChargedSwingTempo(archetype, id, SwordTempo.ChargedSpeedFor(id)); // the end-of-dash cut, twice as fast
 
         Register(name, id, archetype, Clone(batCategory), knifeCategory.persistentID, mastaba,
             "A Japanese long sword swung in wide two-handed arcs, cutting through everything in its path. Release a full charge to dash forward, slashing all you pass.");
-    }
-
-    // The Norimitsu Odachi, the largest known: a 2.26 m blade. Brought down overhead with the
-    // sledgehammer's swing, charge and weight, reaching 3.5 m and cleaving through a crowd.
-    private static void AddOdachi(string name, uint id)
-    {
-        var hammer = Lookup<MeleeArchetypeDataBlock>("Hammer");
-        var hammerCategory = Lookup<GearCategoryDataBlock>("MeleeSledgehammer");
-        var knifeCategory = Lookup<GearCategoryDataBlock>("MeleeKnife");
-        var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
-
-        var archetype = Clone(hammer);
-        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Odachi.LightAttackDamage, 6f);          // hammer 3
-        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Odachi.ChargedAttackDamage, 9999f);   // a full charge kills anything it reaches (hammer 20)
-        archetype.CanHitMultipleEnemies = true;
-        archetype.AttackSphereRadius = WeaponSettings.Or(WeaponSettings.Odachi.AttackSphereRadius, 0.4f);      // hammer 0.3
-        archetype.CameraDamageRayLength = 3.5f; // hammer 1.8
-        archetype.PlayerRunSpeedMultiWhileCharging = WeaponSettings.Or(WeaponSettings.Odachi.ChargeSpeedMulti, 0.7f);
-        archetype.name = "Odachi";
-        WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
-
-        Register(name, id, archetype, Clone(hammerCategory), knifeCategory.persistentID, mastaba,
-            "A colossal Japanese field sword, taller than two men. Slow, heavy overhead cuts that reach far and cleave everything beneath them.");
     }
 
     private static void AddMjolnir(string name, uint id)
@@ -256,40 +148,6 @@ internal static class MeleeInjector
             "Strike from the shadows. A fully charged hit makes you vanish for six seconds: no enemy can see, hear or chase you. Kills while hidden sharpen the blade.");
     }
 
-    // The Omneco Maul with the sledgehammer's swing and charge - but a charge that never swings by
-    // itself: a copy of the hammer's animation set with the auto-attack (4.2 s) pushed out of
-    // reach. Holding it pulls enemies in; releasing a full charge blasts them out (GravityHammer).
-    private static void AddGravityHammer(string name, uint id)
-    {
-        var hammer = Lookup<MeleeArchetypeDataBlock>("Hammer");
-        var hammerCategory = Lookup<GearCategoryDataBlock>("MeleeSledgehammer");
-        var maul = Lookup<PlayerOfflineGearDataBlock>("Maul"); // Omneco Maul
-
-        var animations = GameDataBlockBase<MeleeAnimationSetDataBlock>.GetBlock(hammer.MeleeAnimationSet)
-            ?? throw new InvalidOperationException("the hammer's melee animation set wasn't found");
-        if (GameDataBlockBase<MeleeAnimationSetDataBlock>.HasBlock(id))
-            throw new InvalidOperationException($"melee animation set id {id} is taken by another mod");
-        var held = Clone(animations);
-        held.persistentID = id;
-        held.name = name.Replace(" ", "") + "_Animations";
-        held.AutoAttackTime = 1000000f;
-        held.AutoAttackWarningTime = 999999f;
-        GameDataBlockBase<MeleeAnimationSetDataBlock>.AddBlock(held, -1);
-
-        var archetype = Clone(hammer);
-        archetype.MeleeAnimationSet = id;
-        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.GravityHammer.LightAttackDamage, 4f);         // hammer 3
-        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.GravityHammer.ChargedAttackDamage, 30f);    // hammer 20
-        archetype.ChargedStaggerMulti = WeaponSettings.Or(WeaponSettings.GravityHammer.ChargedStaggerMulti, 20f);    // hammer 1.3
-        archetype.CanHitMultipleEnemies = true;
-        archetype.AttackSphereRadius = WeaponSettings.Or(WeaponSettings.GravityHammer.AttackSphereRadius, 0.5f);     // hammer 0.3
-        archetype.CameraDamageRayLength = 2.2f;   // hammer 1.8
-        archetype.PlayerRunSpeedMultiWhileCharging = WeaponSettings.Or(WeaponSettings.GravityHammer.ChargeSpeedMulti, 0.6f); // anchored while it pulls
-
-        Register(name, id, archetype, Clone(hammerCategory), hammerCategory.persistentID, maul,
-            "Hold the charge as long as you like and it drags every enemy in sight toward you. Let go of a full charge and it throws them all back out.");
-    }
-
     // Light attacks `speed` times as fast: the weapon gets its own copy of its animation set (id =
     // the weapon's id) with the light attacks' timings - hit, damage window, combo, length -
     // divided by `speed`. SwordTempo speeds the animation itself up to match.
@@ -306,6 +164,26 @@ internal static class MeleeInjector
         set.FPAttackMissLeft = Faster(set.FPAttackMissLeft, speed);
         set.FPAttackHitRight = Faster(set.FPAttackHitRight, speed);
         set.FPAttackHitLeft = Faster(set.FPAttackHitLeft, speed);
+        GameDataBlockBase<MeleeAnimationSetDataBlock>.AddBlock(set, -1);
+        archetype.MeleeAnimationSet = id;
+    }
+
+    // The charged swing (its release and its hit - not the charge-up, which the full-charge checks
+    // time) `speed` times as fast, in the weapon's own copy of its animation set (id = the weapon's
+    // id). SwordTempo speeds the animation up to match.
+    private static void WithChargedSwingTempo(MeleeArchetypeDataBlock archetype, uint id, float speed)
+    {
+        var source = GameDataBlockBase<MeleeAnimationSetDataBlock>.GetBlock(archetype.MeleeAnimationSet)
+            ?? throw new InvalidOperationException($"melee animation set {archetype.MeleeAnimationSet} wasn't found");
+        if (GameDataBlockBase<MeleeAnimationSetDataBlock>.HasBlock(id))
+            throw new InvalidOperationException($"melee animation set id {id} is taken by another mod");
+        var set = Clone(source);
+        set.persistentID = id;
+        set.name = archetype.name + "_ChargedTempo";
+        set.FPAttackChargeUpReleaseLeft = Faster(set.FPAttackChargeUpReleaseLeft, speed);
+        set.FPAttackChargeUpReleaseRight = Faster(set.FPAttackChargeUpReleaseRight, speed);
+        set.FPAttackChargeUpHitLeft = Faster(set.FPAttackChargeUpHitLeft, speed);
+        set.FPAttackChargeUpHitRight = Faster(set.FPAttackChargeUpHitRight, speed);
         GameDataBlockBase<MeleeAnimationSetDataBlock>.AddBlock(set, -1);
         archetype.MeleeAnimationSet = id;
     }

@@ -42,6 +42,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The package's icon and manifest go next to the DLL too, so the mod manager shows the mod's
+         icon for this local install, the same as for one installed from Thunderstore. -->
+    <None Include="..\..\package\icon.png" Link="icon.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\package\manifest.json" Link="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- GTFO-API: network messages so teammates see the seeker guns' projectiles. -->
     <Reference Include="$(BepInEx)\plugins\GTFO-API.dll" Private="false" />
   </ItemGroup>

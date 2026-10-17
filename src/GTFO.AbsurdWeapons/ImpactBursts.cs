@@ -26,16 +26,12 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
     // Damage per metre of knockback left unspent when a flung enemy hits a wall (see Knockback).
     internal float SlamDamagePerMeter { get; init; }
 
-    // Released by the weapon's own trigger (ImpactBursts.Release) rather than when a hit lands.
-    internal bool OnRelease { get; init; }
-
     // Mjolnir's thunderclap: every hit that lands shocks the enemies around the one it struck. (A
     // full charge also throws the hammer - MjolnirThrow.) Built inside Bind(), not as a static field
     // initializer: those would run (as part of this type's static constructor) the moment Bind()
     // itself is first called, before Bind()'s own body had assigned the config entries they read.
     internal static ImpactBurst Thunderclap = null!;
     internal static ImpactBurst Shockwave = null!;
-    internal static ImpactBurst GravityBlast = null!;
 
     internal static void Bind(ConfigFile config)
     {
@@ -63,20 +59,6 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
             KnockStruckLight = shockwaveKnockStruckLight.Value, KnockStruckCharged = shockwaveKnockStruckCharged.Value,
             KnockArea = shockwaveKnockArea.Value, SlamDamagePerMeter = shockwaveSlamDamagePerMeter.Value,
         };
-
-        var gravityBlastRadius = config.Bind("Gravity Hammer", "BlastRadius", 8f, "Metres the release blast reaches.");
-        var gravityBlastDamage = config.Bind("Gravity Hammer", "BlastDamage", 15f, "Damage at the blast's center.");
-        var gravityBlastStagger = config.Bind("Gravity Hammer", "BlastStagger", 100f, "Blast stagger multiplier.");
-        var gravityBlastKnockArea = config.Bind("Gravity Hammer", "BlastKnockArea", 5f, "Metres everyone in the blast is thrown back.");
-        var gravityBlastSlamDamagePerMeter = config.Bind("Gravity Hammer", "BlastSlamDamagePerMeter", 3f, "Wall-slam damage per metre of unspent slide.");
-        // The Gravity Hammer's release: a full charge let go in front of you staggers everything
-        // within 8 m (100x, like the shockwave, with a little damage) and throws it 5 m back out.
-        GravityBlast = new(3, MeleeInjector.GravityHammerId, ChargedOnly: true, SparesStruckEnemy: false,
-            Radius: gravityBlastRadius.Value, Damage: gravityBlastDamage.Value, EdgeDamageFraction: 0.5f, StaggerMulti: gravityBlastStagger.Value,
-            new Color(0.6f, 0.3f, 1f), FlashRange: 12f, FlashIntensity: 10f, FlashSeconds: 0.45f)
-        {
-            KnockArea = gravityBlastKnockArea.Value, OnRelease = true, SlamDamagePerMeter = gravityBlastSlamDamagePerMeter.Value,
-        };
     }
 
     // The burst a weapon's landed hit releases (not the release-triggered ones).
@@ -85,7 +67,6 @@ internal sealed record ImpactBurst(byte Id, uint WeaponId, bool ChargedOnly, boo
     {
         1 => Thunderclap,
         2 => Shockwave,
-        3 => GravityBlast,
         _ => null,
     };
 }
@@ -102,6 +83,7 @@ internal static class ImpactBursts
     private const string BurstEvent = "MindAttic.GTFO.AbsurdWeapons.ImpactBurst";
     private const float SwingSeconds = 0.3f; // hits closer together than this are the same swing
     private static float lastBurstTime = -10f;
+    internal static float LastBurstTime => lastBurstTime; // WarhammerSlam: did the swing already burst?
 
     internal static void Init()
     {
@@ -242,8 +224,11 @@ internal sealed class BurstFlash : MonoBehaviour
     public BurstFlash(IntPtr ptr) : base(ptr) { }
 
     [HideFromIl2Cpp]
-    internal static void Spawn(ImpactBurst burst, Vector3 position) =>
+    internal static void Spawn(ImpactBurst burst, Vector3 position)
+    {
         Spawn(position + Vector3.up * 0.5f, burst.FlashColor, burst.FlashRange, burst.FlashIntensity, burst.FlashSeconds);
+        if (burst == ImpactBurst.Thunderclap) Sounds.Play(Sounds.Thunderclap.Value, position); // every game shows the burst, so every game hears it
+    }
 
     [HideFromIl2Cpp]
     internal static void Spawn(Vector3 position, Color color, float range, float intensity, float seconds)

@@ -5,7 +5,6 @@ using AssetShards;
 using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
-using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -13,14 +12,15 @@ using UnityEngine;
 namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// The Grenade Launcher: a C-Foam launcher whose globs are swapped for lock melters rigged to
-/// blow. The launcher's own firing (pressure, ammo, sound) is untouched; each glob it would launch
-/// becomes a grenade instead. A grenade that hits an enemy explodes at once. One that misses
+/// The Grenade Pistol and Grenade Rifle: plain semi-auto guns on heavy models (one shared set of
+/// stats - the pair handles identically) whose every shot launches a lock melter rigged to blow
+/// instead of a bullet (SeekerGuns' ray hook calls <see cref="Launch"/>). The gun's own firing -
+/// sound, recoil, ammo (infinite, like every gun here) - stays vanilla. A grenade that hits an
+/// enemy explodes at once. One that misses
 /// bounces off whatever it hits, flashing red faster and faster, and explodes 3 seconds after it
 /// was fired. The blast damages and staggers enemies only, through the bullet path, on the
 /// shooter's game; teammates are sent each launch and detonation and see the same grenades.
 /// </summary>
-[HarmonyPatch]
 internal static class GrenadeLauncher
 {
     internal static ConfigEntry<float> Speed = null!;           // launch speed, m/s
@@ -30,45 +30,28 @@ internal static class GrenadeLauncher
     internal static ConfigEntry<float> BlastEdgeFraction = null!;
     internal static ConfigEntry<float> BlastStagger = null!;
     internal static ConfigEntry<float> GrenadeBounciness = null!;
-    private const float MinSecondsBetween = 0.5f; // one grenade per pull: the launcher's burst extras are dropped
+    internal static ConfigEntry<float> Lift = null!;
+    internal static ConfigEntry<float> Gravity = null!;
+    internal static ConfigEntry<float> GunShotDelay = null!;
+    internal static ConfigEntry<int> GunClipSize = null!;
 
     private const string LaunchEvent = "MindAttic.GTFO.AbsurdWeapons.GrenadeLaunch";
     private const string DetonateEvent = "MindAttic.GTFO.AbsurdWeapons.GrenadeDetonate";
 
     internal static void Bind(ConfigFile config)
     {
-        Speed = config.Bind("Grenade Launcher", "LaunchSpeed", 24f, "Grenade launch speed, m/s.");
-        FuseSeconds = config.Bind("Grenade Launcher", "FuseSeconds", 3f, "Seconds before a missed grenade explodes on its own.");
-        BlastRadius = config.Bind("Grenade Launcher", "BlastRadius", 5f, "Metres the blast reaches.");
-        BlastDamage = config.Bind("Grenade Launcher", "BlastDamage", 40f, "Damage at the blast's center.");
-        BlastEdgeFraction = config.Bind("Grenade Launcher", "BlastEdgeFraction", 0.25f, "Share of damage left at the blast's edge.");
+        Speed = config.Bind("Grenade Launcher", "LaunchSpeed", 30f, "Launch speed along the aim, m/s.");
+        Lift = config.Bind("Grenade Launcher", "LaunchLift", 5f, "Extra upward speed every grenade is thrown with, m/s - the lob.");
+        Gravity = config.Bind("Grenade Launcher", "Gravity", 18f, "Gravity on a grenade in flight, m/s2.");
+        FuseSeconds = config.Bind("Grenade Launcher", "FuseSeconds", 2.5f, "Seconds before a missed grenade explodes on its own (Quake 1: 2.5).");
+        BlastRadius = config.Bind("Grenade Launcher", "BlastRadius", 5.2f, "Metres the blast reaches (Quake 1: 160 units).");
+        BlastDamage = config.Bind("Grenade Launcher", "BlastDamage", 75f, "Damage at the blast's center.");
+        BlastEdgeFraction = config.Bind("Grenade Launcher", "BlastEdgeFraction", 0.33f, "Share of damage left at the blast's edge (Quake 1: a third).");
         BlastStagger = config.Bind("Grenade Launcher", "BlastStagger", 5f, "Blast stagger multiplier.");
-        GrenadeBounciness = config.Bind("Grenade Launcher", "GrenadeBounciness", 0.55f, "Speed kept per bounce off the world.");
+        GrenadeBounciness = config.Bind("Grenade Launcher", "GrenadeBounciness", 0.5f, "Speed kept per bounce off the world (Quake 1: half).");
+        GunShotDelay = config.Bind("Grenade Launcher", "GunShotDelay", 0.6f, "Seconds between shots (semi-auto) - the Grenade Pistol and Rifle alike.");
+        GunClipSize = config.Bind("Grenade Launcher", "GunClipSize", 6, "Clip size (infinite ammo refills it anyway).");
     }
-
-    private static float lastLaunch = -10f;
-    private static uint nextId;
-
-    // Set while the launcher itself is firing, so glue from anything else (a C-foam mine, say)
-    // stays glue even with the launcher in hand.
-    private static int launcherFiring;
-    private static bool strayGlueLogged;
-
-    [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.FireBurst))]
-    [HarmonyPrefix]
-    private static void BeforeFireBurst() => launcherFiring++;
-
-    [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.FireBurst))]
-    [HarmonyFinalizer]
-    private static void AfterFireBurst() => launcherFiring = Math.Max(0, launcherFiring - 1);
-
-    [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.FireSingle))]
-    [HarmonyPrefix]
-    private static void BeforeFireSingle() => launcherFiring++;
-
-    [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.FireSingle))]
-    [HarmonyFinalizer]
-    private static void AfterFireSingle() => launcherFiring = Math.Max(0, launcherFiring - 1);
 
     internal static void Init()
     {
@@ -79,65 +62,17 @@ internal static class GrenadeLauncher
             LauncherGrenade.Detonate(message.Id, new Vector3(message.X, message.Y, message.Z)));
     }
 
-    // Every glob the C-Foam launcher would fire goes through here (the local player's only). Ours
-    // become grenades.
-    [HarmonyPatch(typeof(ProjectileManager), nameof(ProjectileManager.WantToFireGlue))]
-    [HarmonyPrefix]
-    private static bool BeforeFireGlue(PlayerAgent owner, Vector3 pos, Vector3 velocity)
-    {
-        try
-        {
-            if (owner == null || !owner.IsLocallyOwned) return true;
-            var wielded = owner.Inventory?.WieldedItem;
-            if (wielded == null || wielded.GearCategoryData?.persistentID != GunInjector.GrenadeLauncherId) return true;
-            if (launcherFiring == 0)
-            {
-                if (!strayGlueLogged)
-                {
-                    strayGlueLogged = true;
-                    Plugin.Logger.LogInfo("GTFO.AbsurdWeapons Grenade Launcher: glue fired by something other than the launcher stays glue.");
-                }
-                return true;
-            }
-            if (Time.time - lastLaunch < MinSecondsBetween) return false;
-            lastLaunch = Time.time;
+    private static uint nextId;
 
-            var aim = owner.FPSCamera != null ? owner.FPSCamera.Forward : velocity.normalized;
-            var launch = aim * Speed.Value;
-            var id = ((uint)(owner.Owner?.PlayerSlotIndex() ?? 0) << 24) | (++nextId & 0xFFFFFF);
-            LauncherGrenade.Spawn(id, owner, pos, launch);
-            NetworkAPI.InvokeEvent(LaunchEvent, new LaunchMessage(id, pos, launch));
-            CellSound.Post(EVENTS.FRAGGRENADETHROW, pos);
-            return false;
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons Grenade Launcher failed to fire: {e}");
-            return false;
-        }
-    }
-
-    // Infinite ammo: while the local player holds the launcher, the tool ammo is kept full. (On
-    // Update - Unity calls it; UpdateLocal is inlined into it, so a patch there never runs.)
-    [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.Update))]
-    [HarmonyPostfix]
-    private static void KeepToolAmmoFull(GlueGun __instance)
+    // One shot from the local shooter's Grenade Pistol or Rifle: a grenade out of the muzzle along
+    // the aim, shown to teammates too.
+    internal static void Launch(PlayerAgent owner, Vector3 position, Vector3 aim, uint gearCategoryId)
     {
-        try
-        {
-            if (__instance.GearCategoryData?.persistentID != GunInjector.GrenadeLauncherId) return;
-            if (__instance.Owner == null || !__instance.Owner.IsLocallyOwned) return;
-            var storage = PlayerBackpackManager.LocalBackpack?.AmmoStorage;
-            var ammo = storage?.ClassAmmo;
-            if (storage == null || ammo == null || ammo.IsFull) return;
-            storage.SetAmmo(AmmoType.Class, ammo.AmmoMaxCap);
-            storage.UpdateAllAmmoUI();
-            storage.NeedsSync = true;
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't refill the Grenade Launcher: {e.Message}");
-        }
+        // Quake 1: along the aim plus a fixed upward lob.
+        var velocity = aim.normalized * Speed.Value + Vector3.up * Lift.Value;
+        var id = ((uint)(owner.Owner?.PlayerSlotIndex() ?? 0) << 24) | (++nextId & 0xFFFFFF);
+        LauncherGrenade.Spawn(id, owner, position, velocity, gearCategoryId);
+        NetworkAPI.InvokeEvent(LaunchEvent, new LaunchMessage(id, position, velocity));
     }
 
     internal static void SendDetonate(uint id, Vector3 position) =>
@@ -179,7 +114,6 @@ internal static class GrenadeLauncher
 internal sealed class LauncherGrenade : MonoBehaviour
 {
     private const float Radius = 0.12f;
-    private const float Gravity = 9.81f;
     private const float RestSpeed = 1.2f;
     private const float RemoteGraceSeconds = 0.75f; // a teammate's copy waits this long past the fuse for the detonation message
     private static readonly Color FlashColor = new(1f, 0.05f, 0.05f, 1f);
@@ -197,7 +131,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
     private static bool modelLogged;
     private static Material? ledMaterial;
 
-    private uint id;
+    private uint id, gearCategoryId;
     private PlayerAgent? owner; // null on a teammate's (visual-only) copy
     private Vector3 velocity, spinAxis;
     private float age, spinSpeed, nextFlash, lastBounceSound;
@@ -208,7 +142,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
     public LauncherGrenade(IntPtr ptr) : base(ptr) { }
 
     [HideFromIl2Cpp]
-    internal static void Spawn(uint id, PlayerAgent? owner, Vector3 position, Vector3 velocity)
+    internal static void Spawn(uint id, PlayerAgent? owner, Vector3 position, Vector3 velocity, uint gearCategoryId = 0)
     {
         var go = new GameObject("GTFO.AbsurdWeapons Launcher Grenade");
         go.transform.position = position;
@@ -216,6 +150,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
 
         var grenade = go.AddComponent<LauncherGrenade>();
         grenade.id = id;
+        grenade.gearCategoryId = gearCategoryId;
         grenade.owner = owner;
         grenade.velocity = velocity;
         grenade.spinAxis = UnityEngine.Random.onUnitSphere;
@@ -285,7 +220,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
     [HideFromIl2Cpp]
     private void Fly(float dt)
     {
-        velocity += Vector3.down * (Gravity * dt);
+        velocity += Vector3.down * (GrenadeLauncher.Gravity.Value * dt);
         var position = transform.position;
         var step = velocity * dt;
         var distance = step.magnitude;
@@ -371,13 +306,13 @@ internal sealed class LauncherGrenade : MonoBehaviour
         GrenadeLauncher.SendDetonate(id, position);
         Explosion.Show(position);
         AreaDamage.Apply(position, GrenadeLauncher.BlastRadius.Value, GrenadeLauncher.BlastDamage.Value, GrenadeLauncher.BlastEdgeFraction.Value,
-            GrenadeLauncher.BlastStagger.Value, owner.Cast<Agents.Agent>(), null, GunInjector.GrenadeLauncherId);
+            GrenadeLauncher.BlastStagger.Value, owner.Cast<Agents.Agent>(), null, gearCategoryId);
     }
 
     // The lock melter's meshes, copied onto the grenade - just the look, none of the prefab's
     // pickup or interaction scripts. Falls back to a plain capsule if the prefab isn't loaded.
     [HideFromIl2Cpp]
-    private static void BuildModel(Transform parent)
+    internal static void BuildModel(Transform parent) // also the Hand Grenade's look (HandGrenade)
     {
         string source = "fallback capsule";
         try

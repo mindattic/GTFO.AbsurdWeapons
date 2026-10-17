@@ -12,10 +12,11 @@ using UnityEngine;
 namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// The Chain Lightning Gun: every shot is a bolt of lightning. It strikes the enemy under the
-/// crosshair (or, if the shot would miss, the enemy nearest the aim within a narrow cone), then
-/// jumps to the nearest enemy it hasn't hit yet, again and again, up to five jumps, each one
-/// weaker than the last. Jumps need line of sight. Damage goes through the bullet path on the
+/// The Chain Lightning Gun: a continuous stream of lightning for as long as the trigger is held
+/// (<see cref="ChainLightningDriver"/>; the gun itself never fires). Every tick it strikes the
+/// enemy under the crosshair (or, failing that, the enemy nearest the aim within a narrow cone),
+/// then jumps to the nearest enemy it hasn't hit yet, again and again, up to five jumps, each one
+/// weaker than the last. Ticks come faster than a bolt fades, so it reads as one unbroken arc. Jumps need line of sight. Damage goes through the bullet path on the
 /// shooter's game, so it syncs; teammates are sent the bolt's path and see the same lightning.
 /// </summary>
 internal static class ChainLightning
@@ -42,10 +43,14 @@ internal static class ChainLightning
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<BoltMessage>(BoltEvent, (_, message) => LightningBolt.Spawn(message.Points(), message.Count > 2));
+        NetworkAPI.RegisterEvent<BoltMessage>(BoltEvent, (sender, message) => LightningBolt.Spawn(message.Points(), message.Count > 2, sender));
     }
 
-    // One shot from the local shooter.
+    // How often the stream strikes while the trigger is held. Each strike's damage is scaled from
+    // the archetype's per-shot damage and shot delay, so damage per second is unchanged.
+    internal const float TickSeconds = 0.08f;
+
+    // One tick of the stream from the local shooter.
     internal static void Fire(PlayerAgent owner, Vector3 eye, Vector3 aim, float damage, uint gearCategoryId)
     {
         var path = new List<Vector3> { LaserGuns.ScreenStart(eye, aim) };
@@ -76,7 +81,7 @@ internal static class ChainLightning
         {
             // A plain miss: the bolt crackles out to whatever it hit, harmlessly.
             path.Add(point);
-            Send(path);
+            Send(path, owner);
             return;
         }
 
@@ -96,7 +101,7 @@ internal static class ChainLightning
             point = current.AimTarget.position;
             limb = NearestLimb(current, point);
         }
-        Send(path);
+        Send(path, owner);
     }
 
     // A lightning pulse from a point (thrown Mjolnir): it strikes the nearest enemy within `range`
@@ -122,13 +127,13 @@ internal static class ChainLightning
             strike *= JumpFalloff.Value;
             current = NextTarget(point, struck);
         }
-        Send(path);
+        Send(path, owner);
         return true;
     }
 
-    private static void Send(List<Vector3> path)
+    private static void Send(List<Vector3> path, PlayerAgent owner)
     {
-        LightningBolt.Spawn(path.ToArray(), path.Count > 2);
+        LightningBolt.Spawn(path.ToArray(), path.Count > 2, owner.Owner != null ? owner.Owner.Lookup : 0UL);
         NetworkAPI.InvokeEvent(BoltEvent, new BoltMessage(path));
     }
 
@@ -152,7 +157,7 @@ internal static class ChainLightning
         return best;
     }
 
-    // Shared with FlameThrower's afterburn ticks: the limb of `enemy` nearest `point`.
+    // The limb of `enemy` nearest `point`.
     internal static Dam_EnemyDamageLimb? NearestLimb(EnemyAgent enemy, Vector3 point)
     {
         Dam_EnemyDamageLimb? nearest = null;
@@ -218,9 +223,13 @@ internal sealed class LightningBolt : MonoBehaviour
     public LightningBolt(IntPtr ptr) : base(ptr) { }
 
     [HideFromIl2Cpp]
-    internal static void Spawn(Vector3[] points, bool struckEnemies)
+    internal static void Spawn(Vector3[] points, bool struckEnemies, ulong source = 0)
     {
         if (points.Length < 2) return;
+
+        // A crackling loop while the stream keeps coming, and a crackle where it strikes.
+        LoopSounds.Touch($"lightning:{source}", Sounds.LightningLoopStart.Value, Sounds.LightningLoopStop.Value, points[1]);
+        Sounds.PlayLimited($"crackle:{source}", 0.25f, Sounds.LightningCrackle.Value, points[points.Length - 1]);
         var go = new GameObject("GTFO.AbsurdWeapons Lightning Bolt");
         var bolt = go.AddComponent<LightningBolt>();
         bolt.points = points;
@@ -278,5 +287,40 @@ internal sealed class LightningBolt : MonoBehaviour
         var width = 0.05f * (0.6f + 0.4f * UnityEngine.Random.value);
         line.startWidth = line.endWidth = width;
         line.startColor = line.endColor = new Color(BoltColor.r, BoltColor.g, BoltColor.b, fade);
+    }
+}
+
+/// <summary>
+/// Drives the local player's Chain Lightning stream from the trigger: while the gun is in hand and
+/// Fire is held, a strike every <see cref="ChainLightning.TickSeconds"/>, its damage the archetype's
+/// per-shot damage scaled to the tick (same damage per second as when it fired shots).
+/// </summary>
+internal sealed class ChainLightningDriver : MonoBehaviour
+{
+    private float nextTick;
+
+    public ChainLightningDriver(IntPtr ptr) : base(ptr) { }
+
+    private void Update()
+    {
+        try
+        {
+            var player = PlayerManager.GetLocalPlayerAgent();
+            if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
+            var archetype = player.Inventory?.WieldedItem?.TryCast<Gear.BulletWeapon>()?.ArchetypeData;
+            if (archetype == null || archetype.persistentID != GunInjector.ChainLightningId) return;
+            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS) || Time.time < nextTick) return;
+            var camera = player.FPSCamera;
+            if (camera == null) return;
+
+            nextTick = Time.time + ChainLightning.TickSeconds;
+            var damage = archetype.Damage * ChainLightning.TickSeconds / Mathf.Max(0.02f, archetype.ShotDelay);
+            ChainLightning.Fire(player, camera.Position, camera.Forward, damage, GunInjector.ChainLightningId);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons chain lightning driver failed: {e.Message}");
+            nextTick = Time.time + 1f;
+        }
     }
 }

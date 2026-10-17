@@ -18,15 +18,10 @@ internal enum BladeAxis
 /// </summary>
 internal sealed class WeaponSettings
 {
-    internal static WeaponSettings Yari = null!;
-    internal static WeaponSettings Tanto = null!;
-    internal static WeaponSettings Wakizashi = null!;
     internal static WeaponSettings Katana = null!;
-    internal static WeaponSettings Odachi = null!;
     internal static WeaponSettings Mjolnir = null!;
     internal static WeaponSettings Warhammer = null!;
     internal static WeaponSettings ShadowDagger = null!;
-    internal static WeaponSettings GravityHammer = null!;
 
     private static ConfigFile config = null!;
 
@@ -36,8 +31,8 @@ internal sealed class WeaponSettings
     internal ConfigEntry<float> Reach { get; }
 
     // The weapon's own numbers (0 keeps the built-in value baked into MeleeInjector's Add* methods;
-    // takes effect on restart, same as Reach). Not every weapon uses every entry - Yari and Mjolnir
-    // keep their source archetype's stats untouched, for instance - so 0 there just does nothing.
+    // takes effect on restart, same as Reach). Not every weapon uses every entry - Mjolnir
+    // keeps its source archetype's stats untouched, for instance - so 0 there just does nothing.
     internal ConfigEntry<float> LightAttackDamage { get; }
     internal ConfigEntry<float> ChargedAttackDamage { get; }
     internal ConfigEntry<float> LightStaggerMulti { get; }
@@ -69,17 +64,11 @@ internal sealed class WeaponSettings
     internal static void Bind(ConfigFile file)
     {
         config = file;
-        // The Mastaba Fixed Blade's blade is 0.268 m: x0.93 = a tanto's 25 cm, x1.87 = a wakizashi's
-        // 50 cm, x2.6 = a katana's 70 cm, x8.4 = the Norimitsu Odachi's 2.26 m.
-        Tanto = new WeaponSettings(file, "Tanto", 0.93f, "1.6");
-        Yari = new WeaponSettings(file, "Yari", 1f, "3.2, the spear's");
-        Wakizashi = new WeaponSettings(file, "Wakizashi", 1.87f, "2.0");
-        Katana = new WeaponSettings(file, "Katana", 2.6f, "2.3");
-        Odachi = new WeaponSettings(file, "Odachi", 8.4f, "3.5");
+        // The Mastaba Fixed Blade's blade is 0.268 m: x6.9 = ~1.85 m, over two and a half times a real katana's 70 cm.
+        Katana = new WeaponSettings(file, "Katana", 6.9f, "3.5");
         Mjolnir = new WeaponSettings(file, "Mjolnir", 1f, "1.75, the bat's"); // its "blade" is the hammer head
         Warhammer = new WeaponSettings(file, "Warhammer", 3f, "2.4", BladeAxis.All); // a giant head, not a longer one
         ShadowDagger = new WeaponSettings(file, "Shadow Dagger", 1f, "1.75, the knife's");
-        GravityHammer = new WeaponSettings(file, "Gravity Hammer", 1f, "2.2");
     }
 
     // `entry` wins when it's set (non-zero); otherwise the built-in `builtIn` value.
@@ -87,15 +76,10 @@ internal sealed class WeaponSettings
 
     internal static WeaponSettings? ForCategory(uint categoryId) => categoryId switch
     {
-        MeleeInjector.YariId => Yari,
-        MeleeInjector.TantoId => Tanto,
-        MeleeInjector.WakizashiId => Wakizashi,
         MeleeInjector.KatanaId => Katana,
-        MeleeInjector.OdachiId => Odachi,
         MeleeInjector.MjolnirId => Mjolnir,
         MeleeInjector.WarhammerId => Warhammer,
         MeleeInjector.ShadowDaggerId => ShadowDagger,
-        MeleeInjector.GravityHammerId => GravityHammer,
         _ => null,
     };
 
