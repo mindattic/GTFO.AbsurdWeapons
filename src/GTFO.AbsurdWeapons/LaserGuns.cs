@@ -89,14 +89,15 @@ internal static class LaserGuns
     // eye and shrinks to a dot.
     private const float BeamDown = 0.22f, BeamRight = 0.12f, BeamForward = 0.45f;
 
-    // Where a beam fired from `eye` along `aim` appears to leave the gun on screen.
-    internal static Vector3 ScreenStart(Vector3 eye, Vector3 aim)
+    // Where a beam fired from `eye` along `aim` appears to leave the gun on screen. `forward`
+    // overrides how far out it starts (Chain Lightning's bolt pushes further than the lasers' beam).
+    internal static Vector3 ScreenStart(Vector3 eye, Vector3 aim, float forward = BeamForward)
     {
         var right = Vector3.Cross(Vector3.up, aim);
         if (right.sqrMagnitude < 0.001f) right = Vector3.right;
         right.Normalize();
         var down = -Vector3.Cross(aim, right).normalized;
-        return eye + aim * BeamForward + right * BeamRight + down * BeamDown;
+        return eye + aim * forward + right * BeamRight + down * BeamDown;
     }
 
     // The beam from `eye` along `aim`: where it starts on screen, where it lands, what it hit.

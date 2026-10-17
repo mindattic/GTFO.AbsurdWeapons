@@ -170,30 +170,32 @@ internal static class SeekerGuns
 
     private static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId;
 
-    // For the lasers even the archetype's trigger logic is skipped - it runs the gun's firing, fire
-    // animation and recoil before Fire is ever reached - so a held trigger does nothing to the gun
-    // itself; the beam is LaserDriver's.
+    // For the lasers and the Chain Lightning Gun even the archetype's trigger logic is skipped - it
+    // runs the gun's firing, fire animation and recoil before Fire is ever reached - so a held
+    // trigger does nothing to the gun itself; the stream is LaserDriver's / ChainLightningDriver's.
+    // Left only to the lasers before, Chain Lightning's hip fire never reached OnStartFiring, so the
+    // driver (which gates on the gun actually being wielded and firing) never saw its trigger held.
     [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.Update))]
     [HarmonyPrefix]
-    private static bool SkipLaserTrigger(BulletWeaponArchetype __instance) => !IsLaserArchetype(__instance);
+    private static bool SkipLaserTrigger(BulletWeaponArchetype __instance) => !IsStreamArchetype(__instance);
 
     [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.OnFireShot))]
     [HarmonyPrefix]
-    private static bool SkipLaserShot(BulletWeaponArchetype __instance) => !IsLaserArchetype(__instance);
+    private static bool SkipLaserShot(BulletWeaponArchetype __instance) => !IsStreamArchetype(__instance);
 
     [HarmonyPatch(typeof(BWA_Auto), nameof(BWA_Auto.OnFireShot))]
     [HarmonyPrefix]
-    private static bool SkipLaserAutoShot(BWA_Auto __instance) => !IsLaserArchetype(__instance);
+    private static bool SkipLaserAutoShot(BWA_Auto __instance) => !IsStreamArchetype(__instance);
 
     [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.OnStartFiring))]
     [HarmonyPrefix]
-    private static bool SkipLaserStartFiring(BulletWeaponArchetype __instance) => !IsLaserArchetype(__instance);
+    private static bool SkipLaserStartFiring(BulletWeaponArchetype __instance) => !IsStreamArchetype(__instance);
 
-    private static bool IsLaserArchetype(BulletWeaponArchetype archetype)
+    private static bool IsStreamArchetype(BulletWeaponArchetype archetype)
     {
         try
         {
-            return LaserGuns.ForGun(archetype.m_archetypeData?.persistentID ?? 0) != null;
+            return FiresAStream(archetype.m_archetypeData?.persistentID ?? 0);
         }
         catch (Exception)
         {

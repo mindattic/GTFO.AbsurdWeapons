@@ -32,6 +32,10 @@ internal static class ChainLightning
     private static ConfigEntry<float> StaggerMulti = null!;
     private const string BoltEvent = "MindAttic.GTFO.AbsurdWeapons.ChainLightning";
 
+    // The bolt starts further out from the eye than the lasers' beam (LaserGuns.ScreenStart's
+    // default) - the gun sits lower on screen, so the default offset left the bolt spawning inside it.
+    private const float BoltForward = 0.9f;
+
     internal static void Bind(ConfigFile config)
     {
         Range = config.Bind("Chain Lightning Gun", "Range", 40f, "Metres the first strike reaches.");
@@ -53,7 +57,7 @@ internal static class ChainLightning
     // One tick of the stream from the local shooter.
     internal static void Fire(PlayerAgent owner, Vector3 eye, Vector3 aim, float damage, uint gearCategoryId)
     {
-        var path = new List<Vector3> { LaserGuns.ScreenStart(eye, aim) };
+        var path = new List<Vector3> { LaserGuns.ScreenStart(eye, aim, BoltForward) };
         var struck = new HashSet<IntPtr>();
 
         // The first target: whatever enemy the shot hits, else the enemy nearest the aim.
