@@ -99,13 +99,15 @@ internal sealed class RailBeam : MonoBehaviour
 {
     private const float Seconds = 0.8f;
     private const float HelixLength = 80f;     // the helix wraps the first stretch; the core runs the full range
-    private const float TurnLength = 1.2f;     // metres per full turn (half as many spirals as the first 0.6)
+    private const float TurnLength = 2.4f;     // metres per full turn (half as many spirals again)
     private const int PointsPerTurn = 12;
     private const float StartRadius = 0.04f, EndRadius = 0.3f;
     private const float SpinPerSecond = 720f;
-    private static readonly Color CoreColor = new(0.85f, 0.95f, 1f, 1f);
-    private static readonly Color StrandA = new(0.2f, 0.7f, 1f, 1f);
-    private static readonly Color StrandB = new(0.55f, 0.35f, 1f, 1f);
+    // Green-tinted and semi-transparent: alpha below 1 here, not just the time fade, so the beam
+    // reads as translucent the instant it fires.
+    private static readonly Color CoreColor = new(0.8f, 1f, 0.85f, 0.65f);
+    private static readonly Color StrandA = new(0.2f, 1f, 0.35f, 0.6f);
+    private static readonly Color StrandB = new(0.1f, 0.65f, 0.2f, 0.6f);
     private static Material? material;
 
     private LineRenderer core = null!, strandA = null!, strandB = null!;
