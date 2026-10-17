@@ -113,7 +113,7 @@ internal static class GunInjector
             "Pistolauto", // Raptus Treffen 2: full-auto pistol, no sight, main slot
             48, // held low (ItemFPSSettings "Pistol_Chunky", 10 cm down) so the beam is visible
             laser));
-        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "SMGHeavyAuto", null, laser));   // Accrat ND6, special slot: no animated parts
+        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "SMGHeavyAuto", null, laser, forceSpecialSlot: true));   // Accrat ND6, no animated parts, forced into the special slot (it's a main-slot SMG in vanilla)
         TryAdd("Railgun", RailgunId, AddRailgun);
         TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
         const string grenade = "A heavy semi-auto launcher: every shot is a lock melter rigged to blow - it goes off on the first enemy it hits, or bounces around and blows after 3 seconds.";
@@ -242,7 +242,10 @@ internal static class GunInjector
     // A laser beam gun (LaserGuns) on the given model: forced full-auto at 20 ticks a second - every
     // tick burns 2 into whatever the beam is on - with no spread, no recoil and infinite ammo.
     // Stats come from the Drekker DEL P1. `hold`, if given, replaces the model's first-person hold.
-    private static void AddLaser(string name, uint id, string model, uint? hold, string description)
+    // `forceSpecialSlot`: the Accrat ND6 (SMGHeavyAuto) is actually a main-slot SMG in vanilla - its
+    // gear category's own BaseItem decides the loadout slot - so swap that BaseItem for the special
+    // slot's one to put the Laser Rifle there despite the model it's borrowed for its look.
+    private static void AddLaser(string name, uint id, string model, uint? hold, string description, bool forceSpecialSlot = false)
     {
         var source = Lookup<PlayerOfflineGearDataBlock>(model);
         var gear = WithHold(source, AddSteadyHold(name, id, source, hold));
@@ -258,7 +261,13 @@ internal static class GunInjector
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
-        Register(name, id, archetype, CategoryOf(gear), gear, description);
+        var category = CategoryOf(gear);
+        if (forceSpecialSlot)
+        {
+            category = Clone(category);
+            category.BaseItem = Lookup<ItemDataBlock>("GEAR_Bulletweapon_Special").persistentID;
+        }
+        Register(name, id, archetype, category, gear, description);
     }
 
     // The Koning PR 11 sniper, semi-auto: every shot is one Railgun slug through everything in its
