@@ -133,6 +133,12 @@ internal sealed class DashRunner : MonoBehaviour
                 Finish("you died");
                 return;
             }
+            // A duration of 0 would divide by zero into a NaN step and move the player to NaN.
+            if (KatanaDash.Seconds.Value <= 0f)
+            {
+                Finish("DashSeconds is 0");
+                return;
+            }
             var dt = Mathf.Min(Time.deltaTime, left);
             left -= dt;
             var from = player.Position;
