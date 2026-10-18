@@ -16,7 +16,9 @@ namespace GTFO.AbsurdWeapons;
 /// <see cref="KitSize"/> as their consumable contents - 20% of a pack by default. The table's in-a-box chance is
 /// set so <see cref="OutInTheOpenShare"/> of them lie around the zone instead, and every artifact
 /// spot gets a Hand Grenade instead of an artifact (<see cref="ArtifactsBecomeHandGrenades"/>).
-/// After GTFO.EZ's own loot tweaks; the host's settings decide what spawns.
+/// After GTFO.EZ's own loot tweaks: a table GTFO.EZ already turned into kits only (its Consumables
+/// Are Kits) keeps those kits and just gets the Hand Grenade and Stim Pack added. The host's
+/// settings decide what spawns.
 /// </summary>
 [HarmonyPatch]
 internal static class LootMix
@@ -79,35 +81,74 @@ internal static class LootMix
         {
             if (!Enabled.Value) return;
 
-            var mix = new List<(uint Id, float Weight)>();
-            void Add(uint? id, ConfigEntry<float> weight, string what)
+            static void Add(List<(uint Id, float Weight)> into, uint? id, ConfigEntry<float> weight, string what)
             {
                 if (id == null) Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons loot: no {what} item found - left out of the loot.");
-                else if (weight.Value > 0f) mix.Add((id.Value, weight.Value));
+                else if (weight.Value > 0f) into.Add((id.Value, weight.Value));
             }
-            Add(GameDataBlockBase<ItemDataBlock>.HasBlock(HandGrenade.ItemId) ? HandGrenade.ItemId : null, HandGrenadeWeight, "Hand Grenade");
-            Add(GameDataBlockBase<ItemDataBlock>.HasBlock(StimPack.ItemId) ? StimPack.ItemId : null, StimPackWeight, "Stim Pack");
-            Add(Kit("health", "medi", "health"), HealthKitWeight, "health kit");
-            Add(Kit("tool", "tool"), ToolKitWeight, "tool kit");
-            Add(Kit("ammo", "ammo"), AmmoKitWeight, "ammo kit");
-            if (mix.Count == 0) return;
+
+            // Ours: added to every table either way.
+            var extras = new List<(uint Id, float Weight)>();
+            Add(extras, GameDataBlockBase<ItemDataBlock>.HasBlock(HandGrenade.ItemId) ? HandGrenade.ItemId : null, HandGrenadeWeight, "Hand Grenade");
+            Add(extras, GameDataBlockBase<ItemDataBlock>.HasBlock(StimPack.ItemId) ? StimPack.ItemId : null, StimPackWeight, "Stim Pack");
+
+            // The full mix (ours plus our own kits) only for a table that isn't already kits-only.
+            // Built on first need, since resolving the kits also sets their contents to KitSize -
+            // which must not happen when GTFO.EZ already set them for its own kit loot.
+            List<(uint Id, float Weight)>? fullMix = null;
+            List<(uint Id, float Weight)> FullMix()
+            {
+                if (fullMix != null) return fullMix;
+                fullMix = new List<(uint Id, float Weight)>(extras);
+                Add(fullMix, Kit("health", "medi", "health"), HealthKitWeight, "health kit");
+                Add(fullMix, Kit("tool", "tool"), ToolKitWeight, "tool kit");
+                Add(fullMix, Kit("ammo", "ammo"), AmmoKitWeight, "ammo kit");
+                return fullMix;
+            }
 
             var inBoxes = 1f - Mathf.Clamp01(OutInTheOpenShare.Value);
-            var tables = 0;
+            int appended = 0, replaced = 0;
             foreach (var block in GameDataBlockBase<ConsumableDistributionDataBlock>.GetAllBlocks())
             {
                 if (block?.SpawnData == null || block.SpawnData.Count == 0) continue;
-                block.SpawnData.Clear();
-                foreach (var (id, weight) in mix) block.SpawnData.Add(new ConsumableSpawnData { ItemID = id, Weight = weight });
+
+                // Already nothing but kits (GTFO.EZ's Consumables Are Kits): keep its kits, sizes
+                // and odds, and add ours alongside them.
+                if (IsKitsOnly(block))
+                {
+                    if (extras.Count == 0) continue;
+                    foreach (var (id, weight) in extras) block.SpawnData.Add(new ConsumableSpawnData { ItemID = id, Weight = weight });
+                    appended++;
+                }
+                else
+                {
+                    var mix = FullMix();
+                    if (mix.Count == 0) continue;
+                    block.SpawnData.Clear();
+                    foreach (var (id, weight) in mix) block.SpawnData.Add(new ConsumableSpawnData { ItemID = id, Weight = weight });
+                    replaced++;
+                }
                 block.ChanceToSpawnInResourceContainer = inBoxes;
-                tables++;
             }
-            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: consumable loot is {string.Join(", ", mix.ConvertAll(m => $"item {m.Id} x{m.Weight}"))} ({tables} loot tables, {1f - inBoxes:P0} out in the open).");
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons loot: {appended} kits-only table(s) got {string.Join(", ", extras.ConvertAll(m => $"item {m.Id} x{m.Weight}"))} added; "
+                + $"{replaced} table(s) replaced with {(fullMix == null ? "nothing" : string.Join(", ", fullMix.ConvertAll(m => $"item {m.Id} x{m.Weight}")))}; {1f - inBoxes:P0} out in the open.");
         }
         catch (Exception e)
         {
             Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't set the loot mix: {e}");
         }
+    }
+
+    // A table whose every entry is a resource pack - which is what GTFO.EZ's Consumables Are Kits
+    // leaves behind (vanilla tables always hold at least one non-pack consumable).
+    private static bool IsKitsOnly(ConsumableDistributionDataBlock block)
+    {
+        foreach (var entry in block.SpawnData)
+        {
+            var item = GameDataBlockBase<ItemDataBlock>.GetBlock(entry.ItemID);
+            if (item == null || item.inventorySlot != InventorySlot.ResourcePack) return false;
+        }
+        return true;
     }
 
     // The resource pack whose name has one of `keys` in it (tool kits checked before ammo, so the

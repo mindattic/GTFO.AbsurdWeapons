@@ -236,6 +236,9 @@ things: **Hand Grenades** (2 in 6), **Stim Packs**, **health kits**, **tool kits
 (1 in 6 each). Kits found this way always hold **20%** of a pack. The zone's own resource packs
 still spawn as normal, at their usual sizes, on top.
 
+With **GTFO.EZ** installed and its *Consumables Are Kits* on, its kits are kept as they are (its
+sizes and odds) and Hand Grenades and Stim Packs are added alongside them instead.
+
 And **there are no artifacts**: everywhere the level would have placed one - out in the open or in a
 box - there's a **Hand Grenade** instead.
 
