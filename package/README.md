@@ -11,6 +11,9 @@ They show up in the loadout screen next to the vanilla weapons, in their normal 
 them has **(!)** after its name, so you can tell them from vanilla gear at a glance. In a level you
 can swap between them without going back to the lobby (see [Swapping weapons in a level](#swapping-weapons-in-a-level)).
 
+**Every weapon can be switched off, and nearly every number below can be retuned** (200+ settings),
+in the config file BepInEx creates on first launch — see [Config](#config).
+
 ## The weapons
 
 ### Melee
@@ -25,8 +28,8 @@ can swap between them without going back to the lobby (see [Swapping weapons in 
 ### Guns
 
 All guns have **infinite ammo** (the clip refills after every shot and the reserve stays full, so
-they never reload, and a gun you switch to starts fully loaded). They damage only enemies, never you or your teammates. They're tuned to be fun
-first; balance comes later.
+they never reload, and a gun you switch to starts fully loaded). They're tuned to be fun first;
+balance comes later.
 
 | Weapon | Slot | Model | In one line |
 |---|---|---|---|
@@ -44,17 +47,17 @@ first; balance comes later.
 | **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: flies dead straight with no drop, trailing falling sparks and dust, and blows up the first thing it touches |
 | **Shrink Beam** | Special | Omneco exp1 | A continuous ray that shrinks whatever it's held on until it pops; get close enough to a small one and you'll step on it |
 
-### Tools
+### Tool
 
 | Weapon | Model | In one line |
 |---|---|---|
-| **Victory Banner** | Stalwart Flow G2 (C-Foam launcher) | Put a flag down in front of you, like a sentry, with a glowing healing aura; walk up and press Use to pick it up. Heals everyone inside and buffs your damage |
+| **Victory Banner** | Stalwart Flow G2 (C-Foam launcher) | Put a flag down in front of you, like a sentry, with a glowing healing aura that heals everyone inside; walk up and press Use to pick it up |
 
-### Consumables
+### Consumable
 
 | Item | Model | In one line |
 |---|---|---|
-| **Hand Grenade** | Lock melter (thrown like a glowstick) | Hold to wind up, release to throw; bounces, then blows after 3 s. Everyone starts each level with 99, and they never run out |
+| **Hand Grenade** | Lock melter, thrown like a glowstick | Hold to wind up, release to throw; bounces, then blows after 3 s. Everyone starts each level with 99, and they never run out |
 
 ## Melee weapons
 
@@ -66,35 +69,37 @@ reach, stamina costs, and the swing teammates see, unless a stat below says othe
 The Mastaba Fixed Blade with a ~1.85 m blade (a real katana's is ~70 cm; the grip stays knife-sized),
 on the bat's moves: 4 / 14 damage, 3.5 m reach, cutting every enemy in the arc.
 
-**Katana dash-slash:** release a fully charged swing and, instead of swinging, you dash up to
+**Dash-slash:** release a fully charged swing and, instead of swinging, you dash up to
 **10 m** forward along your aim (kept level) in 0.6 s **with the swing held**. The moment you make
 contact - an enemy within reach, or a wall or prop that stops you - the charged cut is released
 right there, twice as fast as a normal charged swing. If you reach nothing, it swings at the end of the dash.
 
 ### Mjolnir
 
-A short-hafted war hammer on the bat's moveset.
+A short-hafted war hammer with the bat's stats and moveset.
 
 - **Thunderclap:** every hit that lands releases an electric shock with a blue flash, hitting every
   other enemy within 5 m for up to 8 damage (falling to 40% at the edge) with a x3 stagger. Walls
   block it.
 - **Throw:** release a full charge and a Mjolnir flies from your hand, tumbling end over end, out
   to 25 m (or the first wall), then comes back to you (one throw at a time; the one in your hand
-  stays put). It hits every enemy it passes through (20
-  damage, x4 stagger, once each way) and whenever an enemy is within 3 m of it, it casts chain lightning at
-  the nearest one (every 0.12 s while one's that close), which jumps on to two more (6 damage, 75% per jump).
+  stays put). It hits every enemy it passes through (20 damage, x4 stagger, once each way), and
+  whenever an enemy is within 3 m of it, it casts chain lightning at the nearest one (every 0.12 s
+  while one's that close), which jumps on to two more (6 damage, 75% per jump).
 
 ### Warhammer
 
 A sledgehammer with a head the size of a crate. Charged 500 / light 6 damage, x55 / x11 stagger,
-x10 to doors and locks on a charged hit, 2.4 m reach, hits several enemies. **Shockwave:** every hit that lands
-staggers everything within 6 m (1 damage, x100 stagger). **Slam:** a fully charged swing always comes
-down on the ground in front of you with the shockwave and a crater's worth of scattered debris and
-scorch marks, not one small mark - and flings everything around away - even if it hits nothing. **Knockback:** enemies are flung across
-the floor: the one you hit 4 m (**12 m** on a charged hit), the rest 6 m out from the impact. Walls
-and ledges stop the slide. **Wall slam:** an enemy that hits a wall with fling still to go takes
-"sideways fall damage": 5 per metre it didn't get to travel (the first metre is free), with a
-stagger and a puff of dust. A charged hit into a nearby wall does about 50.
+x10 to doors and locks on a charged hit, 2.4 m reach, hits several enemies.
+
+- **Shockwave:** every hit that lands staggers everything within 6 m (1 damage, x100 stagger).
+- **Slam:** a fully charged swing always comes down on the ground in front of you with the
+  shockwave and a crater's worth of scattered debris and scorch marks - even if it hits nothing.
+- **Knockback:** enemies are flung across the floor: the one you hit 4 m (**12 m** on a charged
+  hit), the rest 6 m out from the impact. Walls and ledges stop the slide.
+- **Wall slam:** an enemy that hits a wall with fling still to go takes "sideways fall damage": 5
+  per metre it didn't get to travel (the first metre is free), with a stagger and a puff of dust.
+  A charged hit into a nearby wall does about 50.
 
 ### Shadow Dagger
 
@@ -103,8 +108,7 @@ unseen for 2 seconds**: enemies can't see or hear you, won't lock on, and lose y
 chasing. You fade to a faint purple tint while hidden - the dagger's own glow - filling back in as
 the time runs out, and flickering faster and faster over the last second as a warning before it
 reverts. Another full-charge hit tops the stealth back up to the full 2 seconds (never cut short).
-**Put the dagger away and it ends at once:** wielding any other item makes you
-visible again.
+**Put the dagger away and it ends at once:** wielding any other item makes you visible again.
 
 - **Kills while hidden** sharpen the dagger: each adds **+25% damage**, up to **+100%**, for the
   rest of that stealth.
@@ -117,8 +121,8 @@ visible again.
 
 Doom's plasma gun: a rapid stream of blue plasma balls (real enemy projectiles, tinted) that fly
 dead straight at twice Doom's speed, with no spread at all - every ball goes exactly where the
-crosshair is - and stop at walls and doors. Each does **5 × 1d8 (5–40)** and a small 1.25 m electric
-splash (6 damage falling to 40% at the edge, x3 stagger). One every 3 tics, ~11.7 a second, like Doom. No recoil, no brass.
+crosshair is - and stop at walls and doors. Each does **5 × 1d8 (5–40)** and a small 1.75 m electric
+splash (6 damage, x3 stagger). One every 3 tics, ~11.7 a second, like Doom. No recoil, no brass.
 
 ### Hive Pistol (main) and Hive Rifle (special)
 
@@ -130,39 +134,38 @@ taking turns. Every round lands but does only **1 damage**. ~11 a second. No rec
 
 One continuous red beam from the barrel to whatever your crosshair is on, for as long as you hold
 the trigger. Where it lands it **burns**: a white-hot spot, an orange glow, sparks and scorch marks.
-They don't shoot: it's one constant beam, and its end burns whatever enemy it's on, 40 damage a
-second out to 70 m. No bullets, no muzzle flash, no kickback.
+It burns whatever enemy it's on for 40 damage a second, out to 70 m. No bullets, no muzzle flash,
+no kickback.
 
 ### Tentacle Cannon (special)
 
 Every round is a burst of three striker tentacles, mouths and all, spewing out from spots just below
-your eyeline around the view - never where you can see them start - and thrashing in from off-screen.
-**While an enemy is near your crosshair and in reach**, every tentacle in the burst reaches for it,
-each landing its own bite on its body; with none in reach they instead reach out along their own
-random lines for the nearest wall, floor or crate (and melt a lock they grab). It's carried very low
-at the waist, like a minigun. Each bite does 25 and staggers hard (x12); ~4.3 bursts a second, three
-tentacles each.
+your eyeline around the view and thrashing in from off-screen. **While an enemy is near your
+crosshair and in reach**, every tentacle in the burst reaches for it, each landing its own bite;
+with none in reach they reach out along their own random lines for the nearest wall, floor or crate
+(and melt a lock they grab). It's carried very low at the waist, like a minigun. Each bite does 25
+and staggers hard (x12); ~4.3 bursts a second.
 
 ### Grenade Pistol (main) and Grenade Rifle (special)
 
-Plain semi-auto launchers on heavy guns - the Bataldo 3RB revolver (main) and the TechMan Veruta XII (special). A shot does
-exactly the same from either; each just looks like its own gun firing - its own barrel, its own kick. Every shot is a **lock melter rigged to blow**, with infinite ammo.
+Semi-auto launchers on heavy guns - the Bataldo 3RB revolver (main) and the TechMan Veruta XII
+(special). A shot does exactly the same from either; each just looks like its own gun firing. Every
+shot is a **lock melter rigged to blow**.
 
 - **Hits an enemy:** explodes instantly.
 - **Misses:** bounces off walls and floors, losing half its speed each time, and explodes **2.5 seconds** after firing.
 - While it's out it **flashes red faster and faster** (with a beep each flash) as the fuse burns.
 - It's lobbed: launched fast with a little upward lift, so it arcs out a long way.
-- The blast does 75 damage at the center, falling to a third at 5.2 m, with a heavy stagger (x5). It
-  never hurts players.
+- The blast does 75 damage at the center, falling to a third at 5.2 m, with a heavy stagger (x5).
+  It never hurts players.
 
 ### Railgun (special)
 
 The Köning PR 11, semi-auto, one shot every 1.5 seconds. Each shot is an instant slug with **infinite
 penetration**: it goes through every enemy and every wall out to 200 m, doing **150 damage** to every
 enemy on the line (headshots still count). It's drawn as a white-hot beam wrapped in a spinning
-double helix that spins, widens and fades over 0.8 s, with sparks wherever it punches through a wall.
-Slow but devastating, like Quake's rail. Keeps the sniper's scope, with no kickback; the beam starts
-well out ahead of you.
+double helix that widens and fades over 0.8 s, with sparks wherever it punches through a wall. Keeps
+the sniper's scope, with no kickback.
 
 ### Chain Lightning Gun (special)
 
@@ -176,7 +179,7 @@ a clear line. No recoil, no brass.
 Quake 1's own rocket launcher. Every shot is a rocket that flies dead straight out of the barrel -
 no drop, no bounce - to the first enemy or wall in its way, trailing falling sparks and a dust trail,
 then explodes: **110 damage** at the center, falling to a third at **5.2 m**, with a heavy stagger
-(x5). The blast reaches nearby players too (shooter, bots and teammates alike), Quake/Doom style.
+(x5). **The blast reaches nearby players too** (shooter, bots and teammates alike), Quake style.
 Semi-auto, one shot every **0.8 seconds**.
 
 ### Shrink Beam (special)
@@ -187,42 +190,324 @@ so a shrink has to finish in one sustained hold. Shrink it below **25%** of its 
 outright. Once it's under **40%** size, just getting within **0.6 m** of it pops it too - small
 enough that walking near it counts as stepping on it.
 
+## Tool
+
 ### Victory Banner
 
 You carry the flag itself. Press fire and it's **planted right in front of you** at once - a pole
-with a green banner waving from it - no charging up. Like a sentry, you **pick it back up** by walking up to it, looking at it and pressing **Use** (a
-prompt shows) - planting switches you to your main weapon meanwhile. Switching your tool slot away from it - PageUp/PageDown, equipping something else, or
-pressing Home to restore your starting loadout - **retires it on its own**, no need to pick it up
-first.
+with a green banner waving from it - no charging up - and you switch to your main weapon. Like a
+sentry, you **pick it back up** by walking up to it, looking at it and pressing **Use** (a prompt
+shows). Switching your tool slot away from it - Page Up/Down, equipping something else, or pressing
+Home to restore your starting loadout - **retires it on its own**.
 
 While it's up, a **glowing green aura** lies on the ground around it out to **8 m**. Every quarter
 second it pulses, **healing** everyone standing inside it 1% of their max health - stay in it and
-you're back to full well within a minute. That's all it does.
+you're back to full well within a minute.
+
+## Consumable
+
+### Hand Grenade
+
+The glowstick's own item, cloned - so the throw, bounce and sync are all vanilla - wearing a lock
+melter's look. Hold to wind up and release to throw (twice as hard as a glowstick); it bounces
+around, flashing red faster and faster, and blows after **3 seconds**: 60 damage at the center,
+falling to a quarter at 6 m, x6 stagger. It never hurts players.
+
+Every player is handed a stack of **99** in their consumable slot when they drop into a level, and
+the stack never goes down. By default every consumable that would have spawned in boxes and lockers
+is a Hand Grenade instead, and 60% of them are left lying out in the open.
 
 ## Swapping weapons in a level
 
 Hold a main, special, tool or melee weapon and press **Page Up** for the next of this mod's weapons
 for that slot, or **Page Down** for the previous one. A five-second message names what you switched
-to. Only this mod's weapons are in the cycle, never vanilla gear. Teammates get the swap too.
+to. Only this mod's weapons are in the cycle, never vanilla gear (and never one you've switched off
+in the config). Teammates get the swap too.
 
 Press **Home** to go back to a serious run: every slot you've swapped this level - main, special,
 tool and melee, all at once - goes back to the gear you started with, with the magazines and
 reserve ammo you had the moment you first swapped it away. Slots you never swapped aren't touched.
-The keys are configurable (below).
 
 ## Config
 
-`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg` is created on first launch.
+`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg` is created on first launch. Every number above is
+in it, grouped one section per weapon (pistol/rifle pairs share one section, since they share one
+set of stats).
 
-One section per melee weapon:
+- Settings marked **†** are baked into the weapon when the game loads its data, so they **take effect
+  on the next game restart**.
+- Everything else is read while you play. The file is re-read whenever a melee weapon's model is
+  built (the loadout screen, equipping it, or a Page Up/Down swap), so edits to those land without
+  restarting.
+- In the melee sections, **0 means "keep the built-in value"** listed in the weapon's description
+  above.
+
+If you're upgrading from an older version: BepInEx keeps whatever value is already in your `.cfg`,
+so when a *default* changes between versions (see `CHANGELOG.md`), the mod corrects that once per
+affected setting the first time you launch the version that changes it.
+
+### Turning weapons off
+
+Every weapon has its own on/off switch, `<Weapon> Enabled` †, in its section. All are on by default.
+A weapon that's off simply isn't added: it's not in the loadout screen or the Page Up/Down cycle,
+and nothing else about the game changes. Pistol and rifle versions of a gun are switched separately.
+
+| Section | Switches |
+|---|---|
+| `[Katana]` | `Katana Enabled` |
+| `[Mjolnir]` | `Mjolnir Enabled` |
+| `[Warhammer]` | `Warhammer Enabled` |
+| `[Shadow Dagger]` | `Shadow Dagger Enabled` |
+| `[Plasma Guns]` | `Plasma Pistol Enabled`, `Plasma Rifle Enabled` |
+| `[Hive Guns]` | `Hive Pistol Enabled`, `Hive Rifle Enabled` |
+| `[Laser Guns]` | `Laser Pistol Enabled`, `Laser Rifle Enabled` |
+| `[Tentacle Guns]` | `Tentacle Cannon Enabled` |
+| `[Grenade Launcher]` | `Grenade Pistol Enabled`, `Grenade Rifle Enabled` |
+| `[Railgun]` | `Railgun Enabled` |
+| `[Chain Lightning Gun]` | `Chain Lightning Gun Enabled` |
+| `[Rocket Launcher]` | `Rocket Launcher Enabled` |
+| `[Shrink Beam]` | `Shrink Beam Enabled` |
+| `[Victory Banner]` | `Victory Banner Enabled` |
+| `[Hand Grenade]` | `Hand Grenade Enabled` (off: glowsticks and loot stay vanilla) |
+
+### Melee weapons (shared settings)
+
+Each of `[Katana]`, `[Mjolnir]`, `[Warhammer]` and `[Shadow Dagger]` has these:
 
 | Setting | Default | What it does |
 |---|---|---|
-| `BladeLength` | Katana 6.9, Warhammer 3, others 1 | How much the blade (or hammer head) is stretched; 1 is the model's own size. Re-read whenever the weapon is rebuilt (loadout screen, re-equip), so you can tune it without restarting. |
-| `BladeLengthAxis` | Y (Warhammer: All) | Which of the model's axes is "length". All scales it evenly, so a head gets bigger instead of longer. |
-| `Reach` | 0 (built-in: Katana 3.5, Warhammer 2.4) | How far hits land, in meters. Takes effect on restart. |
+| `BladeLength` | Katana 6.9, Warhammer 3, others 1 | How much the blade (or hammer head) is stretched; 1 is the model's own size. Visual only - raise `Reach` to match. |
+| `BladeLengthAxis` | Y (Warhammer: All) | Which of the model's axes is its length. `Auto` picks the longest; `All` scales evenly, so a head gets bigger instead of longer. |
+| `Reach` † | 0 (Katana 3.5, Mjolnir 1.75, Warhammer 2.4, Shadow Dagger 1.75) | How far hits land, in metres (0-10). |
+| `LightAttackDamage` † | 0 (Katana 4, Mjolnir 3, Warhammer 6, Shadow Dagger: the knife's) | Light-attack damage. |
+| `ChargedAttackDamage` † | 0 (Katana 14, Mjolnir 12, Warhammer 500, Shadow Dagger: the knife's) | Fully charged attack damage. |
+| `LightStaggerMulti` † | 0 (Warhammer 11, others vanilla) | Light-attack stagger multiplier. |
+| `ChargedStaggerMulti` † | 0 (Warhammer 55, others vanilla) | Charged-attack stagger multiplier. |
+| `ChargedEnvironmentMulti` † | 0 (Warhammer 10, others vanilla) | Charged-attack damage multiplier against doors and locks. |
+| `AttackSphereRadius` † | 0 (Warhammer 0.6, others vanilla) | How wide a swing's hit sphere is, in metres. |
+| `ChargeSpeedMulti` † | 0 (Warhammer 0.5, others vanilla) | Your move speed while holding a charge (1 = normal). |
+| `LightAttackSpeed` † | 0 (Shadow Dagger 2.5, others 1) | Light-attack pace: 2 swings twice as fast. |
+| `ChargedAttackSpeed` † | 0 (Katana 2, others 1) | Pace of a charged swing's release and hit. The charge-up itself keeps its timing. |
 
-`[Gear Cycling]`:
+### `[Katana]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `DashDistance` | 10 | Metres the full-charge dash moves you (it stops sooner on contact with an enemy or a wall). |
+| `DashSeconds` | 0.6 | Seconds the full dash takes. |
+| `DashSlashRadius` | 1.2 | How close an enemy has to be to count as contact (the held swing releases). |
+| `DashSlashStagger` | 3 | Stagger multiplier of the fallback cut, if the held swing can't be released. |
+
+### `[Mjolnir]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ThunderclapRadius` † | 5 | Metres the thunderclap reaches. |
+| `ThunderclapDamage` † | 8 | Damage at the thunderclap's center. |
+| `ThunderclapEdgeFraction` † | 0.4 | Share of damage left at its edge. |
+| `ThunderclapStagger` † | 3 | Thunderclap stagger multiplier. |
+| `ThrowSpeed` | 26 | The thrown hammer's outbound speed, m/s. |
+| `ThrowReturnSpeed` | 32 | Its speed flying back to you, m/s. |
+| `ThrowReach` | 25 | Metres it flies before turning back (or the first wall). |
+| `ThrowSpin` | 1080 | How fast it tumbles end over end, degrees/second. |
+| `ThrowHitRadius` | 0.6 | How wide a swath the flying hammer hits. |
+| `ThrowHitDamage` | 20 | Damage per enemy hit, each way. |
+| `ThrowHitStagger` | 4 | Stagger multiplier per hit. |
+| `ThrowPulseSeconds` | 0.12 | Seconds between the flying hammer's lightning pulses. |
+| `ThrowPulseRange` | 3 | It casts chain lightning whenever an enemy is within this many metres. |
+| `ThrowPulseDamage` | 6 | Damage of a pulse's first strike. |
+| `ThrowPulseJumps` | 2 | Chain-lightning jumps per pulse, after the first strike. |
+
+### `[Warhammer]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShockwaveRadius` † | 6 | Metres the shockwave reaches. |
+| `ShockwaveStagger` † | 100 | Shockwave stagger multiplier. |
+| `ShockwaveKnockStruckLight` † | 4 | Metres the struck enemy slides on a light hit. |
+| `ShockwaveKnockStruckCharged` † | 12 | Metres the struck enemy slides on a charged hit. |
+| `ShockwaveKnockArea` † | 6 | Metres everyone else in the shockwave slides. |
+| `ShockwaveSlamDamagePerMeter` † | 5 | Wall-slam damage per metre of unspent slide. |
+| `SlamDelaySeconds` | 0.25 | Seconds after a full charge is released that the hammer hits the ground. |
+| `SlamReach` | 1.8 | Metres in front of you the slam lands. |
+| `SlamDebrisRadius` | 1.5 | Metres out from the slam point the debris and scorch marks scatter. |
+| `SlamDebrisCount` | 8 | How many debris bursts scatter across that radius. |
+
+### `[Shadow Dagger]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `StealthSeconds` | 2 | Seconds a fully charged hit hides you for; a further one restarts the count. |
+| `StealthKillTimeBonus` | 0.25 | Seconds added for a full-windup kill made while hidden. |
+| `StealthBonusPerKill` | 0.25 | Damage bonus added per kill while hidden (0.25 = +25%). |
+| `StealthMaxBonus` | 1 | Cap on the stacked kill bonus (1 = +100%). |
+| `StealthTransparency` | 0.95 | How see-through you are at full stealth (0-1). Visual only. |
+| `StealthWarningSeconds` | 1 | With this much stealth left you start flickering back in as a warning. 0 turns it off. |
+
+### `[Knockback]`
+
+Shared by everything that flings enemies (the Warhammer).
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Sharpness` | 14 | How quickly a slide covers its distance (ease-out rate). |
+| `MaxSeconds` | 0.6 | A slide is cut short after this many seconds regardless. |
+| `SlamFreeMeters` | 1 | Slides ending within this of their full distance take no wall-slam damage. |
+| `SlamStagger` | 3 | Stagger multiplier of a wall slam. |
+
+### `[Plasma Guns]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` † | 22.5 | Damage shown in the loadout screen (each ball actually rolls `DamageScale` x 1d`DamageDie`). |
+| `ShotDelay` † | 0.0857 | Seconds between balls (~11.7 a second). |
+| `ClipSize` † | 100 | Clip size (infinite ammo refills it anyway). |
+| `BallSpeed` † | 57.2 | Ball speed, m/s. |
+| `DamageDie` † | 8 | Each hit rolls `DamageScale` x 1d`DamageDie`. |
+| `DamageScale` † | 5 | Each hit rolls `DamageScale` x 1d`DamageDie`. |
+| `BlastRadius` † | 1.75 | Metres of the small shock on impact. |
+| `BlastDamage` † | 6 | Damage at the shock's center. |
+| `BlastStagger` † | 3 | Shock stagger multiplier. |
+
+### `[Hive Guns]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` † | 1 | Damage per round. |
+| `ShotDelay` † | 0.09 | Seconds between rounds. |
+| `ClipSize` † | 30 | Clip size. |
+| `RoundSpeed` † | 45 | Round speed, m/s. |
+| `TurnRate` † | 1500 | How fast a homing round can turn, degrees/second. |
+| `LockConeDegrees` † | 35 | Cone around the crosshair that locks count as nearby. |
+| `LockRange` † | 60 | Metres a lock can be picked up from. |
+| `MaxLocks` † | 6 | How many enemies it cycles locks between. |
+| `LockPipSeconds` | 0.25 | Seconds each lock pip takes to build while the enemy stays near the crosshair. |
+| `LockHealthPerPip` | 40 | An enemy needs one lock pip per this much health (at least one). |
+| `LockMaxPips` | 3 | The most pips any enemy needs, however tough. |
+
+### `[Laser Guns]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` † | 2 | Damage per tick (20 ticks a second). |
+| `ShotDelay` † | 0.05 | Seconds between ticks. |
+| `ClipSize` † | 100 | Clip size. |
+| `BeamRange` † | 70 | Metres the beam reaches. |
+| `BeamWidth` † | 0.025 | The beam's visual width. |
+
+### `[Tentacle Guns]` (the Tentacle Cannon)
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` † | 25 | Damage per bite (enemies' own tentacles are untouched). |
+| `ShotDelay` † | 0.235 | Seconds between bursts. |
+| `ClipSize` † | 60 | Clip size. |
+| `TentaclesPerShot` | 3 | Tentacles each burst sends out (each needs a free one of twelve spawn spots). |
+| `EngageConeDegrees` | 20 | The enemy nearest the crosshair within this cone (and in reach) draws every tentacle. |
+| `GrabConeDegrees` | 25 | With no enemy in reach, each tentacle reaches along its own random line within this cone. |
+| `StaggerMulti` | 12 | Stagger multiplier per bite. |
+| `IdleReach` | 4 | Metres a tentacle wriggles out when its line meets nothing in reach. |
+| `FallbackReach` | 25 | Reach used until a real striker's is found in the level. |
+
+### `[Tentacles]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `PoolMultiplier` † | 4 | How many times more tentacles the game can draw at once (1-16; every tentacle type, enemies' included). |
+
+### `[Grenade Launcher]` (the Grenade Pistol and Rifle)
+
+| Setting | Default | What it does |
+|---|---|---|
+| `GunShotDelay` † | 0.6 | Seconds between shots. |
+| `GunClipSize` † | 6 | Clip size. |
+| `LaunchSpeed` | 30 | Launch speed along the aim, m/s. |
+| `LaunchLift` | 5 | Extra upward speed every grenade is thrown with, m/s - the lob. |
+| `Gravity` | 18 | Gravity on a grenade in flight, m/s². |
+| `FuseSeconds` | 2.5 | Seconds before a missed grenade explodes on its own. |
+| `GrenadeBounciness` | 0.5 | Speed kept per bounce. |
+| `BlastRadius` | 5.2 | Metres the blast reaches. |
+| `BlastDamage` | 75 | Damage at the blast's center. |
+| `BlastEdgeFraction` | 0.33 | Share of damage left at the blast's edge. |
+| `BlastStagger` | 5 | Blast stagger multiplier. |
+
+### `[Railgun]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` † | 150 | Damage to every enemy on the line. |
+| `ShotDelay` † | 1.5 | Seconds between shots. |
+| `ClipSize` † | 5 | Clip size. |
+| `PenetrationRange` | 200 | Metres the piercing slug reaches. |
+
+### `[Chain Lightning Gun]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` † | 5 | Damage of the first strike. |
+| `ShotDelay` † | 0.15 | Seconds between shots. |
+| `ClipSize` † | 60 | Clip size. |
+| `Range` | 40 | Metres the first strike reaches. |
+| `AssistConeDegrees` | 6 | A near-miss within this cone still finds a first target. |
+| `Jumps` | 5 | How many times a bolt leaps on to another enemy (0-5). |
+| `JumpRange` | 8 | Metres each jump can reach. |
+| `JumpFalloff` | 0.75 | Share of the previous strike's damage each jump does. |
+| `StaggerMulti` | 2 | Stagger multiplier per strike. |
+
+### `[Rocket Launcher]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `GunShotDelay` † | 0.8 | Seconds between shots. |
+| `GunClipSize` † | 5 | Clip size. |
+| `LaunchSpeed` | 32.7 | Rocket speed, m/s. |
+| `Lifetime` | 10 | Seconds a rocket flies before it disappears if it never hits anything. |
+| `BlastRadius` | 5.2 | Metres the blast reaches. |
+| `BlastDamage` | 110 | Damage at the blast's center. |
+| `BlastEdgeFraction` | 0.33 | Share of damage left at the blast's edge. |
+| `BlastStagger` | 5 | Blast stagger multiplier. |
+
+### `[Shrink Beam]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `GunShotDelay` † | 0.08 | Seconds between beam ticks. |
+| `GunClipSize` † | 100 | Clip size. |
+| `Range` | 40 | Metres the beam reaches. |
+| `ShrinkPerSecond` | 0.25 | Share of full size (and speed) removed per second on the beam. |
+| `RegrowDelaySeconds` | 1 | Seconds off the beam before a shrunk enemy starts growing back. |
+| `RegrowPerSecond` | 0.15 | Share of full size regained per second while growing back. |
+| `MinScale` | 0.25 | Share of full size that pops it. |
+| `PopDamage` | 99999 | Damage dealt on the pop. |
+| `StepOnScale` | 0.4 | Below this share of full size, just getting close pops it too. |
+| `StepOnRadius` | 0.6 | Metres counted as standing on it. |
+
+### `[Victory Banner]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Radius` | 8 | Metres out to which it heals. |
+| `HealSeconds` | 0.25 | Seconds between heals. |
+| `HealPercent` | 1 | Percent of max health restored per heal. |
+| `PickupRange` | 2.5 | Metres from the banner within which Use picks it back up. |
+| `SafetyLifetimeSeconds` | 600 | A safety-net despawn in case it's never picked back up. |
+
+### `[Hand Grenade]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `FuseSeconds` | 3 | Seconds from the throw until it explodes. |
+| `ThrowForceMultiplier` | 2 | Multiplies the glowstick's own throw strength. |
+| `BlastRadius` | 6 | Metres the blast reaches. |
+| `BlastDamage` | 60 | Damage at the blast's center. |
+| `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
+| `BlastStagger` | 6 | Blast stagger multiplier. |
+| `StackSize` † | 99 | How many the stack holds (it's kept full). |
+| `GiveOnDrop` | true | Hand every player a stack when they drop into a level (the host's setting decides). |
+| `OnlyLootConsumable` † | true | Every consumable in boxes and lockers is a Hand Grenade instead (the host's setting decides). |
+| `OutInTheOpenShare` † | 0.6 | With `OnlyLootConsumable` on: the share (0-1) left lying out in the open instead. |
+
+### `[Gear Cycling]`
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -230,34 +515,46 @@ One section per melee weapon:
 | `PreviousWeaponKey` | PageDown | Swap to the previous one. |
 | `RestoreLoadoutKey` | Home | Put back every swapped slot, ammo included, as it was before its first swap. |
 
-`[Tentacles]`:
+Any [Unity `KeyCode`](https://docs.unity3d.com/ScriptReference/KeyCode.html) name works; `None` disables that key.
 
-| Setting | Default | What it does |
+### `[Sounds]`
+
+Every weapon sound is one of the game's own Wwise events, picked by name. Swap any of them for
+another game sound by name; an empty value is silent (or, for a gun's shot, the gun's own sound).
+
+| Setting | Default | Plays |
 |---|---|---|
-| `PoolMultiplier` | 4 | How many times more tentacles the game can draw at once, for every tentacle type (enemies' included). Takes effect on restart. |
+| `PlasmaShot` | GAUSSPISTOLBODYA3D | Plasma Pistol/Rifle shot |
+| `RailgunShot` | GAUSSPISTOLFIRE2D_RANDOM | Railgun shot |
+| `GrenadeShot` | FLAREGUNFIRE | Grenade Pistol/Rifle shot |
+| `TentacleShot` | SNATCHERTENTACLESHOOT | Each tentacle lashing out |
+| `TentacleBite` | SNATCHERTENTACLEHIT | A tentacle landing its bite |
+| `LaserLoopStart` / `LaserLoopStop` | FREEZERLOOP / FREEZERLOOPEND | The laser beam's hum |
+| `LightningLoopStart` / `LightningLoopStop` | TERMINAL_CREEPY_STATIC_LOOP / _STOP | Chain Lightning's crackle loop |
+| `ShrinkLoopStart` / `ShrinkLoopStop` | BIOTRACKER_TOOL_LOOP / _STOP | The Shrink Beam's hum |
+| `LightningCrackle` | FLUORESCENT_LIGHT_CRACKLE | Where lightning strikes |
+| `Thunderclap` | ELEVATOR_THUNDER | Mjolnir's thunderclap |
+| `HandGrenadeThrow` | FRAGGRENADETHROW | Throwing a Hand Grenade |
+| `HandGrenadeBounce` | FRAGGRENADEBOUNCE | A Hand Grenade bouncing |
+| `BannerPlant` | SENTRYGUN_DEPLOY | Planting the Victory Banner |
 
 ## Multiplayer
 
-Everyone in the lobby needs this mod. Weapons sync between players by an id that only exists for
-players who have it installed. The player who fires deals the damage through the normal bullet
-path, so health, stagger and kills stay in sync. Teammates are sent every shot, beam, tentacle,
-bolt, grenade, flash and stealth, and see the same thing. Knockback is done by the host, who owns enemy positions.
-
-## Sounds
-
-Every weapon sounds like what it is: no gunshots from the lightning or laser guns (a crackling electric
-loop and a continuous beam hum instead), a gauss crack from the Railgun, a hollow thump from the grenade guns,
-tentacle lashes and bites, thunder from Mjolnir. Every one is the game's own
-sound, and each can be swapped for any other game sound by name in the config (`[Sounds]`).
+Everyone in the lobby needs this mod, with the same weapons switched on: weapons sync between
+players by an id that only exists for players who have it. The player who fires deals the damage
+through the normal bullet path, so health, stagger and kills stay in sync. Teammates are sent every
+shot, beam, tentacle, bolt, grenade, flash and stealth, and see the same thing. Knockback is done by
+the host, who owns enemy positions.
 
 ## Compatibility
 
 - **GTFO.EZ:** compatible, in either load order. Weapons are built after EZ's tuning, so each
   starts from EZ's version of the weapon it's copied from. Stats this mod sets itself stay fixed.
-- **Other mods that add weapons** at the same ids (1001-1010 melee, 1101-1119 guns, 1202 tool, 1203 consumable): if
-  one already uses an id, that weapon isn't added and `LogOutput.log` says so. The rest still load.
-  The mod also adds melee animation sets 1006-1010, recoil profiles 1101-1109 and 1119, and first-person hold
-  1103; a clash there drops that weapon (animation sets) or leaves it its model's recoil.
+- **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202 tool, 1203
+  consumable): if one already uses an id, that weapon isn't added and `LogOutput.log` says so. The
+  rest still load. A melee weapon whose attack speed isn't 1 also adds a melee animation set at its
+  own id, and the guns add recoil profiles at 1101-1109 and 1119 and a first-person hold at 1103; a
+  clash there leaves that weapon its model's animation timing or recoil.
 
 ## Requirements
 

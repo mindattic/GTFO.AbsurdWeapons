@@ -3,8 +3,9 @@
 Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds nineteen new weapons, each shown with "(!)"
 after its name: four melee weapons that put one weapon's model on another's moves (Katana, Mjolnir, Warhammer, Shadow Dagger), thirteen guns (Plasma,
 Hive, Laser and Grenade Pistol/Rifle, Tentacle Cannon, Railgun, Chain Lightning Gun, Rocket Launcher, Shrink Beam), a tool (Victory Banner) and a consumable (Hand Grenade).
-Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. See
-`package/README.md` for the player-facing breakdown and stat tables.
+Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. Every weapon
+can be switched off in the config, and 200+ settings retune them. See `package/README.md` for the
+player-facing breakdown and the full config reference.
 
 Not yet published on Thunderstore (the package name will be `GtfoAbsurdWeapons`).
 
@@ -286,13 +287,15 @@ of the game's own concrete-impact effect (dust and a scorch decal together), one
 `DebrisCount` (8) more scattered across `DebrisRadius` (1.5 m), each dropped to the actual floor under
 it, instead of the single bullet-sized mark a plain `Impact_Concrete` call leaves.
 
-### Light-attack tempo (`MeleeInjector.WithLightAttackTempo`, `SwordTempo`)
+### Attack tempo (`MeleeInjector.WithTempo`, `SwordTempo`)
 
 The `MeleeSpeedModifier` getter is never called natively (IL2CPP inlined it), so patching it does
-nothing. Instead the Shadow Dagger (x2.5) gets its own copy of their `MeleeAnimationSetDataBlock` (id = the weapon's id) whose light-attack
-`MeleeAttackData` (miss and hit, left and right - copied, never edited in place) has every `*Time`
-divided by the speed, and a `ChangeState` postfix sets `WeaponAnimator.speed` to match during
-light attacks (1 otherwise). Charge-ups keep their timing, which the full-charge checks use.
+nothing. Instead a melee weapon whose `LightAttackSpeed` or `ChargedAttackSpeed` isn't 1 (built in:
+Shadow Dagger light x2.5, Katana charged x2) gets its own copy of its `MeleeAnimationSetDataBlock`
+(id = the weapon's id). Its light-attack `MeleeAttackData` (miss and hit, left and right) and/or its
+charged release and hit - copied, never edited in place - have every `*Time` divided by the speed,
+and a `ChangeState` postfix sets `WeaponAnimator.speed` to match during those states (1 otherwise).
+Charge-ups keep their timing, which the full-charge checks use.
 
 ### Shadow Dagger kill bonus (`Stealth`)
 
@@ -543,35 +546,27 @@ Still to verify in-game:
 
 ## Config
 
-`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg` has one section per melee weapon: `BladeLength`,
-`BladeLengthAxis`, `Reach`, and now also `LightAttackDamage`, `ChargedAttackDamage`,
-`LightStaggerMulti`, `ChargedStaggerMulti`, `AttackSphereRadius`, `ChargeSpeedMulti` and
-`LightAttackSpeed` (0 keeps the built-in value for each; a weapon that doesn't use a given stat
-just ignores it). `BladeLength` is re-read whenever a model is built, so it can be tuned without
-restarting; everything else here is baked in at `GameDataInit.Initialize`, so it needs a restart.
-Shadow Dagger's stealth duration/bonus-per-kill/cap (`[Shadow Dagger] StealthSeconds` etc.) and the
-Katana's dash distance/time/slash radius/stagger (`[Katana] Dash...`) are their own entries, read
-live. Also config now: the hammer-family impact
-bursts - Mjolnir's thunderclap and the Warhammer's shockwave
-(`[Mjolnir] Thunderclap...`, `[Warhammer] Shockwave...`) - Mjolnir's
-throw (`[Mjolnir] Throw...`) and the shared physical-knockback tuning (`[Knockback]`). The ten original guns' damage, rate of fire and clip size are config too (`[Plasma Guns]`,
-`[Hive Guns]`, `[Laser Guns]`, `[Railgun]`, `[Chain Lightning Gun]`, `[Tentacle Guns]` - one section
-covers both guns of a pistol/rifle pair, since they share stats); their other runtime numbers are config too: the Plasma/Hive seeker kinds' speed, damage and lock
-range (`[Plasma Guns]`/`[Hive Guns]`, alongside the gun stats above), the laser beam's
-range/width (`[Laser Guns]`), the Railgun's penetration range (`[Railgun]`), Chain Lightning's
-range/jump range/falloff/stagger (`[Chain Lightning Gun]` - jump *count* stays fixed at 5: the
-network message has exactly enough fields for that many), and the Tentacle guns' spew/engage/lock
-cones and stagger (`[Tentacle Guns]`). The Grenade Pistol/Rifle's speed, fuse, blast
-radius/damage/stagger, bounciness, shot delay and clip are `[Grenade Launcher]`; the Hand Grenade's
-fuse, blast, throw-force multiplier, loot takeover and hand-out are `[Hand Grenade]`. The Rocket
-Launcher's launch speed, lifetime, blast radius/damage/falloff/stagger, shot delay and clip are
-`[Rocket Launcher]`; the Shrink Beam's range, shrink/regrow rates, min/step-on scale and radius, shot
-delay and clip are `[Shrink Beam]`. For
-the Victory Banner, every one of its numbers - gun stats
-(damage, rate of fire, clip, pellet count/spread) included - is its own config entry
-(`[Victory Banner]`), read once at `GameDataInit.Initialize` for
-the gun stats and live for the runtime behaviour (heal radius, rate and percent), so
-most of it can be dialed in without restarting.
+`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg`, one section per weapon (a pistol/rifle pair
+shares one, since they share stats), plus `[Knockback]`, `[Tentacles]`, `[Gear Cycling]`,
+`[Sounds]` and `[Internal]` (the migration version - don't edit). **The full reference - every
+setting, its default and what it does - is in [`package/README.md`](package/README.md#config).**
+
+Conventions:
+
+- **`<Weapon> Enabled`** (default `true`), in each weapon's own section, is checked first thing in
+  `MeleeInjector.TryAdd` / `GunInjector.TryAdd` / `HandGrenade.AddItem`: off, the weapon's
+  datablocks are never registered, so it's absent from the loadout and the Page Up/Down cycle
+  (`GearCycler` cycles `DataBlocks.AddedCategories`). Same key style as GTFO.EZ's own toggles.
+- **Restart vs live:** anything that goes into a datablock - every `Enabled`, gun
+  `Damage`/`ShotDelay`/`ClipSize`, the melee archetype overrides, the seeker/laser/impact-burst kinds
+  built in their `Bind` - is read once at `GameDataInit.Initialize`. Everything else reads
+  `.Value` at use, and `BladeStretcher` calls `ConfigFile.Reload()` whenever it builds a melee
+  model, so those pick up edits without a restart.
+- **Melee overrides:** the `Add*` methods set each weapon's built-in values; `MeleeInjector.ApplyOverrides`
+  then replaces any whose config entry is non-zero, so every entry in every melee section works on
+  that weapon.
+- **Changed defaults** get a `ConfigMigrations` entry, so an existing install that still holds the
+  old default moves to the new one once.
 
 ## Versioning
 

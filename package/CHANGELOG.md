@@ -23,5 +23,8 @@
   - **Consumable:** Hand Grenade (a lock melter thrown like a glowstick, lobbed twice as hard, that bounces and blows after
     3 s; can replace every other loot consumable in the level; every player starts each level with 99, and they never run out).
 - Swap between this mod's weapons in a level with Page Up / Page Down (configurable).
-- Config: per-weapon `BladeLength`, `BladeLengthAxis` and `Reach`; `[Gear Cycling]` keys;
-  `[Tentacles] PoolMultiplier` raises how many tentacles the game can draw at once.
+- Config: every weapon has its own on/off switch (`<Weapon> Enabled`, pistol and rifle versions
+  separately), and 200+ settings retune them - damage, rate of fire, ranges, blasts, the Katana's
+  dash, Mjolnir's throw, the Warhammer's shockwave and slam, the Shadow Dagger's stealth, Chain
+  Lightning's jump count, every sound, and more. `[Gear Cycling]` keys; `[Tentacles] PoolMultiplier`
+  raises how many tentacles the game can draw at once. Full reference in the README.

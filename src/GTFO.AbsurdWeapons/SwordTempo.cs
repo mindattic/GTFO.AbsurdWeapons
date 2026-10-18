@@ -5,10 +5,11 @@ using HarmonyLib;
 namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// Light-attack speed for the weapons that have their own (MeleeInjector.WithLightAttackTempo):
-/// the Shadow Dagger stabs 2.5x as fast. The attack timings live in each weapon's copied animation set; this plays the first-person
-/// animation at the same pace during light attacks and back at normal speed otherwise. Charge-ups
-/// keep their timing, which the full-charge checks are measured against.
+/// Light- and charged-attack speed for melee weapons with their own tempo (MeleeInjector.WithTempo;
+/// built in: the Shadow Dagger stabs 2.5x as fast, the Katana's charged cut is 2x). The attack
+/// timings live in each weapon's copied animation set; this plays the first-person animation at the
+/// same pace during those attacks and back at normal speed otherwise. Charge-ups keep their timing,
+/// which the full-charge checks are measured against.
 /// </summary>
 [HarmonyPatch]
 internal static class SwordTempo
