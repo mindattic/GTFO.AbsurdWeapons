@@ -59,6 +59,40 @@ internal static class HandGrenade
 
     internal static bool IsOurs(ItemDataBlock? block) => block != null && block.persistentID == ItemId;
 
+    // No carrying limit: while Hand Grenades are in the local consumable slot, the slot holds this
+    // many, so you keep every one you collect.
+    private const int Uncapped = 9999;
+
+    internal static void Uncap(InventorySlotAmmo? ammo)
+    {
+        if (ammo == null || ammo.BulletsMaxCap >= Uncapped || !InLocalConsumableSlot()) return;
+        ammo.AmmoMaxCap = Mathf.Max(0.0001f, ammo.CostOfBullet) * Uncapped;
+        ammo.BulletsMaxCap = Uncapped;
+    }
+
+    private static bool InLocalConsumableSlot()
+    {
+        var backpack = PlayerBackpackManager.LocalBackpack;
+        return backpack != null && backpack.TryGetBackpackItem(InventorySlot.Consumable, out var item) && item != null
+            && (item.ItemID == ItemId || IsOurs(item.Instance?.ItemDataBlock));
+    }
+
+    // The game re-sets the slot's cap from the item whenever it sets the slot's ammo up (picking one
+    // up included), so it's lifted again straight after.
+    [HarmonyPatch(typeof(PlayerAmmoStorage), nameof(PlayerAmmoStorage.SetupAmmoType))]
+    [HarmonyPostfix]
+    private static void AfterSetupAmmoType(PlayerAmmoStorage __instance, AmmoType type)
+    {
+        try
+        {
+            if (type == AmmoType.CurrentConsumable) Uncap(__instance.ConsumableAmmo);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't lift the Hand Grenade cap: {e.Message}");
+        }
+    }
+
     // The glowstick's item, cloned as ours. After GTFO.EZ, same as the guns.
     [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
     [HarmonyPostfix]
@@ -325,7 +359,8 @@ internal sealed class HandGrenadeFuse : MonoBehaviour
 }
 
 /// <summary>
-/// On the host: gives every player StartingCount Hand Grenades when they drop into a level.
+/// Keeps the local Hand Grenade stack uncapped, and on the host gives every player StartingCount
+/// Hand Grenades when they drop into a level.
 /// </summary>
 internal sealed class HandGrenadeSupply : MonoBehaviour
 {
@@ -343,6 +378,7 @@ internal sealed class HandGrenadeSupply : MonoBehaviour
                 supplied.Clear();
                 return;
             }
+            HandGrenade.Uncap(PlayerBackpackManager.LocalBackpack?.AmmoStorage?.ConsumableAmmo);
             if (!SNet.IsMaster || !HandGrenade.GiveOnDrop.Value || HandGrenade.StartingCount.Value <= 0 || Time.time < nextSupplyCheck) return;
             nextSupplyCheck = Time.time + 2f;
             foreach (var player in PlayerManager.PlayerAgentsInLevel)

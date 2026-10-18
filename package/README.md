@@ -220,7 +220,8 @@ around, flashing red faster and faster, and blows after **3 seconds**: 60 damage
 falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
 Every player is handed **1** in their consumable slot when they drop into a level, and **each one
-you find** - as loot, or where an artifact would have been - **is 1 more**. Thrown ones are gone.
+you find** - as loot, or where an artifact would have been - **is 1 more**, with **no limit** on how
+many you carry. Thrown ones are gone.
 
 ### Stim Pack
 
