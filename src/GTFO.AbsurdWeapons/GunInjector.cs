@@ -25,6 +25,7 @@ namespace GTFO.AbsurdWeapons;
 /// <item>Chain Lightning Gun (special) - Omneco exp1; lightning that jumps enemy to enemy (<see cref="ChainLightning"/>).</item>
 /// <item>Grenade Pistol (main) / Grenade Rifle (special) - Bataldo 3RB / TechMan Veruta XII; semi-auto lock-melter grenades (<see cref="GrenadeLauncher"/>).</item>
 /// <item>Rocket Launcher (special) - Buckland XDist2; Quake 1's rocket, straight and gravity-free (<see cref="RocketLauncher"/>).</item>
+/// <item>Shrink Beam (special) - Omneco exp1; a held ray that shrinks an enemy to nothing (<see cref="ShrinkBeam"/>).</item>
 /// </list>
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
@@ -49,6 +50,7 @@ internal static class GunInjector
     internal const uint GrenadeRifleId = 1116;
     // 1117 was the Gravity Gun (removed); left unused so old loadouts never pick up a different gun.
     internal const uint RocketLauncherId = 1118;
+    internal const uint ShrinkBeamId = 1119;
     // 1201 was the Grenade Launcher tool (now the Grenade Pistol/Rifle); left unused.
     internal const uint VictoryBannerId = 1202;   // a tool: same reason
 
@@ -124,6 +126,7 @@ internal static class GunInjector
         TryAdd("Grenade Pistol", GrenadePistolId, (name, id) => AddGrenadeGun(name, id, "RevolverHEL", grenade));    // Bataldo 3RB (heavy revolver), main slot
         TryAdd("Grenade Rifle", GrenadeRifleId, (name, id) => AddGrenadeGun(name, id, "MachinegunAuto", grenade)); // TechMan Veruta XII (heavy machine gun), special slot
         TryAdd("Rocket Launcher", RocketLauncherId, AddRocketLauncher);
+        TryAdd("Shrink Beam", ShrinkBeamId, AddShrinkBeam);
         TryAdd("Victory Banner", VictoryBannerId, AddVictoryBanner);
     }
 
@@ -322,6 +325,28 @@ internal static class GunInjector
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
             "A continuous stream of lightning while you hold the trigger, leaping from enemy to enemy, up to five jumps, weaker with each.");
+    }
+
+    // The Omneco exp1 (the Chain Lightning Gun's own model), full-auto, no recoil, no spread, no
+    // brass, infinite ammo: a continuous ray (ShrinkBeam) while the trigger is held, same as Chain
+    // Lightning's own stream.
+    private static void AddShrinkBeam(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("HELGun");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Auto;
+        archetype.ShotgunBulletCount = 1;
+        archetype.Damage = 0f; // the loadout screen: the beam shrinks, it doesn't deal a number
+        archetype.ShotDelay = ShrinkBeam.GunShotDelay.Value;
+        archetype.DefaultClipSize = ShrinkBeam.GunClipSize.Value;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.ShellCasingSize = 0f;
+        archetype.SpecialChargetupTime = 0f;
+        archetype.SpecialCooldownTime = 0f;
+        archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
+        Register(name, id, archetype, category, gear,
+            "A continuous ray while you hold the trigger: whatever it's held on shrinks - smaller and slower by the same share - until there's nothing left of it.");
     }
 
     // The Buckland XDist2 (the Tentacle Cannon's own model), semi-auto: every shot is a rocket

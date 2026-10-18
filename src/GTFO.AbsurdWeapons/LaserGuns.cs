@@ -368,6 +368,30 @@ internal sealed class LaserBeam : MonoBehaviour
 /// held, a damage tick at the beam's end every <c>ShotDelay</c> seconds (the archetype's), at the
 /// archetype's damage. The gun's own firing never runs (see <see cref="LaserGuns"/>).
 /// </summary>
+/// <summary>
+/// Shared by every trigger-driven stream (lasers, Chain Lightning, Shrink Beam): whether the local
+/// player's currently wielded item has been up long enough to count as settled into its aim
+/// position, rather than still mid-raise from just being swapped to or coming back from a sprint.
+/// </summary>
+internal static class StreamReadiness
+{
+    private const float SettleSeconds = 0.3f;
+    private static IntPtr wieldedItem;
+    private static float wieldedSince;
+
+    internal static bool IsSettled(PlayerAgent player)
+    {
+        var item = player.Inventory?.WieldedItem;
+        var pointer = item != null ? item.Pointer : IntPtr.Zero;
+        if (pointer != wieldedItem)
+        {
+            wieldedItem = pointer;
+            wieldedSince = Time.time;
+        }
+        return Time.time - wieldedSince >= SettleSeconds;
+    }
+}
+
 internal sealed class LaserDriver : MonoBehaviour
 {
     private float nextTick;
@@ -380,6 +404,8 @@ internal sealed class LaserDriver : MonoBehaviour
         {
             var player = PlayerManager.GetLocalPlayerAgent();
             if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
+            if (player.Locomotion != null && player.Locomotion.IsRunning) return; // no beam while sprinting
+            if (!StreamReadiness.IsSettled(player)) return; // not yet raised into its aim position
             var gun = player.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
             var archetype = gun?.ArchetypeData;
             var kind = LaserGuns.ForGun(archetype?.persistentID ?? 0);

@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using GameData;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
+using LevelGeneration;
 using Localization;
 using Player;
 using SNetwork;
@@ -36,6 +37,7 @@ internal static class HandGrenade
     internal static ConfigEntry<int> StackSize = null!;
     internal static ConfigEntry<bool> OnlyLootConsumable = null!;
     internal static ConfigEntry<float> OutInTheOpenShare = null!;
+    internal static ConfigEntry<float> ThrowForceMultiplier = null!;
 
     private static bool added;
 
@@ -53,6 +55,7 @@ internal static class HandGrenade
             "Every consumable found in boxes and lockers is a Hand Grenade instead (takes effect on restart; the host's setting decides what spawns).");
         OutInTheOpenShare = config.Bind("Hand Grenade", "OutInTheOpenShare", 0.6f,
             "With OnlyLootConsumable on: the share (0-1) of Hand Grenades left lying around the level, out in the open like artifacts, instead of in boxes and lockers.");
+        ThrowForceMultiplier = config.Bind("Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
     }
 
     internal static bool IsOurs(ItemDataBlock? block) => block != null && block.persistentID == ItemId;
@@ -154,6 +157,34 @@ internal static class HandGrenade
         catch (Exception e)
         {
             Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't reskin the held Hand Grenade: {e.Message}");
+        }
+    }
+
+    // Thrown twice as hard as a glowstick's own wind-up would give it (ThrowForceMultiplier):
+    // ThrowingWeapon.Throw takes the wind-up charge (0-1) and turns it into thrust itself
+    // (CalcThrust), so scaling the charge here scales however far it flies.
+    [HarmonyPatch(typeof(ThrowingWeapon), nameof(ThrowingWeapon.Throw))]
+    [HarmonyPrefix]
+    private static void BeforeThrow(ThrowingWeapon __instance, ref float strength)
+    {
+        if (IsOurs(__instance.ItemDataBlock)) strength *= ThrowForceMultiplier.Value;
+    }
+
+    // The glowstick model sitting as loot (in a box, a locker, or out in the open) before anyone
+    // picks it up: a separate instance from the held/thrown one (GlowstickInstance), so it needs
+    // its own reskin.
+    [HarmonyPatch(typeof(ItemInLevel), nameof(ItemInLevel.Setup))]
+    [HarmonyPostfix]
+    private static void AfterPickupSetup(ItemInLevel __instance, ItemDataBlock data)
+    {
+        try
+        {
+            if (!IsOurs(data)) return;
+            Reskin(__instance.gameObject);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't reskin a dropped Hand Grenade: {e.Message}");
         }
     }
 

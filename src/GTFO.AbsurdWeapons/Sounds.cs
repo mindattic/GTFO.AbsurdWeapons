@@ -69,7 +69,7 @@ internal static class Sounds
     private static bool Overridden(BulletWeapon weapon)
     {
         var id = weapon.ArchetypeData?.persistentID ?? 0;
-        if (LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId) return true;
+        if (LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId || id == GunInjector.ShrinkBeamId) return true;
         return ShotFor(id) is { } entry && !string.IsNullOrWhiteSpace(entry.Value);
     }
 

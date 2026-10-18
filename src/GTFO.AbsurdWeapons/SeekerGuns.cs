@@ -171,7 +171,7 @@ internal static class SeekerGuns
     [HarmonyPrefix]
     private static bool SkipSyncedStreamFire(BulletWeaponSynced __instance) => !FiresAStream(__instance.ArchetypeData?.persistentID ?? 0);
 
-    private static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId;
+    private static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId || id == GunInjector.ShrinkBeamId;
 
     // For the lasers and the Chain Lightning Gun even the archetype's trigger logic is skipped - it
     // runs the gun's firing, fire animation and recoil before Fire is ever reached - so a held
@@ -237,7 +237,7 @@ internal static class SeekerGuns
         previous = firingArchetype;
         firingArchetype = weapon.ArchetypeData?.persistentID ?? 0;
         firingWeapon = weapon;
-        if (LaserGuns.ForGun(firingArchetype) != null || firingArchetype is GunInjector.RailgunId or GunInjector.ChainLightningId)
+        if (LaserGuns.ForGun(firingArchetype) != null || firingArchetype is GunInjector.RailgunId or GunInjector.ChainLightningId or GunInjector.ShrinkBeamId)
             LaserGuns.MuteTracer(weapon);
         if (TentacleCannon.IsTentacleGun(firingArchetype) && TentacleCannon.DiagnosticShots > 0)
             Plugin.Logger.LogInfo("GTFO.AbsurdWeapons Tentacle Cannon: Fire() called.");

@@ -41,6 +41,7 @@ public class Plugin : BasePlugin
         TentacleCannon.Bind(Config);
         GrenadeLauncher.Bind(Config);
         RocketLauncher.Bind(Config);
+        ShrinkBeam.Bind(Config);
         HandGrenade.Bind(Config);
         Sounds.Bind(Config);
         HiveLocks.Bind(Config);
@@ -52,6 +53,8 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<LaserBeam>();
         ClassInjector.RegisterTypeInIl2Cpp<LauncherGrenade>();
         ClassInjector.RegisterTypeInIl2Cpp<RocketProjectile>();
+        ClassInjector.RegisterTypeInIl2Cpp<FallingSpark>();
+        ClassInjector.RegisterTypeInIl2Cpp<ShrinkStream>();
         ClassInjector.RegisterTypeInIl2Cpp<RailBeam>();
         ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
         ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
@@ -64,6 +67,7 @@ public class Plugin : BasePlugin
         LaserGuns.Init();
         GrenadeLauncher.Init();
         RocketLauncher.Init();
+        ShrinkBeam.Init();
         Railgun.Init();
         ChainLightning.Init();
         VictoryBanner.Init();
@@ -80,6 +84,8 @@ public class Plugin : BasePlugin
         AddComponent<LoopSounds>();
         AddComponent<HiveLocks>();
         AddComponent<ChainLightningDriver>();
+        AddComponent<ShrinkBeamDriver>();
+        AddComponent<ShrinkRegrowth>();
         MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }

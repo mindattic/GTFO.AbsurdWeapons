@@ -30,11 +30,6 @@ internal static class ChainLightning
     private static ConfigEntry<float> JumpRange = null!;
     private static ConfigEntry<float> JumpFalloff = null!;       // each jump does this share of the one before
     private static ConfigEntry<float> StaggerMulti = null!;
-    private static ConfigEntry<float> ChainAfterSeconds = null!;
-
-    // The first enemy the stream is on and since when: only sustained contact chains.
-    private static IntPtr contactEnemy;
-    private static float contactSince, lastContact;
     private const string BoltEvent = "MindAttic.GTFO.AbsurdWeapons.ChainLightning";
 
     // The bolt starts further out from the eye than the lasers' beam (LaserGuns.ScreenStart's
@@ -48,8 +43,6 @@ internal static class ChainLightning
         JumpRange = config.Bind("Chain Lightning Gun", "JumpRange", 8f, "Metres each jump can reach the next enemy.");
         JumpFalloff = config.Bind("Chain Lightning Gun", "JumpFalloff", 0.75f, "Share of the previous strike's damage each jump does.");
         StaggerMulti = config.Bind("Chain Lightning Gun", "StaggerMulti", 2f, "Stagger multiplier per strike.");
-        ChainAfterSeconds = config.Bind("Chain Lightning Gun", "ChainAfterSeconds", 0.6f,
-            "Seconds the stream has to stay on its first enemy before it starts chaining on to others (one chain, never branching).");
     }
 
     internal static void Init()
@@ -98,26 +91,14 @@ internal static class ChainLightning
 
         if (current == null || limb == null || !current.Alive)
         {
-            contactEnemy = IntPtr.Zero;
             // A plain miss: the bolt crackles out to whatever it hit, harmlessly.
             path.Add(point);
             Send(path, owner);
             return;
         }
 
-        // Only sustained contact chains: the stream has to stay on the same first enemy (no tick
-        // missed) for ChainAfterSeconds before it jumps on - and then it's one chain, enemy to
-        // enemy, never branching.
-        if (contactEnemy != current.Pointer || Time.time - lastContact > TickSeconds * 2.5f)
-        {
-            contactEnemy = current.Pointer;
-            contactSince = Time.time;
-        }
-        lastContact = Time.time;
-        var jumps = Time.time - contactSince >= ChainAfterSeconds.Value ? MaxJumps : 0;
-
         var strike = damage;
-        for (var jump = 0; jump <= jumps && current != null && limb != null; jump++)
+        for (var jump = 0; jump <= MaxJumps && current != null && limb != null; jump++)
         {
             struck.Add(current.Pointer);
             var from = path[path.Count - 1];
@@ -235,29 +216,21 @@ internal static class ChainLightning
 }
 
 /// <summary>
-/// The lightning's look: one unbroken stream per shooter for as long as the trigger is held -
-/// every tick feeds it the latest strike points and it lingers only a moment past the last one,
-/// so it ends when the trigger is released. Each link of the chain is drawn like the Gravity
-/// Gun's tether: a line that sways at random, most in its middle, re-rolled every frame so it
-/// crackles - and each jump down the chain is narrower than the one before. A flash and sparks
-/// at each enemy struck.
+/// One bolt's look: a jagged line through every strike point, re-jagged every frame so it
+/// crackles, with a flash and sparks at each enemy struck, gone in a fraction of a second.
 /// </summary>
 internal sealed class LightningBolt : MonoBehaviour
 {
-    private const float LingerSeconds = 0.2f;   // past the last tick: a little over two ticks
-    private const int PointsPerLink = 12;
-    private const float Sway = 0.06f;           // the Gravity Gun tether's
-    private const float NarrowPerJump = 0.6f;   // each jump's width and sway, of the one before
-    private static readonly Color BoltColor = new(0.7f, 0.85f, 1f, 0.8f);
+    private const float Seconds = 0.16f;
+    private const float SegmentLength = 0.35f;
+    private const float Jitter = 0.18f;
+    private static readonly Color BoltColor = new(0.7f, 0.85f, 1f, 1f);
     private static readonly Color FlashColor = new(0.45f, 0.75f, 1f);
     private static Material? material;
 
-    private static readonly Dictionary<ulong, LightningBolt> streams = new();
-
-    private readonly List<LineRenderer> links = new();
+    private LineRenderer line = null!;
     private Vector3[] points = Array.Empty<Vector3>();
-    private ulong source;
-    private float lastFed;
+    private float age;
 
     public LightningBolt(IntPtr ptr) : base(ptr) { }
 
@@ -269,16 +242,14 @@ internal sealed class LightningBolt : MonoBehaviour
         // A crackling loop while the stream keeps coming, and a crackle where it strikes.
         LoopSounds.Touch($"lightning:{source}", Sounds.LightningLoopStart.Value, Sounds.LightningLoopStop.Value, points[1]);
         Sounds.PlayLimited($"crackle:{source}", 0.25f, Sounds.LightningCrackle.Value, points[points.Length - 1]);
-
-        if (!streams.TryGetValue(source, out var stream) || stream == null)
-        {
-            stream = new GameObject("GTFO.AbsurdWeapons Lightning Stream").AddComponent<LightningBolt>();
-            stream.source = source;
-            streams[source] = stream;
-        }
-        stream.points = points;
-        stream.lastFed = Time.time;
-        stream.Draw();
+        var go = new GameObject("GTFO.AbsurdWeapons Lightning Bolt");
+        var bolt = go.AddComponent<LightningBolt>();
+        bolt.points = points;
+        bolt.line = go.AddComponent<LineRenderer>();
+        bolt.line.useWorldSpace = true;
+        bolt.line.numCapVertices = 2;
+        bolt.line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+        bolt.Jag();
 
         // Every strike point after the gun flashes and sparks (a plain miss just sparks).
         for (var i = 1; i < points.Length; i++)
@@ -290,69 +261,44 @@ internal sealed class LightningBolt : MonoBehaviour
             }
             catch (Exception)
             {
-                // Sparks are a nicety; the stream and flash still show.
+                // Sparks are a nicety; the bolt and flash still show.
             }
         }
     }
 
     private void Update()
     {
-        if (Time.time - lastFed > LingerSeconds)
+        age += Time.deltaTime;
+        if (age >= Seconds)
         {
             Destroy(gameObject);
             return;
         }
-        try
-        {
-            Draw();
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons lightning stream failed: {e.Message}");
-            Destroy(gameObject);
-        }
+        Jag();
     }
 
-    private void OnDestroy()
-    {
-        if (streams.TryGetValue(source, out var current) && current == this) streams.Remove(source);
-    }
-
-    // One swaying line per link of the chain, narrower with every jump.
+    // Lays a fresh jagged path through the strike points: each stretch split into short segments
+    // nudged sideways at random, pinned at the strike points themselves.
     [HideFromIl2Cpp]
-    private void Draw()
+    private void Jag()
     {
-        var count = points.Length - 1;
-        while (links.Count < count)
+        var jagged = new List<Vector3> { points[0] };
+        for (var i = 1; i < points.Length; i++)
         {
-            var link = new GameObject($"Link {links.Count}");
-            link.transform.SetParent(transform, false);
-            var line = link.AddComponent<LineRenderer>();
-            line.useWorldSpace = true;
-            line.positionCount = PointsPerLink;
-            line.material = material ??= new Material(Shader.Find("Sprites/Default"));
-            links.Add(line);
+            var from = points[i - 1];
+            var to = points[i];
+            var segments = Mathf.Clamp(Mathf.CeilToInt(Vector3.Distance(from, to) / SegmentLength), 1, 120);
+            for (var s = 1; s < segments; s++)
+                jagged.Add(Vector3.Lerp(from, to, s / (float)segments) + UnityEngine.Random.insideUnitSphere * Jitter);
+            jagged.Add(to);
         }
 
-        var scale = 1f;
-        for (var j = 0; j < links.Count; j++)
-        {
-            var line = links[j];
-            line.enabled = j < count;
-            if (j >= count) continue;
-            var from = points[j];
-            var to = points[j + 1];
-            for (var i = 0; i < PointsPerLink; i++)
-            {
-                var t = i / (float)(PointsPerLink - 1);
-                var sway = Mathf.Sin(t * Mathf.PI) * Sway * scale;
-                line.SetPosition(i, Vector3.Lerp(from, to, t) + UnityEngine.Random.insideUnitSphere * sway);
-            }
-            line.startWidth = 0.05f * scale;
-            line.endWidth = 0.12f * scale;
-            line.startColor = line.endColor = BoltColor;
-            scale *= NarrowPerJump;
-        }
+        line.positionCount = jagged.Count;
+        for (var i = 0; i < jagged.Count; i++) line.SetPosition(i, jagged[i]);
+        var fade = 1f - age / Seconds;
+        var width = 0.05f * (0.6f + 0.4f * UnityEngine.Random.value);
+        line.startWidth = line.endWidth = width;
+        line.startColor = line.endColor = new Color(BoltColor.r, BoltColor.g, BoltColor.b, fade);
     }
 }
 
@@ -373,6 +319,8 @@ internal sealed class ChainLightningDriver : MonoBehaviour
         {
             var player = PlayerManager.GetLocalPlayerAgent();
             if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
+            if (player.Locomotion != null && player.Locomotion.IsRunning) return; // no stream while sprinting
+            if (!StreamReadiness.IsSettled(player)) return; // not yet raised into its aim position
             var gun = player.Inventory?.WieldedItem?.TryCast<Gear.BulletWeapon>();
             var archetype = gun?.ArchetypeData;
             if (gun == null || archetype == null || archetype.persistentID != GunInjector.ChainLightningId) return;

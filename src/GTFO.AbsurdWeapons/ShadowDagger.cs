@@ -30,6 +30,7 @@ internal static class Stealth
     internal const float StabSpeed = 2.5f; // the fallback for WeaponSettings.ShadowDagger.LightAttackSpeed
 
     internal static ConfigEntry<float> Seconds = null!;
+    internal static ConfigEntry<float> KillTimeBonus = null!;
     internal static ConfigEntry<float> BonusPerKill = null!;
     internal static ConfigEntry<float> MaxBonus = null!;
 
@@ -42,7 +43,8 @@ internal static class Stealth
 
     internal static void Bind(ConfigFile config)
     {
-        Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 6f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
+        Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 2f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
+        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.5f, "Seconds added to the stealth for a full-windup kill made while hidden (balances the shorter base stealth).");
         BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
         MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
     }
@@ -123,7 +125,7 @@ internal static class Stealth
     }
 
     // Kills confirmed since they were struck: the damage bonus grows, and a full-windup kill
-    // stretches the stealth by the windup. Called every frame (StealthVisuals).
+    // stretches the stealth by KillTimeBonus. Called every frame (StealthVisuals).
     internal static void ProcessKills(PlayerAgent local)
     {
         if (Remaining(local) <= 0f)
@@ -143,7 +145,7 @@ internal static class Stealth
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: kill while hidden - damage +{damageBonus * 100f:0}%.");
             if (windup > 0f && local.Owner != null)
             {
-                var stretched = Remaining(local) + windup;
+                var stretched = Remaining(local) + KillTimeBonus.Value;
                 Hide(local.Owner.Lookup, stretched);
                 NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(stretched));
             }
@@ -242,22 +244,23 @@ internal static class Stealth
 
 /// <summary>
 /// Shows stealth on every game, from the shared hidden list, so everyone sees the same thing: the
-/// hidden player fades out to 90% transparent, and how see-through they are is tied straight to
-/// how much stealth they have left - it fades back in as the time runs down, and anything that
-/// adds time (another full hit, a full-windup kill) makes them more see-through again. Every part
-/// of them shown (each renderer) is switched to a see-through copy of its own materials for the
-/// duration, and back to its own when it ends. Teammates see the whole body; the hidden player
-/// sees their first-person view (arms and the dagger itself).
-/// Even out of stealth, the Shadow Dagger in anyone's hand gives off a pulsing violet glow, the
-/// Gravity Hammer's old light.
+/// hidden player tints the same purple as the dagger's own glow and fades out to
+/// <see cref="MostTransparent"/> transparent, tied straight to how much stealth is left - filling
+/// back in as the time runs down. Anything that adds time (another full hit, a full-windup kill)
+/// makes them more see-through again. Every part of them shown (each renderer) is switched to a
+/// tinted, see-through copy of its own materials for the duration, and back to its own when it
+/// ends. Teammates see the whole body; the hidden player sees their first-person view (arms and the
+/// dagger itself).
+/// Even out of stealth, the Shadow Dagger in anyone's hand gives off a faint pulsing violet glow -
+/// a whisper of the Gravity Hammer's old light, not the thing itself.
 /// </summary>
 internal sealed class StealthVisuals : MonoBehaviour
 {
-    private const float MostTransparent = 0.9f; // fully stealthed: 10% there
+    private const float MostTransparent = 0.95f; // fully stealthed: 5% there
     private const float FadeRate = 6f;          // how quickly the shown transparency follows the time left
     private const float RescanSeconds = 0.25f;  // how often to pick up renderers that appeared (a swapped-in weapon)
 
-    // One part of a hidden player: its own materials, and the see-through copies shown meanwhile.
+    // One part of a hidden player: its own materials, and the tinted see-through copies shown meanwhile.
     private sealed class Part
     {
         public Renderer Renderer = null!;
@@ -340,13 +343,14 @@ internal sealed class StealthVisuals : MonoBehaviour
             var go = new GameObject("GTFO.AbsurdWeapons Shadow Dagger Glow");
             state.Glow = go.AddComponent<EffectLight>();
             state.Glow.Color = GlowColor;
-            state.Glow.Range = 5f;
+            state.Glow.Range = 1.2f;
             state.Glow.enabled = true;
             held[player.Pointer] = state;
         }
 
         state.Glow.transform.position = item!.transform.position;
-        state.Glow.Intensity = 2f * (0.75f + 0.25f * Mathf.Sin(Time.time * 12f));
+        // A whisper of light, not a beacon: a tenth of what it was.
+        state.Glow.Intensity = 0.2f * (0.75f + 0.25f * Mathf.Sin(Time.time * 12f));
     }
 
     // Switches the player's showing renderers not tracked yet to see-through copies of their
@@ -375,17 +379,20 @@ internal sealed class StealthVisuals : MonoBehaviour
         }
     }
 
-    // Transparency follows the stealth time left: 90% at a full stealth (or more), back to solid
-    // as it runs out - eased, so it fades rather than snaps when time is added.
+    // Transparency follows the stealth time left (MostTransparent at a full stealth or more, back
+    // to solid as it runs out), eased so it doesn't snap when time is added; the tint is the
+    // dagger's own purple glow, not white.
     [HideFromIl2Cpp]
     private static void Fade(Hidden state, float remaining)
     {
         var target = MostTransparent * Mathf.Clamp01(remaining / Mathf.Max(0.1f, Stealth.Seconds.Value));
         state.Transparency = Mathf.Lerp(state.Transparency, target, 1f - Mathf.Exp(-FadeRate * Time.deltaTime));
-        var tint = new Color(1f, 1f, 1f, 1f - state.Transparency);
+        var tint = new Color(GlowColor.r, GlowColor.g, GlowColor.b, 1f - state.Transparency);
         foreach (var part in state.Parts)
+        {
             foreach (var ghost in part.Ghosts)
                 if (ghost != null) ghost.color = tint;
+        }
     }
 
     // Every part back to its own materials.

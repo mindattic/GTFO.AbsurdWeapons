@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
-using FX_EffectSystem;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -13,14 +12,16 @@ namespace GTFO.AbsurdWeapons;
 /// The Rocket Launcher: Quake 1's own id Software code (<c>W_FireRocket</c> / <c>T_MissileTouch</c> /
 /// <c>T_RadiusDamage</c>), with Doom's rocket's straight, gravity-free flight (<c>MT_ROCKET</c>'s
 /// <c>MF_NOGRAVITY</c>) - neither game's rocket drops or bounces. Every shot (SeekerGuns' ray hook
-/// calls <see cref="Launch"/>) leaves the barrel and flies dead straight, trailing smoke and sparks,
-/// to the first enemy or wall in its way, then explodes there - same blast code as the Grenade
-/// Launcher (<see cref="AreaDamage"/>, <see cref="Explosion"/>). Quake's own numbers: 120-damage
-/// splash with a half-distance falloff (<c>T_RadiusDamage</c>), searched out to 160 units - zero
-/// past that, a third of the center damage left at the edge (the same 160 u / a-third the Grenade
-/// Launcher's blast already uses) - and a 0.8 s refire. The gun's own firing - sound, recoil, ammo
-/// (infinite, like every gun here) - stays vanilla. The shooter's game deals the damage, through the
-/// bullet path so it syncs; everyone else is sent the launch and the blast and sees the same rocket.
+/// calls <see cref="Launch"/>) leaves the barrel and flies dead straight, kicking off falling sparks
+/// as it goes, to the first enemy or wall in its way, then explodes there - same blast code as the
+/// Grenade Launcher (<see cref="AreaDamage"/>, <see cref="Explosion"/>), plus the game's own
+/// <c>DamageUtil.DoExplosionDamage</c> so the blast catches nearby players too, Quake/Doom style.
+/// Quake's own numbers: 120-damage splash with a half-distance falloff (<c>T_RadiusDamage</c>),
+/// searched out to 160 units - zero past that, a third of the center damage left at the edge (the
+/// same 160 u / a-third the Grenade Launcher's blast already uses) - and a 0.8 s refire. The gun's
+/// own firing - sound, recoil, ammo (infinite, like every gun here) - stays vanilla. The shooter's
+/// game deals the damage, through the bullet path so it syncs; everyone else is sent the launch and
+/// the blast and sees the same rocket.
 /// </summary>
 internal static class RocketLauncher
 {
@@ -102,7 +103,7 @@ internal static class RocketLauncher
 /// <summary>
 /// One rocket in flight: a small hand-built missile, flown by hand in a dead straight line (no
 /// gravity, no bounce - unlike <see cref="LauncherGrenade"/>) until it touches an enemy or the
-/// world, trailing smoke and a spark every few metres. Only the shooter's own copy decides when it
+/// world, kicking off a falling spark every few centimetres. Only the shooter's own copy decides when it
 /// hits something (through the same enemy/world sphere cast its blast then uses); a teammate's copy
 /// is purely visual and flies on - rockets never bounce, so there's nothing for it to simulate -
 /// until the shooter's detonation message (<see cref="RocketLauncher.SendDetonate"/>) snaps it to
@@ -115,7 +116,6 @@ internal sealed class RocketProjectile : MonoBehaviour
     private static int HitMask => LayerManager.MASK_ENEMY_DAMAGABLE | LayerManager.MASK_WORLD;
 
     private static readonly Dictionary<uint, RocketProjectile> live = new();
-    private static Material? smokeMaterial;
 
     private uint id, gearCategoryId;
     private PlayerAgent? owner; // null on a teammate's (visual-only) copy
@@ -137,25 +137,6 @@ internal sealed class RocketProjectile : MonoBehaviour
         rocket.gearCategoryId = gearCategoryId;
         rocket.owner = owner;
         rocket.direction = direction.normalized;
-
-        var tail = new GameObject("Tail");
-        tail.transform.SetParent(go.transform, false);
-        tail.transform.localPosition = Vector3.back * 0.25f;
-
-        var smoke = tail.AddComponent<TrailRenderer>();
-        smoke.time = 0.6f;
-        smoke.startWidth = 0.1f;
-        smoke.endWidth = 0.35f;
-        smoke.minVertexDistance = 0.04f;
-        smoke.material = SmokeMaterial();
-        smoke.startColor = new Color(0.55f, 0.55f, 0.55f, 0.6f);
-        smoke.endColor = new Color(0.4f, 0.4f, 0.4f, 0f);
-
-        var glow = tail.AddComponent<EffectLight>();
-        glow.Color = new Color(1f, 0.55f, 0.2f);
-        glow.Range = 3f;
-        glow.Intensity = 4f;
-        glow.enabled = true;
 
         live[id] = rocket;
     }
@@ -208,20 +189,20 @@ internal sealed class RocketProjectile : MonoBehaviour
         }
     }
 
-    // A spark burst every few centimetres of flight, so the trail reads as more than just smoke.
+    // No smoke trail - just a spray of sparks every few centimetres of flight, kicked out behind
+    // and to the sides, that fall away under gravity as the rocket keeps going.
     [HideFromIl2Cpp]
     private void Spark()
     {
         if (age < nextSpark) return;
         nextSpark = age + SparkInterval;
-        try
+        var position = transform.position;
+        var count = UnityEngine.Random.Range(1, 3);
+        for (var i = 0; i < count; i++)
         {
-            FX_Manager.PlayEffect(false, FX_GroupName.Impact_Electronics, transform.position - direction * 0.2f,
-                Quaternion.LookRotation(-direction), false);
-        }
-        catch (Exception)
-        {
-            // Sparks are a nicety; the smoke trail still shows.
+            var scatter = UnityEngine.Random.insideUnitSphere * 2f;
+            var velocity = -direction * UnityEngine.Random.Range(1f, 3f) + scatter;
+            FallingSpark.Spawn(position, velocity);
         }
     }
 
@@ -238,6 +219,19 @@ internal sealed class RocketProjectile : MonoBehaviour
         if (owner == null) return; // a teammate's copy: visual only, no damage
         AreaDamage.Apply(position, RocketLauncher.BlastRadius.Value, RocketLauncher.BlastDamage.Value, RocketLauncher.BlastEdgeFraction.Value,
             RocketLauncher.BlastStagger.Value, owner.Cast<Agents.Agent>(), null, gearCategoryId);
+
+        // Quake/Doom rockets hurt whoever's standing in the blast, shooter included: the game's own
+        // explosion-damage sweep (MASK_EXPLOSION_TARGETS is players and destructibles, not enemies -
+        // those are the AreaDamage.Apply above, with their own falloff), blocked by world geometry.
+        try
+        {
+            DamageUtil.DoExplosionDamage(position, RocketLauncher.BlastRadius.Value, RocketLauncher.BlastDamage.Value,
+                LayerManager.MASK_EXPLOSION_TARGETS, LayerManager.MASK_EXPLOSION_BLOCKERS, false, 0f);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons rocket couldn't damage nearby players: {e.Message}");
+        }
     }
 
     [HideFromIl2Cpp]
@@ -270,8 +264,48 @@ internal sealed class RocketProjectile : MonoBehaviour
         var tipRenderer = tip.GetComponent<Renderer>();
         if (tipRenderer != null) tipRenderer.material.color = new Color(0.6f, 0.08f, 0.05f);
     }
+}
+
+/// <summary>
+/// One ember kicked off a flying rocket: a tiny bright point that falls under gravity, dimming out
+/// over its short life - no trail, just a shower of sparks peeling away behind the rocket.
+/// </summary>
+internal sealed class FallingSpark : MonoBehaviour
+{
+    private const float Lifetime = 0.5f;
+    private const float Gravity = 9.8f;
+    private static readonly Color SparkColor = new(1f, 0.6f, 0.2f);
+
+    private Vector3 velocity;
+    private float age;
+    private EffectLight light = null!;
+
+    public FallingSpark(IntPtr ptr) : base(ptr) { }
 
     [HideFromIl2Cpp]
-    private static Material SmokeMaterial() =>
-        smokeMaterial ??= new Material(Shader.Find("Sprites/Default")) { color = Color.white };
+    internal static void Spawn(Vector3 position, Vector3 velocity)
+    {
+        var go = new GameObject("GTFO.AbsurdWeapons Rocket Spark");
+        go.transform.position = position;
+        var spark = go.AddComponent<FallingSpark>();
+        spark.velocity = velocity;
+        spark.light = go.AddComponent<EffectLight>();
+        spark.light.Color = SparkColor;
+        spark.light.Range = 1.5f;
+        spark.light.Intensity = 2f;
+        spark.light.enabled = true;
+    }
+
+    private void Update()
+    {
+        age += Time.deltaTime;
+        if (age >= Lifetime)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        velocity += Vector3.down * (Gravity * Time.deltaTime);
+        transform.position += velocity * Time.deltaTime;
+        light.Intensity = 2f * (1f - age / Lifetime);
+    }
 }
