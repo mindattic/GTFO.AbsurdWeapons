@@ -28,6 +28,9 @@ internal static class Sounds
     internal static ConfigEntry<string> LaserLoopStop = null!;
     internal static ConfigEntry<string> LightningLoopStart = null!;
     internal static ConfigEntry<string> LightningLoopStop = null!;
+    internal static ConfigEntry<string> ShrinkLoopStart = null!;
+    internal static ConfigEntry<string> ShrinkLoopStop = null!;
+    internal static ConfigEntry<string> ShrinkPop = null!;
     internal static ConfigEntry<string> LightningCrackle = null!;
     internal static ConfigEntry<string> Thunderclap = null!;
     internal static ConfigEntry<string> HandGrenadeThrow = null!;
@@ -46,6 +49,9 @@ internal static class Sounds
         LaserLoopStop = config.Bind(s, "LaserLoopStop", "FREEZERLOOPEND", "Laser beam: stops the loop when the beam goes off.");
         LightningLoopStart = config.Bind(s, "LightningLoopStart", "TERMINAL_CREEPY_STATIC_LOOP", "Chain Lightning: a crackling electric loop while the stream runs.");
         LightningLoopStop = config.Bind(s, "LightningLoopStop", "TERMINAL_CREEPY_STATIC_STOP", "Chain Lightning: stops the loop.");
+        ShrinkLoopStart = config.Bind(s, "ShrinkLoopStart", "BIOSCAN_TUBE_EMITTER", "Shrink Beam: a continuous emitter-beam hum while the ray runs (the security scan's beam emitter).");
+        ShrinkLoopStop = config.Bind(s, "ShrinkLoopStop", "BIOSCAN_TUBE_EMITTER_STOP", "Shrink Beam: stops the loop.");
+        ShrinkPop = config.Bind(s, "ShrinkPop", "ENEMYWEAKSPOTEXPLODE", "Shrink Beam: a shrunk enemy gibbing (shrunk away, or stepped on).");
         LightningCrackle = config.Bind(s, "LightningCrackle", "FLUORESCENT_LIGHT_CRACKLE", "An electric crackle where lightning strikes (chain lightning and Mjolnir's pulses), a few times a second.");
         Thunderclap = config.Bind(s, "Thunderclap", "ELEVATOR_THUNDER", "Mjolnir's thunderclap on a landed hit.");
         HandGrenadeThrow = config.Bind(s, "HandGrenadeThrow", "FRAGGRENADETHROW", "Throwing a Hand Grenade (instead of the glowstick's toss).");

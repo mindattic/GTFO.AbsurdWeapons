@@ -16,8 +16,8 @@
     Chain Lightning Gun (bolts that jump between up to six enemies), Grenade Pistol/Rifle (lobbed lock-melter grenades that blow on
     an enemy or bounce and blow after 2.5 s, flashing red faster and faster), Rocket Launcher (Quake 1's
     rocket: dead straight, no drop, trailing sparks and dust, blowing up the first thing it touches - and
-    nearby players too), Shrink Beam (a continuous ray that shrinks whatever it's held on until it pops,
-    or until you step close enough to a small enough one).
+    nearby players too), Shrink Beam (a continuous ray that shrinks whatever it's held on until it gibs
+    at a third of its size; once one's half-size or smaller, look down at it within 1 m to step on it).
   - **Tool:** Victory
     Banner (plant a flag with a glowing healing aura, pick it back up; heals everyone standing in it).
   - **Consumable:** Hand Grenade (a lock melter thrown like a glowstick, lobbed twice as hard, that bounces and blows after

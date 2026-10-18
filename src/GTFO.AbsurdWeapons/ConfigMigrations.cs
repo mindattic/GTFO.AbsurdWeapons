@@ -22,6 +22,11 @@ internal static class ConfigMigrations
         (2, "Tentacle Guns", "Damage", 35f),
         (2, "Tentacle Guns", "StaggerMulti", 5f),
         (3, "Tentacle Guns", "Damage", 100f),
+        (4, "Shrink Beam", "MinScale", 0.25f),
+        (4, "Shrink Beam", "StepOnScale", 0.4f),
+        (4, "Shrink Beam", "StepOnRadius", 0.6f),
+        (4, "Sounds", "ShrinkLoopStart", "BIOTRACKER_TOOL_LOOP"),
+        (4, "Sounds", "ShrinkLoopStop", "BIOTRACKER_TOOL_LOOP_STOP"),
     };
 
     // After every setting is bound.

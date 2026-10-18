@@ -45,7 +45,7 @@ balance comes later.
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | A continuous stream of lightning that leaps from enemy to enemy, up to five jumps |
 | **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: flies dead straight with no drop, trailing falling sparks and dust, and blows up the first thing it touches |
-| **Shrink Beam** | Special | Omneco exp1 | A continuous ray that shrinks whatever it's held on until it pops; get close enough to a small one and you'll step on it |
+| **Shrink Beam** | Special | Omneco exp1 | A continuous ray that shrinks whatever it's held on until it gibs; look down at a small one up close and you'll step on it |
 
 ### Tool
 
@@ -186,9 +186,9 @@ Semi-auto, one shot every **0.8 seconds**.
 
 A continuous green ray. Hold it on an enemy and it shrinks - smaller and slower by the same share -
 the longer you keep the beam on it; let go and, after a second off the beam, it starts growing back,
-so a shrink has to finish in one sustained hold. Shrink it below **25%** of its size and it pops
-outright. Once it's under **40%** size, just getting within **0.6 m** of it pops it too - small
-enough that walking near it counts as stepping on it.
+so a shrink has to finish in one sustained hold. Shrink it to **33%** of its size and it gibs
+outright. Once it's at **50%** size or smaller, get within **1 m** of it and look down at it and you
+step on it - it gibs too.
 
 ## Tool
 
@@ -477,10 +477,11 @@ Shared by everything that flings enemies (the Warhammer).
 | `ShrinkPerSecond` | 0.25 | Share of full size (and speed) removed per second on the beam. |
 | `RegrowDelaySeconds` | 1 | Seconds off the beam before a shrunk enemy starts growing back. |
 | `RegrowPerSecond` | 0.15 | Share of full size regained per second while growing back. |
-| `MinScale` | 0.25 | Share of full size that pops it. |
-| `PopDamage` | 99999 | Damage dealt on the pop. |
-| `StepOnScale` | 0.4 | Below this share of full size, just getting close pops it too. |
-| `StepOnRadius` | 0.6 | Metres counted as standing on it. |
+| `MinScale` | 0.33 | Share of full size at which it gibs. |
+| `PopDamage` | 99999 | Damage dealt when it gibs. |
+| `StepOnScale` | 0.5 | At or below this share of full size you can step on it. |
+| `StepOnRadius` | 1 | Metres within which looking down at a small-enough enemy steps on it. |
+| `StepOnLookConeDegrees` | 35 | How close to your crosshair it has to be to count as looking down at it. |
 
 ### `[Victory Banner]`
 
@@ -531,7 +532,8 @@ another game sound by name; an empty value is silent (or, for a gun's shot, the 
 | `TentacleBite` | SNATCHERTENTACLEHIT | A tentacle landing its bite |
 | `LaserLoopStart` / `LaserLoopStop` | FREEZERLOOP / FREEZERLOOPEND | The laser beam's hum |
 | `LightningLoopStart` / `LightningLoopStop` | TERMINAL_CREEPY_STATIC_LOOP / _STOP | Chain Lightning's crackle loop |
-| `ShrinkLoopStart` / `ShrinkLoopStop` | BIOTRACKER_TOOL_LOOP / _STOP | The Shrink Beam's hum |
+| `ShrinkLoopStart` / `ShrinkLoopStop` | BIOSCAN_TUBE_EMITTER / _STOP | The Shrink Beam's emitter hum |
+| `ShrinkPop` | ENEMYWEAKSPOTEXPLODE | A shrunk enemy gibbing |
 | `LightningCrackle` | FLUORESCENT_LIGHT_CRACKLE | Where lightning strikes |
 | `Thunderclap` | ELEVATOR_THUNDER | Mjolnir's thunderclap |
 | `HandGrenadeThrow` | FRAGGRENADETHROW | Throwing a Hand Grenade |

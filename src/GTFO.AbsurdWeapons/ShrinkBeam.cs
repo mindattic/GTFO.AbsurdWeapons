@@ -14,9 +14,9 @@ namespace GTFO.AbsurdWeapons;
 /// <summary>
 /// The Shrink Beam: a continuous ray (<see cref="ShrinkBeamDriver"/>; the gun itself never fires)
 /// that holds on whatever's under the crosshair and steadily shrinks it - smaller and slower by the
-/// same share of its own full size - until it shrinks past <see cref="MinScale"/> and pops. Once
-/// it's under <see cref="StepOnScale"/>, just getting within <see cref="StepOnRadius"/> of it pops
-/// it too - small enough that walking near it counts as stepping on it. Stop holding the beam on it
+/// same share of its own full size - until it shrinks to <see cref="MinScale"/> and gibs. Once
+/// it's at <see cref="StepOnScale"/> or smaller, getting within <see cref="StepOnRadius"/> of it and
+/// looking down at it gibs it too - you've stepped on it. Stop holding the beam on it
 /// and, after <see cref="RegrowDelaySeconds"/> off it, it grows back to full size at its own pace: a
 /// shrink has to be finished in one sustained hold, not nibbled away at across several bursts. The
 /// shrink and regrow are cosmetic (scale and move speed aren't
@@ -34,6 +34,7 @@ internal static class ShrinkBeam
     internal static ConfigEntry<float> PopDamage = null!;
     internal static ConfigEntry<float> StepOnScale = null!;
     internal static ConfigEntry<float> StepOnRadius = null!;
+    internal static ConfigEntry<float> StepOnLookConeDegrees = null!;
     internal static ConfigEntry<float> GunShotDelay = null!;
     internal static ConfigEntry<int> GunClipSize = null!;
 
@@ -48,10 +49,11 @@ internal static class ShrinkBeam
         ShrinkPerSecond = config.Bind("Shrink Beam", "ShrinkPerSecond", 0.25f, "Share of full size (and speed) removed per second the beam holds on an enemy.");
         RegrowDelaySeconds = config.Bind("Shrink Beam", "RegrowDelaySeconds", 1f, "Seconds off the beam before a shrunk enemy starts growing back.");
         RegrowPerSecond = config.Bind("Shrink Beam", "RegrowPerSecond", 0.15f, "Share of full size regained per second once it starts growing back.");
-        MinScale = config.Bind("Shrink Beam", "MinScale", 0.25f, "Share of full size that pops it.");
+        MinScale = config.Bind("Shrink Beam", "MinScale", 0.33f, "Share of full size at which it gibs.");
         PopDamage = config.Bind("Shrink Beam", "PopDamage", 99999f, "Damage dealt on the pop (enough to kill anything outright).");
-        StepOnScale = config.Bind("Shrink Beam", "StepOnScale", 0.4f, "Below this share of full size, just getting close enough pops it too - you've stepped on it.");
-        StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 0.6f, "Metres counted as \"standing on it\" once it's small enough.");
+        StepOnScale = config.Bind("Shrink Beam", "StepOnScale", 0.5f, "At or below this share of full size you can step on it: get within StepOnRadius and look down at it and it gibs.");
+        StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 1f, "Metres from a small-enough enemy within which looking down at it steps on it.");
+        StepOnLookConeDegrees = config.Bind("Shrink Beam", "StepOnLookConeDegrees", 35f, "How close to your crosshair a small-enough enemy has to be for you to count as looking down at it.");
         GunShotDelay = config.Bind("Shrink Beam", "GunShotDelay", 0.08f, "Seconds between beam ticks (it never actually fires - the stream is trigger-driven).");
         GunClipSize = config.Bind("Shrink Beam", "GunClipSize", 100, "Clip size (infinite ammo refills it anyway).");
     }
@@ -169,6 +171,7 @@ internal static class ShrinkBeam
         {
             var point = enemy.AimTarget.position;
             BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
+            Sounds.Play(Sounds.ShrinkPop.Value, point);
             var limb = ChainLightning.NearestLimb(enemy, point);
             limb?.BulletDamage(PopDamage.Value, owner.Cast<Agent>(), point, Vector3.up, Vector3.down,
                 allowDirectionalBonus: false, 10f, 1f, gearCategoryId);
@@ -202,20 +205,24 @@ internal static class ShrinkBeam
         foreach (var pointer in done) shrunk.Remove(pointer);
     }
 
-    // Once an enemy's shrunk below StepOnScale, just getting close enough to it pops it too - as if
-    // the local player stepped on it. Each client checks this for its own local player only, same
+    // Once an enemy's shrunk to StepOnScale, getting within StepOnRadius and looking down at it gibs
+    // it - the local player stepped on it. Each client checks this for its own local player only, same
     // as the regrow above: no network message needed, the kill still goes through the bullet path.
     internal static void CheckStepOn()
     {
         if (shrunk.Count == 0) return;
         var local = PlayerManager.GetLocalPlayerAgent();
-        if (local == null || !local.Alive) return;
+        if (local == null || !local.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
+        var camera = local.FPSCamera;
+        if (camera == null) return;
 
         List<EnemyAgent>? stepped = null;
         foreach (var state in shrunk.Values)
         {
             if (state.Scale > StepOnScale.Value || state.Enemy == null || !state.Enemy.Alive) continue;
-            if (Vector3.Distance(local.Position, state.Enemy.transform.position) > StepOnRadius.Value) continue;
+            var feet = state.Enemy.transform.position;
+            if (Vector3.Distance(local.Position, feet) > StepOnRadius.Value) continue;
+            if (Vector3.Angle(camera.Forward, feet - camera.Position) > StepOnLookConeDegrees.Value) continue;
             (stepped ??= new List<EnemyAgent>()).Add(state.Enemy);
         }
         if (stepped == null) return;
@@ -255,10 +262,11 @@ internal static class ShrinkBeam
 }
 
 /// <summary>
-/// The beam's look: Chain Lightning's old persistent-stream tether, recolored green and drawn as a
-/// single swaying line (no jumps - the Shrink Beam only ever holds on one target) - one unbroken
-/// ray per shooter for as long as it's fed, re-swayed every frame so it crackles, lingering only a
-/// moment past the last tick so it ends when the trigger is released.
+/// The beam's look and sound: Chain Lightning's old persistent-stream tether, recolored green and
+/// drawn as a single swaying line (no jumps - the Shrink Beam only ever holds on one target) - one
+/// unbroken ray per shooter for as long as it's fed, re-swayed every frame so it crackles, lingering
+/// only a moment past the last tick so it ends when the trigger is released. A continuous hum plays
+/// at the gun for as long as it's fed, same as the laser beams' and Chain Lightning's own loops.
 /// </summary>
 internal sealed class ShrinkStream : MonoBehaviour
 {
@@ -280,6 +288,9 @@ internal sealed class ShrinkStream : MonoBehaviour
     [HideFromIl2Cpp]
     internal static void Spawn(Vector3 start, Vector3 end, ulong source = 0)
     {
+        // A continuous hum at the gun (where the player hears it) while the beam keeps coming.
+        LoopSounds.Touch($"shrink:{source}", Sounds.ShrinkLoopStart.Value, Sounds.ShrinkLoopStop.Value, start);
+
         if (!streams.TryGetValue(source, out var stream) || stream == null)
         {
             stream = new GameObject("GTFO.AbsurdWeapons Shrink Beam").AddComponent<ShrinkStream>();
