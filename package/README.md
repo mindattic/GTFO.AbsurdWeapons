@@ -231,8 +231,8 @@ A consumable of its own (the I2-LP syringe is left as it is): an **overheal like
 ### Loot
 
 Consumables in boxes and lockers - and lying around, like artifacts (60% of them) - are only five
-things: **Hand Grenades** (2 in 6), **Stim Packs**, **health kits**, **tool kits** and **ammo kits**
-(1 in 6 each). Kits found this way always hold **20%** of a pack. The zone's own resource packs
+things: **Hand Grenades** (half of them), **Stim Packs**, **health kits**, **tool kits** and **ammo
+kits** (1 in 8 each) - and there's half as much loot again as vanilla, so grenades are common. Kits found this way always hold **20%** of a pack. The zone's own resource packs
 still spawn as normal, at their usual sizes, on top.
 
 With **GTFO.EZ** installed, this mod's loot settings take precedence: its own kits come with Hand
@@ -555,13 +555,14 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `HandGrenadeWeight` † | 2 | Relative odds a loot consumable is a Hand Grenade. |
+| `HandGrenadeWeight` † | 4 | Relative odds a loot consumable is a Hand Grenade. |
 | `StimPackWeight` † | 1 | Relative odds it's a Stim Pack. |
 | `HealthKitWeight` † | 1 | Relative odds it's a health kit. |
 | `ToolKitWeight` † | 1 | Relative odds it's a tool kit. |
 | `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
 | `KitSize` † | 20 | Contents of a kit found as consumable loot, in percent of a full pack. Zone resource packs are unaffected. |
 | `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
+| `SpawnsPerZoneMultiplier` † | 1.5 | Multiplies how many loot consumables spawn per zone (on top of GTFO.EZ's, if installed). |
 
 ### `[Ammo]`
 

@@ -270,7 +270,8 @@ the Hand Grenade (1203), the Stim Pack (1204) and the health, tool and ammo reso
 zone budget, so the pack items' `ConsumableAmmoMin/Max` are set to `KitSize` (20) for the loot path.
 `ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`. Where this clashes with GTFO.EZ
 this mod wins: a table GTFO.EZ's `Consumables Are Kits` already made kits-only gets this mix too, so
-kit odds and contents follow `[Loot]` here, not GTFO.EZ's kit settings (logged when it happens). Artifacts are left alone.
+kit odds and contents follow `[Loot]` here, not GTFO.EZ's kit settings (logged when it happens). Each
+table's `SpawnsPerZone` is scaled by `SpawnsPerZoneMultiplier` (1.5). Artifacts are left alone.
 
 The Stim Pack is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
 (`SyringeFirstPerson._ApplySyringe_d__18.MoveNext`) flags a Stim Pack's use - not the I2-LP's - so

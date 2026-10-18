@@ -14,8 +14,9 @@ namespace GTFO.AbsurdWeapons;
 /// kits. The kits are the game's own resource packs; those normally get their contents from the
 /// zone's resource budget (those spawn as normal), so the ones found as consumable loot are given
 /// <see cref="KitSize"/> as their consumable contents - 20% of a pack by default. The table's in-a-box chance is
-/// set so <see cref="OutInTheOpenShare"/> of them lie around the zone instead. Artifacts are left
-/// alone - as rare as vanilla, with Hand Grenades common alongside them.
+/// set so <see cref="OutInTheOpenShare"/> of them lie around the zone instead, and its spawns per zone
+/// are scaled by <see cref="SpawnsPerZoneMultiplier"/>: Hand Grenades are half the mix and there's
+/// more loot, so they're common. Artifacts are left alone - as rare as vanilla.
 /// After GTFO.EZ's own loot tweaks, and it takes precedence over them: a table GTFO.EZ already
 /// turned into kits only (its Consumables Are Kits) gets this mix too, so the kits follow this
 /// mod's weights and KitSize. The host's settings decide what spawns.
@@ -31,13 +32,14 @@ internal static class LootMix
     internal static ConfigEntry<float> AmmoKitWeight = null!;
     internal static ConfigEntry<int> KitSize = null!;
     internal static ConfigEntry<float> OutInTheOpenShare = null!;
+    internal static ConfigEntry<float> SpawnsPerZoneMultiplier = null!;
 
     internal static void Bind(ConfigFile config)
     {
         const string s = "Loot";
         Enabled = config.Bind(s, "Loot Mix Enabled", true,
             "Consumable loot is only Hand Grenades, Stim Packs and health, tool and ammo kits. Off: vanilla consumable loot. Takes effect on restart.");
-        HandGrenadeWeight = config.Bind(s, "HandGrenadeWeight", 2f, "Relative odds a loot consumable is a Hand Grenade. Takes effect on restart.");
+        HandGrenadeWeight = config.Bind(s, "HandGrenadeWeight", 4f, "Relative odds a loot consumable is a Hand Grenade. Takes effect on restart.");
         StimPackWeight = config.Bind(s, "StimPackWeight", 1f, "Relative odds it's a Stim Pack. Takes effect on restart.");
         HealthKitWeight = config.Bind(s, "HealthKitWeight", 1f, "Relative odds it's a health kit. Takes effect on restart.");
         ToolKitWeight = config.Bind(s, "ToolKitWeight", 1f, "Relative odds it's a tool kit. Takes effect on restart.");
@@ -46,6 +48,8 @@ internal static class LootMix
         OutInTheOpenShare = config.Bind(s, "OutInTheOpenShare", 0.6f,
             new ConfigDescription("Share (0-1) of loot consumables left lying out in the open instead of in boxes and lockers. Takes effect on restart.",
                 new AcceptableValueRange<float>(0f, 1f)));
+        SpawnsPerZoneMultiplier = config.Bind(s, "SpawnsPerZoneMultiplier", 1.5f,
+            "Multiplies how many loot consumables spawn per zone (on top of GTFO.EZ's own multiplier, if installed), so Hand Grenades are common. Takes effect on restart.");
     }
 
     [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
@@ -84,6 +88,7 @@ internal static class LootMix
                 block.SpawnData.Clear();
                 foreach (var (id, weight) in mix) block.SpawnData.Add(new ConsumableSpawnData { ItemID = id, Weight = weight });
                 block.ChanceToSpawnInResourceContainer = inBoxes;
+                block.SpawnsPerZone = Mathf.CeilToInt(block.SpawnsPerZone * Mathf.Max(0f, SpawnsPerZoneMultiplier.Value));
                 tables++;
             }
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons loot: {tables} table(s) are {string.Join(", ", mix.ConvertAll(m => $"item {m.Id} x{m.Weight}"))}, kits at {KitSize.Value}%"

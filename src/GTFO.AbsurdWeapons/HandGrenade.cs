@@ -55,7 +55,7 @@ internal static class HandGrenade
             "Every player is given StartingCount Hand Grenades in their consumable slot when they drop into a level (the host's setting decides).");
         StartingCount = config.Bind("Hand Grenade", "StartingCount", 1, "How many Hand Grenades each player is handed on dropping in (with GiveOnDrop on).");
         MaxCarried = config.Bind("Hand Grenade", "MaxCarried", 6, "The most Hand Grenades you can carry.");
-        PickupCount = config.Bind("Hand Grenade", "PickupCount", 1, "How many Hand Grenades one pickup holds - loot, or an artifact spot. Takes effect on restart.");
+        PickupCount = config.Bind("Hand Grenade", "PickupCount", 1, "How many Hand Grenades one loot pickup holds. Takes effect on restart.");
         ThrowForceMultiplier = config.Bind("Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
     }
 

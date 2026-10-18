@@ -3,7 +3,8 @@
 ## v1
 
 - Artifacts stay: Hand Grenades now join artifacts instead of replacing them - artifacts are as rare
-  as vanilla, grenades common through the loot mix. The `ArtifactsBecomeHandGrenades` setting is
+  as vanilla. Grenades are common instead: half the loot mix (`HandGrenadeWeight` 4) and half as
+  much loot again per zone (`SpawnsPerZoneMultiplier` 1.5). The `ArtifactsBecomeHandGrenades` setting is
   gone.
 - Loot: where it clashes with GTFO.EZ, this mod's loot wins - GTFO.EZ's kit-only tables (its
   *Consumables Are Kits*) get this mod's mix too, Hand Grenades and Stim Packs alongside kits at
