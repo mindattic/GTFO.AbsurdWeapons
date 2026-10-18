@@ -362,29 +362,16 @@ shows it to everyone.
   body, and for the local player everything under `FPItemHolder` (arms and the dagger). Everything
   is turned back on at the end.
 
-### Victory Banner (`VictoryBanner`, `BannerPylon`, `VictoryBannerBuff`)
+### Victory Banner (`VictoryBanner`, `BannerPylon`)
 
-The C-Foam launcher's `WantToFireGlue` hook toggles instead of firing a projectile, and logs each
-plant and pickup. The planted `BannerPylon` is a flag built from primitives (base, 2.1 m pole,
-finial, a green banner with a white emblem on a pivot that waves) with a permanent aura: a
-breathing green ground ring at `Radius` and an `EffectLight` filling it, both flaring on each heal
-pulse alongside the expanding pulse ring. Nothing active for the owner: a raycast down from just in front of them places a
-`BannerPylon` right there (no throw), sent to teammates (`...BannerPlant`), and switches them to
-their main weapon. Like a sentry, it's picked up by the owner walking within 2.5 m, looking at it
-and pressing Use (`InteractionLayer.SetInteractPrompt` shows "Pick up Victory Banner"), which retires it
-(`...BannerPickUp`) and wields the tool slot again - the same message also fires automatically,
-from the owner's own game, when `BannerPylon.StillInToolSlot` (checked twice a second, reading
-`PlayerBackpackManager.LocalBackpack`'s `GearClass` slot the same way `GearCycler` does) finds the
-Victory Banner is no longer what's actually equipped there - PageUp/PageDown, picking something
-else, or Home's restore. Every client runs the same planted `BannerPylon` independently: a pulsing
-ring every `PulseSeconds` out to `Radius`, and each client's own local player self-heals
-(`AddHealth`, `HealPercentPerPulse` of max health - the game's own synced heal, like Shadow Dagger's per-client decisions) if they're standing in it - no
-cross-client authority needed. `VictoryBannerBuff`, an always-on ticker, separately tracks whether
-the local player is in *any* active banner's ring; while they are, a `Dam_EnemyDamageLimb.
-BulletDamage` prefix multiplies every hit they deal - any weapon, this mod's or vanilla, since
-`BulletDamage` is the one choke point all instant damage runs through - by `BaseDamageBuff`,
-climbing by `DamageBuffPerKill` per enemy a postfix catches them killing while still inside, capped
-at `MaxDamageBuff` and reset to base the moment they leave.
+The C-Foam launcher's `WantToFireGlue` hook toggles instead of firing a projectile. Firing plants a
+`BannerPylon` (a flag built from primitives) in front of the owner: the drop point is taken level
+from chest height, kept short of a wall, then raycast straight down to the floor, and the flag is
+lifted so the lowest vertex of its meshes sits on the hit point. It is sent to teammates
+(`...BannerPlant`) and the owner switches to their main weapon. It's picked up like a sentry (Use
+while looking at it within 2.5 m), and it retires when the owner's tool slot no longer holds it.
+While it's down, every client heals its own local player `HealPercent` (1%) of max health every
+`HealSeconds` (0.25 s) while they're within `Radius`. That's all it does.
 
 ## Layout
 

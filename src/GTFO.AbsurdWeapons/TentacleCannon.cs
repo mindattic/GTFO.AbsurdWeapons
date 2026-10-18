@@ -13,47 +13,39 @@ using UnityEngine;
 namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// The Tentacle Cannon: a full-auto gun whose every round is a striker's tentacle - the game's
-/// own, drawn by its GPU tentacle renderer. Each round's tentacle hunts an enemy near its line of
-/// fire (one not already taken by another tentacle fired the same frame, if the gun ever fires
-/// several at once). It snakes out of the barrel, bites (damage and a heavy stagger, through the
-/// enemy limb's normal bullet path, so it syncs), hangs a moment and retracts. With no enemy near
-/// its line it reaches for the nearest thing to grab instead - crates, boxes, walls, the floor. Teammates are sent each lash
-/// and see the same thing; only the shooter's game deals damage.
+/// The Tentacle Cannon: a full-auto gun whose every round is a burst of strikers' tentacles - the
+/// game's own, drawn by its GPU tentacle renderer. They come from twelve fixed spots just below the
+/// player's eyeline (an arc under the bottom of the screen), each round's tentacles taking free
+/// spots in random order; a spot isn't used again until the tentacle on it has retracted. With an
+/// enemy in reach near the crosshair every tentacle goes for that one enemy (each at its own spot
+/// on it) and bites - damage and a heavy stagger through the limb's normal bullet path, so it
+/// syncs. With none, each reaches out along its own random line for whatever it meets - walls,
+/// the floor, crates (and breaks a door lock it grabs). Teammates are sent each lash and see the
+/// same thing; only the shooter's game deals damage.
 /// </summary>
 internal static class TentacleCannon
 {
     // The gun that fires tentacles: the Tentacle Cannon.
     internal static bool IsTentacleGun(uint id) => id == GunInjector.TentacleCannonId;
 
-    private static ConfigEntry<float> LockConeDegrees = null!; // around each tentacle's own line
-    private static ConfigEntry<float> EngageConeDegrees = null!; // any enemy this close to the aim (and in range) draws every tentacle
-    private static ConfigEntry<float> SpewConeDegrees = null!;   // each tentacle leaves within this many degrees of the aim: a cone straight ahead
-    private static ConfigEntry<float> WideSpewConeDegrees = null!; // the occasional tentacle's much wider cone, for variety
-    private static ConfigEntry<float> WideSpewChance = null!;      // the share of tentacles that get the wide cone instead
-    private static ConfigEntry<float> IdleReach = null!;   // how far out a tentacle wriggles with no enemy to reach
-    private static ConfigEntry<float> BarrelOffset = null!; // how far past the muzzle (along its facing) a tentacle starts
-    private static ConfigEntry<float> StartJitterDegrees = null!; // each tentacle's own start angle, below the barrel point
-    private static ConfigEntry<float> StartJitterRadius = null!;  // how far that jittered start sits from the barrel point
+    private static ConfigEntry<float> EngageConeDegrees = null!; // the enemy nearest the crosshair within this cone (and in reach) draws every tentacle
+    private static ConfigEntry<float> GrabConeDegrees = null!;   // with no enemy, each tentacle's own random line within this cone of the aim
+    private static ConfigEntry<int> TentaclesPerShot = null!;
+    private static ConfigEntry<float> IdleReach = null!;   // how far out a tentacle wriggles when its line meets nothing
     internal static ConfigEntry<float> StaggerMulti = null!;
 
     // How far a tentacle reaches - the strikers' own (EAB_MovingEnemeyTentacle's
-    // m_absoluteMaxDistanceToHitTarget), read off the first striker found in the level. Lock range,
-    // a miss's reach and a grab's reach are all this, so a lash is never drawn longer than a real one.
+    // m_absoluteMaxDistanceToHitTarget), read off the first striker found in the level. Lock range
+    // and a grab's reach are both this, so a lash is never drawn longer than a real one.
     private static ConfigEntry<float> FallbackReach = null!; // until a striker has been found
 
     internal static void Bind(ConfigFile config)
     {
-        LockConeDegrees = config.Bind("Tentacle Guns", "LockConeDegrees", 15f, "Cone around each tentacle's own line that counts as a lock.");
-        EngageConeDegrees = config.Bind("Tentacle Guns", "EngageConeDegrees", 15f, "Any enemy this close to the aim (and in reach) draws every tentacle.");
-        SpewConeDegrees = config.Bind("Tentacle Guns", "SpewConeDegrees", 8f, "Half-angle of the cone the tentacles spew out in, straight ahead of the gun.");
-        WideSpewConeDegrees = config.Bind("Tentacle Guns", "WideSpewConeDegrees", 35f, "Half-angle of the wide cone the occasional tentacle spews out in instead, for variety.");
-        WideSpewChance = config.Bind("Tentacle Guns", "WideSpewChance", 0.2f, "Chance (0-1) each tentacle spews wide instead of in the tight forward cone.");
-        StaggerMulti = config.Bind("Tentacle Guns", "StaggerMulti", 5f, "Stagger multiplier per bite.");
-        IdleReach = config.Bind("Tentacle Guns", "IdleReach", 4f, "Metres a tentacle wriggles out when no enemy is in reach (it reaches its full length only for an enemy).");
-        BarrelOffset = config.Bind("Tentacle Guns", "BarrelOffset", 0.3f, "Metres past the muzzle a tentacle starts, so it visibly comes out of the barrel (negative = back inside the gun).");
-        StartJitterDegrees = config.Bind("Tentacle Guns", "StartJitterDegrees", 25f, "Each tentacle's start point swings up to this many degrees off straight-down from the barrel, so a burst doesn't start from one single spot.");
-        StartJitterRadius = config.Bind("Tentacle Guns", "StartJitterRadius", 0.1f, "Metres that jittered start point sits from the barrel point.");
+        EngageConeDegrees = config.Bind("Tentacle Guns", "EngageConeDegrees", 20f, "The enemy nearest the crosshair within this cone (and in reach) draws every tentacle.");
+        GrabConeDegrees = config.Bind("Tentacle Guns", "GrabConeDegrees", 25f, "With no enemy in reach, each tentacle reaches along its own random line within this many degrees of the aim.");
+        TentaclesPerShot = config.Bind("Tentacle Guns", "TentaclesPerShot", 3, "Tentacles each round sends out (each needs a free one of the twelve spawn spots).");
+        StaggerMulti = config.Bind("Tentacle Guns", "StaggerMulti", 12f, "Stagger multiplier per bite.");
+        IdleReach = config.Bind("Tentacle Guns", "IdleReach", 4f, "Metres a tentacle wriggles out when its line meets nothing in reach.");
         FallbackReach = config.Bind("Tentacle Guns", "FallbackReach", 25f, "Reach used until a real striker's is found in the level.");
     }
     private static float reach;
@@ -90,10 +82,54 @@ internal static class TentacleCannon
     }
     private const string LashEvent = "MindAttic.GTFO.AbsurdWeapons.TentacleLash";
 
-    // Enemies already claimed by a tentacle of the shot being fired (a shot's pellets all come in
-    // the same frame).
-    private static readonly HashSet<IntPtr> claimed = new();
-    private static int claimedFrame = -1;
+    // The twelve spawn spots, in the camera's frame (right, up, forward): a half ring 0.8 m out
+    // around the view, from just below level on either side round under it, and hardly ahead of
+    // the eye - ~80 deg off the aim, well outside the view on every side, so a tentacle's start is
+    // never seen: they sweep in from off the sides and bottom of the screen. Never above 15 deg
+    // below level, so they all stay below the eyeline.
+    internal const int SpotCount = 12;
+    private static readonly Vector3[] Spots = BuildSpots();
+    private static readonly bool[] spotTaken = new bool[SpotCount]; // the local shooter's: a lash is on it
+
+    private static Vector3[] BuildSpots()
+    {
+        var spots = new Vector3[SpotCount];
+        for (var i = 0; i < SpotCount; i++)
+        {
+            var angle = Mathf.Lerp(-165f, -15f, i / (float)(SpotCount - 1)) * Mathf.Deg2Rad; // left, round under, to right
+            var radius = i % 2 == 0 ? 0.8f : 0.9f; // two staggered rings
+            spots[i] = new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0.15f);
+        }
+        return spots;
+    }
+
+    // Spot `index` in the world, for the camera at `eye` looking along `aim`.
+    internal static Vector3 SpotPosition(int index, Vector3 eye, Vector3 aim)
+    {
+        var right = Vector3.Cross(Vector3.up, aim);
+        if (right.sqrMagnitude < 0.001f) right = Vector3.right;
+        right.Normalize();
+        var up = Vector3.Cross(aim, right);
+        var spot = Spots[index];
+        return eye + right * spot.x + up * spot.y + aim * spot.z;
+    }
+
+    internal static void FreeSpot(int index)
+    {
+        if (index >= 0 && index < SpotCount) spotTaken[index] = false;
+    }
+
+    // A free spot at random, taken; -1 when all twelve have a tentacle on them.
+    private static int TakeSpot()
+    {
+        var free = new List<int>();
+        for (var i = 0; i < SpotCount; i++)
+            if (!spotTaken[i]) free.Add(i);
+        if (free.Count == 0) return -1;
+        var spot = free[UnityEngine.Random.Range(0, free.Count)];
+        spotTaken[spot] = true;
+        return spot;
+    }
 
     // Diagnostics while the cannon is being brought up: the first few lashes log what happened.
     internal static int DiagnosticShots = 8;
@@ -101,70 +137,47 @@ internal static class TentacleCannon
     internal static void Init()
     {
         NetworkAPI.RegisterEvent<LashMessage>(LashEvent, (_, message) =>
-            TentacleLash.Spawn(new Vector3(message.X, message.Y, message.Z), null,
-                new Vector3(message.EndX, message.EndY, message.EndZ), null, null, 0f, 0f, 0));
+            TentacleLash.Spawn(new Vector3(message.X, message.Y, message.Z), -1,
+                new Vector3(message.EndX, message.EndY, message.EndZ), Vector3.zero, null, null, 0f, 0f, 0));
     }
 
-    // One pellet: one tentacle along (and bending onto an enemy near) the pellet's direction.
-    internal static void FirePellet(PlayerAgent owner, Transform? muzzle, Vector3 eye, Vector3 pellet, float damage, uint gearCategoryId)
+    // One round: TentaclesPerShot tentacles, each from a free spawn spot.
+    internal static void FirePellet(PlayerAgent owner, Vector3 eye, Vector3 pellet, float damage, uint gearCategoryId)
     {
-        if (claimedFrame != Time.frameCount)
-        {
-            claimedFrame = Time.frameCount;
-            claimed.Clear();
-        }
-
-        // Spew: every tentacle takes its own random line within a tight cone straight ahead - except
-        // the occasional one (WideSpewChance), which goes wide instead, for variety.
-        var aim = pellet;
-        var coneDegrees = UnityEngine.Random.value < WideSpewChance.Value ? WideSpewConeDegrees.Value : SpewConeDegrees.Value;
-        pellet = Cone(pellet, coneDegrees);
-        var start = muzzle != null ? BarrelOnScreen(owner, muzzle, -BarrelOffset.Value) : eye + aim * 0.5f;
-        // Each tentacle starts from its own slightly different angle below the barrel point - out of
-        // the player's view - so a burst doesn't read as spewing from one single spot.
-        start = JitteredStart(start, aim);
-        EnemyAgent? target = null;
+        var aim = owner.FPSCamera != null ? owner.FPSCamera.Forward : pellet;
         var range = Reach;
-        foreach (var enemy in SeekerGuns.FindLocks(eye, pellet, LockConeDegrees.Value, range))
-        {
-            if (!claimed.Add(enemy.Pointer)) continue;
-            target = enemy;
-            break;
-        }
+        // One target for all of them: the enemy nearest the crosshair, in reach.
+        var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees.Value, range);
+        var target = nearby.Count > 0 ? nearby[0] : null;
 
-        // An enemy anywhere in front of you takes every tentacle: none wanders off to grab a crate
-        // or a wall while there's something to bite. Nearest the crosshair first; if every one in
-        // view already has a tentacle this frame, they double up.
-        if (target == null)
+        for (var n = 0; n < Mathf.Max(1, TentaclesPerShot.Value); n++)
         {
-            var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees.Value, range);
-            foreach (var enemy in nearby)
+            var spot = TakeSpot();
+            if (spot < 0) return; // every spot still has a tentacle on it
+            var start = SpotPosition(spot, eye, aim);
+
+            // On an enemy: its own spot on the body, so they don't all land on one point. Otherwise:
+            // its own random line, out to whatever it meets.
+            var offset = UnityEngine.Random.insideUnitSphere * 0.25f;
+            var end = target != null
+                ? target.AimTarget.position + offset
+                : SomethingToGrab(eye, Cone(aim, GrabConeDegrees.Value), range);
+
+            if (DiagnosticShots > 0)
             {
-                if (!claimed.Add(enemy.Pointer)) continue;
-                target = enemy;
-                break;
+                DiagnosticShots--;
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Cannon: spot {spot} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
             }
-            if (target == null && nearby.Count > 0) target = nearby[0];
+
+            TentacleLash.Spawn(start, spot, end, offset, target, owner, damage, StaggerMulti.Value, gearCategoryId);
+            NetworkAPI.InvokeEvent(LashEvent, new LashMessage(start, end));
         }
-
-        // No enemy in reach: it just wriggles a short way out, tight in the cone.
-        var end = target != null ? target.AimTarget.position : SomethingToGrab(eye, pellet, Mathf.Min(range, IdleReach.Value));
-
-        if (DiagnosticShots > 0)
-        {
-            DiagnosticShots--;
-            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Cannon pellet: muzzle {(muzzle != null ? "found" : "missing")} at {start}, target {(target != null ? target.name : "none")}, damage {damage}.");
-        }
-
-        TentacleLash.Spawn(start, muzzle, end, target, owner, damage, StaggerMulti.Value, gearCategoryId, -BarrelOffset.Value);
-        NetworkAPI.InvokeEvent(LashEvent, new LashMessage(start, end));
     }
 
-    // With no enemy to bite, a tentacle wriggles straight out along its own line (inside the tight
-    // spew cone) - a short way (`range`), or to the first surface on that line. It never bends off
-    // toward some other surface: only an enemy in range makes it reach out and curve.
+    // With no enemy to bite, a tentacle reaches along `line` for the first thing it meets - a wall,
+    // the floor, a crate - out to its full reach; meeting nothing, it wriggles a short way out.
     private static Vector3 SomethingToGrab(Vector3 eye, Vector3 line, float range) =>
-        Physics.Raycast(eye, line, out var hit, range, LayerManager.MASK_BULLETWEAPON_RAY) ? hit.point : eye + line * range;
+        Physics.Raycast(eye, line, out var hit, range, LayerManager.MASK_BULLETWEAPON_RAY) ? hit.point : eye + line * Mathf.Min(range, IdleReach.Value);
 
     // A random direction within `degrees` of `forward` (a round cone).
     private static Vector3 Cone(Vector3 forward, float degrees)
@@ -175,21 +188,6 @@ internal static class TentacleCannon
         var up = Vector3.Cross(forward, right);
         var offset = UnityEngine.Random.insideUnitCircle * degrees;
         return (Quaternion.AngleAxis(offset.x, up) * Quaternion.AngleAxis(offset.y, right) * forward).normalized;
-    }
-
-    // Nudges `start` toward a point below `aim`'s line, at its own random angle off straight-down
-    // (StartJitterDegrees either way) and a small distance out (StartJitterRadius) - below the
-    // player's own view, so each tentacle in a burst starts from a slightly different spot instead
-    // of all spewing from the exact same point.
-    private static Vector3 JitteredStart(Vector3 start, Vector3 aim)
-    {
-        var right = Vector3.Cross(Vector3.up, aim);
-        if (right.sqrMagnitude < 0.001f) right = Vector3.right;
-        right.Normalize();
-        var down = -Vector3.Cross(aim, right).normalized;
-        var angle = UnityEngine.Random.Range(-StartJitterDegrees.Value, StartJitterDegrees.Value);
-        var direction = Quaternion.AngleAxis(angle, aim) * down;
-        return start + direction * StartJitterRadius.Value;
     }
 
     // The world point that appears on screen where the gun's muzzle is drawn. GTFO draws the
@@ -229,8 +227,8 @@ internal static class TentacleCannon
 
 /// <summary>
 /// One tentacle lash: a pooled striker tentacle (GPUCurvy) whose control points are laid along a
-/// snaking line from the barrel to its target every frame - out, bite, hang, back in - then
-/// handed back to the pool.
+/// snaking line from its spawn spot to its target every frame - out, bite, hang, back in - then
+/// handed back to the pool, freeing the spot.
 /// </summary>
 internal sealed class TentacleLash : MonoBehaviour
 {
@@ -243,9 +241,9 @@ internal sealed class TentacleLash : MonoBehaviour
 
     private GPUCurvy? curvy;
     private Il2CppStructArray<GPUC_ControlPoint> points = null!;
-    private Transform? follow; // the shooter's muzzle, so the lash stays on the gun
-    private float behind;      // how far behind the muzzle (along its facing) the lash starts
-    private Vector3 start, end;
+    private int spot = -1;     // the shooter's spawn spot it rises from (-1 on a teammate's copy)
+    private float sink;        // metres below the spot it starts, for the thicker types
+    private Vector3 start, end, targetOffset;
     private EnemyAgent? target;
     private PlayerAgent? owner; // null on a teammate's (visual-only) copy
     private float damage, staggerMulti, age, seed;
@@ -265,12 +263,24 @@ internal sealed class TentacleLash : MonoBehaviour
     public TentacleLash(IntPtr ptr) : base(ptr) { }
 
     [HideFromIl2Cpp]
-    internal static void Spawn(Vector3 start, Transform? follow, Vector3 end, EnemyAgent? target, PlayerAgent? owner,
-        float damage, float staggerMulti, uint gearCategoryId, float behind = 0f)
+    internal static void Spawn(Vector3 start, int spot, Vector3 end, Vector3 targetOffset, EnemyAgent? target, PlayerAgent? owner,
+        float damage, float staggerMulti, uint gearCategoryId)
     {
-        if (!GPUCurvyManager.TryAllocateGPUCurvy(GPUCurvyType.Striker, out var curvy) || curvy == null)
+        // Girth comes with the tentacle type (each type's pool shares one shape), so each lash rolls
+        // its type: mostly strikers', some big strikers', the odd tank's - a mixed, writhing mass.
+        // The thicker ones rise from lower down so their bulk stays below the eyeline too.
+        var roll = UnityEngine.Random.value;
+        var type = roll < 0.55f ? GPUCurvyType.Striker : roll < 0.85f ? GPUCurvyType.StrikerBig : GPUCurvyType.Tank;
+        var sink = type == GPUCurvyType.Striker ? 0f : type == GPUCurvyType.StrikerBig ? 0.1f : 0.2f;
+        if (!GPUCurvyManager.TryAllocateGPUCurvy(type, out var curvy) || curvy == null)
+        {
+            sink = 0f;
+            if (type != GPUCurvyType.Striker) GPUCurvyManager.TryAllocateGPUCurvy(GPUCurvyType.Striker, out curvy);
+        }
+        if (curvy == null)
         {
             Plugin.Logger.LogWarning("GTFO.AbsurdWeapons: no free tentacle to lash with (the game's tentacle pool gave none).");
+            TentacleCannon.FreeSpot(spot);
             return;
         }
         if (TentacleCannon.DiagnosticShots >= 0 && diagnosticLashes-- > 0)
@@ -280,10 +290,11 @@ internal sealed class TentacleLash : MonoBehaviour
         var lash = go.AddComponent<TentacleLash>();
         lash.curvy = curvy;
         lash.points = new Il2CppStructArray<GPUC_ControlPoint>(curvy.m_pointCount > 1 ? curvy.m_pointCount : FallbackPointCount);
-        lash.follow = follow;
-        lash.behind = behind;
-        lash.start = start;
+        lash.spot = spot;
+        lash.sink = sink;
+        lash.start = start + Vector3.down * sink;
         lash.end = end;
+        lash.targetOffset = targetOffset;
         lash.target = target;
         lash.idle = target == null;
         lash.owner = owner;
@@ -320,8 +331,9 @@ internal sealed class TentacleLash : MonoBehaviour
             else if (age < OutSeconds + HangSeconds) extend = 1f;
             else extend = 1f - (age - OutSeconds - HangSeconds) / InSeconds;
 
-            if (follow != null) start = TentacleCannon.BarrelOnScreen(owner, follow, behind);
-            if (target != null && target.Alive) end = target.AimTarget.position;
+            var camera = owner != null ? owner.FPSCamera : null;
+            if (spot >= 0 && camera != null) start = TentacleCannon.SpotPosition(spot, camera.Position, camera.Forward) + Vector3.down * sink;
+            if (target != null && target.Alive) end = target.AimTarget.position + targetOffset;
             var reach = TentacleCannon.Reach;
             if ((end - start).sqrMagnitude > reach * reach) end = start + (end - start).normalized * reach;
 
@@ -357,7 +369,8 @@ internal sealed class TentacleLash : MonoBehaviour
         var pulse = 0.65f + 0.35f * Mathf.Sin(age * pulseHz * Mathf.PI * 2f + seed);
         // Small enough to stay inside the spew cone: at most ~4% of the length either side.
         // Reaching for an enemy: a gentle sway that keeps it on course. Idle: a tight, lively wriggle.
-        var amplitude = (idle ? Mathf.Min(0.25f, length * 0.07f) : Mathf.Min(0.4f, length * 0.03f)) * sizeScale * pulse;
+        // Lively but never extreme: the bend stays under ~10% of the length either side.
+        var amplitude = (idle ? Mathf.Min(0.3f, length * 0.07f) : Mathf.Min(0.45f, length * 0.05f)) * sizeScale * pulse;
 
         // The spline runs through the inner control points only - the first and last just steer its
         // ends (the head was measured landing at 75% of the line with 5 points). So the second point
@@ -409,7 +422,13 @@ internal sealed class TentacleLash : MonoBehaviour
                 if (enemy != null) break;
             }
         }
-        if (enemy == null || !enemy.Alive) return;
+        if (enemy == null)
+        {
+            // Grabbed a door lock instead.
+            LockDamage.Radius(end, 0.5f, damage, owner.Cast<Agent>());
+            return;
+        }
+        if (!enemy.Alive) return;
 
         Dam_EnemyDamageLimb? nearest = null;
         var best = float.MaxValue;
@@ -427,6 +446,8 @@ internal sealed class TentacleLash : MonoBehaviour
 
     private void OnDestroy()
     {
+        TentacleCannon.FreeSpot(spot);
+        spot = -1;
         if (curvy == null) return;
         try
         {

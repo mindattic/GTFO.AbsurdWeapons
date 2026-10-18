@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using Agents;
 using BepInEx.Configuration;
 using Enemies;
+using FX_EffectSystem;
 using Gear;
 using GTFO.API;
 using HarmonyLib;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -18,8 +20,8 @@ namespace GTFO.AbsurdWeapons;
 /// further one restarts the count). While hidden, enemies can't detect
 /// them by sight or noise, can't lock on or be alerted to them, and drop them as a target if they
 /// already had them. Enemy AI runs on the host, so the hit is sent to everyone over GTFO-API and
-/// every game keeps the same list of who is hidden. Hidden players shimmer, half-there, until it
-/// ends (see <see cref="StealthVisuals"/>). Putting the dagger away - wielding anything else - ends
+/// every game keeps the same list of who is hidden. Hidden players fade to 90% transparent, coming
+/// back in as their time runs out (see <see cref="StealthVisuals"/>). Putting the dagger away - wielding anything else - ends
 /// it at once.
 /// </summary>
 [HarmonyPatch]
@@ -239,31 +241,50 @@ internal static class Stealth
 }
 
 /// <summary>
-/// Shows stealth on every game, from the shared hidden list, so everyone sees the same thing: a
-/// shimmer. Each part of a hidden player's body (every renderer) flickers 10 times a second on its
-/// own timing, showing for 35% of each flicker - so at any moment some pieces are there and others
-/// aren't, and the figure reads as broken up and see-through rather than blinking as a whole.
-/// Over the last second it fills back in to solid as a warning. Teammates see the whole body; the
-/// hidden player sees their first-person view (arms and the dagger itself). Only renderers that
-/// were on when the stealth began are touched, and all of them are turned back on.
+/// Shows stealth on every game, from the shared hidden list, so everyone sees the same thing: the
+/// hidden player fades out to 90% transparent, and how see-through they are is tied straight to
+/// how much stealth they have left - it fades back in as the time runs down, and anything that
+/// adds time (another full hit, a full-windup kill) makes them more see-through again. Every part
+/// of them shown (each renderer) is switched to a see-through copy of its own materials for the
+/// duration, and back to its own when it ends. Teammates see the whole body; the hidden player
+/// sees their first-person view (arms and the dagger itself).
+/// Even out of stealth, the Shadow Dagger in anyone's hand gives off a pulsing violet glow, the
+/// Gravity Hammer's old light.
 /// </summary>
 internal sealed class StealthVisuals : MonoBehaviour
 {
-    private const float FlickersPerSecond = 10f;
-    private const float ShimmerVisible = 0.35f; // share of each flicker a body part shows
-    private const float WarningSeconds = 1f;   // the shimmer fills back in over this last stretch
+    private const float MostTransparent = 0.9f; // fully stealthed: 10% there
+    private const float FadeRate = 6f;          // how quickly the shown transparency follows the time left
+    private const float RescanSeconds = 0.25f;  // how often to pick up renderers that appeared (a swapped-in weapon)
 
-    private const float RescanSeconds = 0.25f; // how often to pick up renderers that appeared (a swapped-in weapon)
+    // One part of a hidden player: its own materials, and the see-through copies shown meanwhile.
+    private sealed class Part
+    {
+        public Renderer Renderer = null!;
+        public Il2CppReferenceArray<Material> Original = null!;
+        public Material[] Ghosts = Array.Empty<Material>();
+    }
 
-    // Per hidden player: each renderer with its own flicker offset (0..1 of a flicker).
     private sealed class Hidden
     {
-        public readonly List<(Renderer Renderer, float Offset)> Renderers = new();
+        public readonly List<Part> Parts = new();
         public readonly HashSet<IntPtr> Known = new();
-        public float NextScan;
+        public float NextScan, Transparency;
     }
 
     private readonly Dictionary<IntPtr, Hidden> hidden = new();
+
+    private static readonly Color GlowColor = new(0.6f, 0.3f, 1f);
+    private static Shader? ghostShader;
+
+    // Per player wielding the dagger: its glow.
+    private sealed class Held
+    {
+        public IntPtr Item;
+        public EffectLight Glow = null!;
+    }
+
+    private readonly Dictionary<IntPtr, Held> held = new();
 
     public StealthVisuals(IntPtr ptr) : base(ptr) { }
 
@@ -280,15 +301,16 @@ internal sealed class StealthVisuals : MonoBehaviour
                 if (player.IsLocallyOwned) Stealth.ProcessKills(player);
                 var remaining = Stealth.Remaining(player);
                 var tracked = hidden.TryGetValue(player.Pointer, out var state);
+                Wielding(player);
 
-                if (remaining > 0f && !tracked) Vanish(player);
-                else if (remaining > 0f)
+                if (remaining > 0f)
                 {
-                    // A weapon swapped in while hidden joins the shimmer too.
+                    if (!tracked) hidden[player.Pointer] = state = new Hidden();
+                    // A weapon swapped in while hidden fades with the rest.
                     if (Time.time >= state!.NextScan) Collect(player, state);
-                    Shimmer(state.Renderers, remaining);
+                    Fade(state, remaining);
                 }
-                else if (tracked) Reappear(player.Pointer, state!.Renderers);
+                else if (tracked) Reappear(player.Pointer, state!);
             }
         }
         catch (Exception e)
@@ -297,51 +319,85 @@ internal sealed class StealthVisuals : MonoBehaviour
         }
     }
 
+    // The dagger's glow while it's in `player`'s hand.
     [HideFromIl2Cpp]
-    private void Vanish(PlayerAgent player)
+    private void Wielding(PlayerAgent player)
     {
-        var state = new Hidden();
-        hidden[player.Pointer] = state;
-        Collect(player, state);
-        SetVisible(state.Renderers, false);
+        var item = player.Inventory?.WieldedItem;
+        var isDagger = item != null && item.GearCategoryData?.persistentID == MeleeInjector.ShadowDaggerId;
+        held.TryGetValue(player.Pointer, out var state);
+        if (state != null && (!isDagger || state.Item != item!.Pointer))
+        {
+            if (state.Glow != null) Destroy(state.Glow.gameObject);
+            held.Remove(player.Pointer);
+            state = null;
+        }
+        if (!isDagger) return;
+
+        if (state == null)
+        {
+            state = new Held { Item = item!.Pointer };
+            var go = new GameObject("GTFO.AbsurdWeapons Shadow Dagger Glow");
+            state.Glow = go.AddComponent<EffectLight>();
+            state.Glow.Color = GlowColor;
+            state.Glow.Range = 5f;
+            state.Glow.enabled = true;
+            held[player.Pointer] = state;
+        }
+
+        state.Glow.transform.position = item!.transform.position;
+        state.Glow.Intensity = 2f * (0.75f + 0.25f * Mathf.Sin(Time.time * 12f));
     }
 
-    // Adds the player's showing renderers not tracked yet: your own first-person view (arms and
-    // the item in hand), or a teammate's whole body.
+    // Switches the player's showing renderers not tracked yet to see-through copies of their
+    // materials: your own first-person view (arms and the item in hand), or a teammate's whole body.
     [HideFromIl2Cpp]
     private static void Collect(PlayerAgent player, Hidden state)
     {
         state.NextScan = Time.time + RescanSeconds;
         Component? root = player.IsLocallyOwned ? player.FPItemHolder : player;
         if (root == null) return;
+        ghostShader ??= Shader.Find("Sprites/Default");
         foreach (var renderer in root.GetComponentsInChildren<Renderer>(false))
-            if (renderer.enabled && state.Known.Add(renderer.Pointer))
-                state.Renderers.Add((renderer, UnityEngine.Random.value));
+        {
+            if (!renderer.enabled || !state.Known.Add(renderer.Pointer)) continue;
+            var original = renderer.sharedMaterials;
+            if (original == null || original.Length == 0) continue;
+            var ghosts = new Material[original.Length];
+            for (var i = 0; i < original.Length; i++)
+            {
+                ghosts[i] = new Material(ghostShader);
+                var source = original[i];
+                if (source != null && source.HasProperty("_MainTex")) ghosts[i].mainTexture = source.mainTexture;
+            }
+            renderer.materials = new Il2CppReferenceArray<Material>(ghosts);
+            state.Parts.Add(new Part { Renderer = renderer, Original = original, Ghosts = ghosts });
+        }
     }
 
+    // Transparency follows the stealth time left: 90% at a full stealth (or more), back to solid
+    // as it runs out - eased, so it fades rather than snaps when time is added.
     [HideFromIl2Cpp]
-    private static void Shimmer(List<(Renderer Renderer, float Offset)> renderers, float remaining)
+    private static void Fade(Hidden state, float remaining)
     {
-        // Over the last second the share of each flicker spent visible climbs to all of it.
-        var visibleShare = remaining > WarningSeconds
-            ? ShimmerVisible
-            : Mathf.Lerp(1f, ShimmerVisible, remaining / WarningSeconds);
-        var flicker = Time.time * FlickersPerSecond;
-        foreach (var (renderer, offset) in renderers)
-            if (renderer != null) renderer.enabled = (flicker + offset) % 1f < visibleShare;
+        var target = MostTransparent * Mathf.Clamp01(remaining / Mathf.Max(0.1f, Stealth.Seconds.Value));
+        state.Transparency = Mathf.Lerp(state.Transparency, target, 1f - Mathf.Exp(-FadeRate * Time.deltaTime));
+        var tint = new Color(1f, 1f, 1f, 1f - state.Transparency);
+        foreach (var part in state.Parts)
+            foreach (var ghost in part.Ghosts)
+                if (ghost != null) ghost.color = tint;
     }
 
+    // Every part back to its own materials.
     [HideFromIl2Cpp]
-    private void Reappear(IntPtr player, List<(Renderer Renderer, float Offset)> renderers)
+    private void Reappear(IntPtr player, Hidden state)
     {
-        SetVisible(renderers, true);
+        foreach (var part in state.Parts)
+        {
+            if (part.Renderer != null) part.Renderer.sharedMaterials = part.Original;
+            foreach (var ghost in part.Ghosts)
+                if (ghost != null) Destroy(ghost);
+        }
         hidden.Remove(player);
-    }
-
-    [HideFromIl2Cpp]
-    private static void SetVisible(List<(Renderer Renderer, float Offset)> renderers, bool visible)
-    {
-        foreach (var (renderer, _) in renderers)
-            if (renderer != null && (!visible || renderer.gameObject.activeInHierarchy)) renderer.enabled = visible;
     }
 }

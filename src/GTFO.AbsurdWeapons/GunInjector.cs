@@ -81,10 +81,10 @@ internal static class GunInjector
         RailgunDamage = config.Bind("Railgun", "Damage", 150f, "Damage to every enemy on the line (Quake's rail kills outright).");
         RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
         RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Clip size (infinite ammo refills it anyway).");
-        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 10f, "Damage of the first strike (each jump is 75% of the last).");
+        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump is 75% of the last).");
         ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
         ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
-        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 22f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
+        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 100f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
         TentacleShotDelay = config.Bind("Tentacle Guns", "ShotDelay", 0.235f, "Seconds between tentacles.");
         TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
     }
@@ -214,6 +214,7 @@ internal static class GunInjector
     private static void AddPlasma(string name, uint id, string model, string description)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>(model);
+        gear = WithHold(gear, AddLowHold(name, id, gear));
         var archetype = StatsFrom("HELRifleSemi");
         archetype.FireMode = eWeaponFireMode.Auto;
         archetype.ShotgunBulletCount = 1;
@@ -269,8 +270,15 @@ internal static class GunInjector
         var category = CategoryOf(gear);
         if (forceSpecialSlot)
         {
+            // Both places the slot is read from: the category's BaseItem and the gear JSON's own
+            // BaseItem component (3). Changing only the category left the gear claiming the main
+            // slot while its category claimed special, and that mismatch could cost a whole slot
+            // its weapon list in the loadout.
+            var special = Lookup<ItemDataBlock>("GEAR_Bulletweapon_Special").persistentID;
             category = Clone(category);
-            category.BaseItem = Lookup<ItemDataBlock>("GEAR_Bulletweapon_Special").persistentID;
+            category.BaseItem = special;
+            gear = Clone(gear);
+            gear.GearJSON = SetGearComponent(gear.GearJSON, 3, special);
         }
         Register(name, id, archetype, category, gear, description);
     }
@@ -381,6 +389,29 @@ internal static class GunInjector
         steady.canRelax = false;    // always up at hip height
         steady.RecoilAnimation = 0; // no kick animation
         GameDataBlockBase<ItemFPSSettingsDataBlock>.AddBlock(steady, -1);
+        return id;
+    }
+
+    // The model's own first-person hold carried lower and tipped up to the crosshair, so what it
+    // fires (the plasma balls) shows above it on screen. Registered at the gun's id; null (keep the
+    // model's) if that id is taken or the model has no hold.
+    private static uint? AddLowHold(string name, uint id, PlayerOfflineGearDataBlock gear)
+    {
+        var sourceId = GearJson.Component(gear.GearJSON, 4);
+        var source = sourceId.HasValue ? GameDataBlockBase<ItemFPSSettingsDataBlock>.GetBlock(sourceId.Value) : null;
+        if (source == null || GameDataBlockBase<ItemFPSSettingsDataBlock>.HasBlock(id))
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: couldn't hold the {name} low - it keeps its model's hold.");
+            return null;
+        }
+        var low = Clone(source);
+        low.persistentID = id;
+        low.name = name.Replace(" ", "") + "_Low";
+        low.localPosHip += new Vector3(0.02f, -0.12f, 0f);
+        low.localPosZoom += new Vector3(0.04f, -0.1f, 0f);
+        low.localRotHip += new Vector3(-4f, 0f, 0f);
+        low.localRotZoom += new Vector3(-3f, 0f, 0f);
+        GameDataBlockBase<ItemFPSSettingsDataBlock>.AddBlock(low, -1);
         return id;
     }
 

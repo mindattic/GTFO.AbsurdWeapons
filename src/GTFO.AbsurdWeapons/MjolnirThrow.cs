@@ -240,6 +240,7 @@ internal sealed class ThrownHammer : MonoBehaviour
                 limb.BulletDamage(MjolnirThrow.HitDamage.Value, owner!.Cast<Agent>(), point, line / length, -line / length,
                     allowDirectionalBonus: false, MjolnirThrow.HitStagger.Value, 1f, MeleeInjector.MjolnirId);
             }
+            LockDamage.Line(from, line / length, length, MjolnirThrow.HitDamage.Value, owner!.Cast<Agent>());
         }
 
         if (age < nextPulse) return;

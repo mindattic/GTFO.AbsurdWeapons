@@ -41,6 +41,8 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
     internal float BlastStagger { get; init; }
     internal Color FlashColor { get; init; }
     internal float FlashRange { get; init; }
+    internal float FlashIntensity { get; init; } = 3f;
+    internal bool Sparks { get; init; } // electric sparks where it lands, too
     // On hitting an enemy, this many of this kind burst out to hunt other enemies.
     internal SeekerKind? SplitInto { get; init; }
     internal int SplitCount { get; init; }
@@ -81,7 +83,7 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
         var plasmaSpeed = config.Bind("Plasma Guns", "BallSpeed", 57.2f, "Plasma ball speed, m/s (twice Doom's 28.6).");
         var plasmaDamageDie = config.Bind("Plasma Guns", "DamageDie", 8, "Each hit rolls DamageScale x 1dDamageDie.");
         var plasmaDamageScale = config.Bind("Plasma Guns", "DamageScale", 5f, "Each hit rolls DamageScale x 1dDamageDie.");
-        var plasmaBlastRadius = config.Bind("Plasma Guns", "BlastRadius", 1.25f, "Metres of the small shock on impact.");
+        var plasmaBlastRadius = config.Bind("Plasma Guns", "BlastRadius", 1.75f, "Metres of the small shock on impact.");
         var plasmaBlastDamage = config.Bind("Plasma Guns", "BlastDamage", 6f, "Damage at the shock's center.");
         var plasmaBlastStagger = config.Bind("Plasma Guns", "BlastStagger", 3f, "Shock stagger multiplier.");
         // Plasma Gun, after Doom's (1993): blue plasma balls that fly dead straight at 25 map units
@@ -94,7 +96,8 @@ internal sealed record SeekerKind(byte Id, ProjectileType Projectile)
             DamageDie = plasmaDamageDie.Value, DamageScale = plasmaDamageScale.Value,
             Tint = new Color(0.3f, 0.55f, 1f),
             BlastRadius = plasmaBlastRadius.Value, BlastDamage = plasmaBlastDamage.Value, BlastStagger = plasmaBlastStagger.Value,
-            FlashColor = ElectricBlue, FlashRange = 2f,
+            // A bright blue flash and sparks marking the splash, so every impact reads.
+            FlashColor = ElectricBlue, FlashRange = 4f, FlashIntensity = 7f, Sparks = true,
         };
 
         var hiveSpeed = config.Bind("Hive Guns", "RoundSpeed", 45f, "Round speed, m/s.");
@@ -354,8 +357,8 @@ internal static class SeekerGuns
                 var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
                 if (shooter != null && shooter.IsLocallyOwned)
                 {
-                    // One tentacle per pellet, along that pellet's spread direction.
-                    TentacleCannon.FirePellet(shooter, firingWeapon?.MuzzleAlign, originPos, PelletDirection(alignTransform, weaponRayData),
+                    // A burst of tentacles per pellet, from the spawn spots under the view.
+                    TentacleCannon.FirePellet(shooter, originPos, PelletDirection(alignTransform, weaponRayData),
                         weaponRayData.damage, weaponRayData.gearCategoryId);
                 }
                 return false;

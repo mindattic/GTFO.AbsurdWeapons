@@ -19,22 +19,17 @@ namespace GTFO.AbsurdWeapons;
 /// and firing again while yours is still up picks it back up instead of planting a second one.
 /// Switching your tool slot away from the Victory Banner retires it on every client (checked
 /// against whichever gear is currently wielded, every half second).
-/// It pulses an expanding green ring every couple of seconds out to its radius, healing every
-/// teammate standing inside it (self-applied per client, like Shadow Dagger's hidden table) and
-/// giving the local player a damage buff while they're in it - a base bonus that climbs the more
-/// enemies they kill while standing there, reset the moment they step out. Every number below is a
-/// config multiplier (`[Victory Banner]`).
+/// While it's down it heals everyone standing within its radius 1% of max health every 250 ms
+/// (each client heals its own local player). That's all it does; the numbers are config
+/// (`[Victory Banner]`).
 /// </summary>
 [HarmonyPatch]
 internal static class VictoryBanner
 {
     internal static ConfigEntry<float> Radius = null!;
-    internal static ConfigEntry<float> PulseSeconds = null!;
-    internal static ConfigEntry<float> HealPerPulse = null!;
+    internal static ConfigEntry<float> HealSeconds = null!;
+    internal static ConfigEntry<float> HealPercent = null!;
     internal static ConfigEntry<float> SafetyLifetimeSeconds = null!;
-    internal static ConfigEntry<float> BaseDamageBuff = null!;
-    internal static ConfigEntry<float> MaxDamageBuff = null!;
-    internal static ConfigEntry<float> DamageBuffPerKill = null!;
 
     private const string PlantEvent = "MindAttic.GTFO.AbsurdWeapons.BannerPlant";
     private const string PickUpEvent = "MindAttic.GTFO.AbsurdWeapons.BannerPickUp";
@@ -43,26 +38,13 @@ internal static class VictoryBanner
     // GrenadeLauncher, which guards the same way for the same reason).
     private static int launcherFiring;
 
-    private static bool localInRange;
-    private static float killBonus;
-
-    // A kill isn't reflected in EnemyAgent.Alive synchronously for a non-host client - the host has
-    // to confirm it - so kills are checked a moment later, same as Shadow Dagger's kill bonus.
-    private const float KillCheckDelay = 0.4f;
-    private static readonly List<(EnemyAgent Enemy, float CheckAt)> pendingKills = new();
-
     internal static void Bind(ConfigFile config)
     {
-        Radius = config.Bind("Victory Banner", "Radius", 8f, "Metres out to which its ring heals and buffs.");
-        PulseSeconds = config.Bind("Victory Banner", "PulseSeconds", 2f, "Seconds between heal pulses.");
-        HealPerPulse = config.Bind("Victory Banner", "HealPercentPerPulse", 8f, "Percent of max health restored per pulse to each teammate inside the aura.");
+        Radius = config.Bind("Victory Banner", "Radius", 8f, "Metres out to which it heals.");
+        HealSeconds = config.Bind("Victory Banner", "HealSeconds", 0.25f, "Seconds between heals.");
+        HealPercent = config.Bind("Victory Banner", "HealPercent", 1f, "Percent of max health restored per heal to whoever is inside the radius.");
         SafetyLifetimeSeconds = config.Bind("Victory Banner", "SafetyLifetimeSeconds", 600f,
             "A safety-net despawn in case it's never picked back up and its owner's tool never changes.");
-        BaseDamageBuff = config.Bind("Victory Banner", "BaseDamageBuff", 0.15f,
-            "Damage multiplier bonus (0.15 = +15%) for the local player while standing in the ring.");
-        MaxDamageBuff = config.Bind("Victory Banner", "MaxDamageBuff", 0.25f, "The damage bonus's cap once kills have built it up.");
-        DamageBuffPerKill = config.Bind("Victory Banner", "DamageBuffPerKill", 0.02f,
-            "How much the bonus climbs per enemy killed while standing in the ring; resets to the base when you step out.");
     }
 
     [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.FireBurst))]
@@ -161,11 +143,17 @@ internal static class VictoryBanner
         var lookup = owner.Owner != null ? owner.Owner.Lookup : 0UL;
         if (BannerPylon.HasActive(lookup)) return;
 
-        var aim = forward.sqrMagnitude > 0.0001f ? forward.normalized : owner.transform.forward;
-        var origin = owner.Position + aim * 1.5f + Vector3.up * 1f;
-        var position = origin + Vector3.down;
+        // Level, so looking down doesn't push the drop point under the floor; short of a wall in
+        // front; then straight down from chest height onto the floor.
+        var aim = new Vector3(forward.x, 0f, forward.z);
+        aim = aim.sqrMagnitude > 0.0001f ? aim.normalized : owner.transform.forward;
+        var chest = owner.Position + Vector3.up * 1.2f;
+        var reach = 1.5f;
+        if (Physics.Raycast(chest, aim, out var wall, reach + 0.4f, LayerManager.MASK_WORLD)) reach = Mathf.Max(0f, wall.distance - 0.4f);
+        var origin = chest + aim * reach;
+        var position = owner.Position + aim * reach;
         var normal = Vector3.up;
-        if (Physics.Raycast(origin, Vector3.down, out var hit, 3f, LayerManager.MASK_WORLD))
+        if (Physics.Raycast(origin, Vector3.down, out var hit, 4f, LayerManager.MASK_WORLD))
         {
             position = hit.point;
             normal = hit.normal;
@@ -209,69 +197,6 @@ internal static class VictoryBanner
         }
     }
 
-    // Universal damage buff: every hit the local player deals while standing in a banner's ring is
-    // multiplied, whatever weapon dealt it (this mod's or vanilla) - BulletDamage is the one choke
-    // point every instant-damage path in the game runs through.
-    [HarmonyPatch(typeof(Dam_EnemyDamageLimb), nameof(Dam_EnemyDamageLimb.BulletDamage))]
-    [HarmonyPrefix]
-    private static void BeforeBulletDamage(Dam_EnemyDamageLimb __instance, ref float dam, Agent sourceAgent, out bool __state)
-    {
-        __state = false;
-        // TryCast, not `is`: the interop wraps the argument as a plain Agent, so `is PlayerAgent` never matches.
-        if (!localInRange) return;
-        var player = sourceAgent?.TryCast<PlayerAgent>();
-        if (player == null || !player.IsLocallyOwned) return;
-        dam *= 1f + CurrentDamageBuff();
-        __state = __instance.m_base?.Owner != null && __instance.m_base.Owner.Alive;
-    }
-
-    [HarmonyPatch(typeof(Dam_EnemyDamageLimb), nameof(Dam_EnemyDamageLimb.BulletDamage))]
-    [HarmonyPostfix]
-    private static void AfterBulletDamage(Dam_EnemyDamageLimb __instance, bool __state)
-    {
-        if (!__state) return;
-        var enemy = __instance.m_base?.Owner;
-        if (enemy != null) QueueKillCheck(enemy);
-    }
-
-    private static float CurrentDamageBuff() => Math.Min(MaxDamageBuff.Value, BaseDamageBuff.Value + killBonus);
-
-    // One check per enemy, however many buffed hits struck it (a kill counts once).
-    private static void QueueKillCheck(EnemyAgent enemy)
-    {
-        if (pendingKills.Exists(p => p.Enemy != null && p.Enemy.Pointer == enemy.Pointer)) return;
-        pendingKills.Add((enemy, Time.time + KillCheckDelay));
-    }
-
-    // Kills confirmed since they were struck. Called every frame (VictoryBannerBuff). The bonus is
-    // earned by being in range when the killing blow landed, not by still being in range now.
-    internal static void ProcessPendingKills()
-    {
-        if (pendingKills.Count == 0) return;
-        for (var i = pendingKills.Count - 1; i >= 0; i--)
-        {
-            var (enemy, checkAt) = pendingKills[i];
-            if (Time.time < checkAt) continue;
-            pendingKills.RemoveAt(i);
-            if (enemy == null || enemy.Alive) continue;
-            killBonus = Formulas.StealthBonusAfterKill(killBonus, DamageBuffPerKill.Value, MaxDamageBuff.Value - BaseDamageBuff.Value);
-        }
-    }
-
-    // Run every frame from VictoryBannerBuff: is the local player inside any active banner's ring.
-    // Leaving clears the kill bonus (the next visit, even to the same banner, starts at base) and
-    // drops any kill still waiting on host confirmation, so it can't retroactively bump a reset bonus.
-    internal static void UpdateLocalRange(PlayerAgent local)
-    {
-        var inRange = BannerPylon.IsPositionBuffed(local.Position);
-        if (!inRange)
-        {
-            killBonus = 0f;
-            pendingKills.Clear();
-        }
-        localInRange = inRange;
-    }
-
     // Plain fields so GTFO-API can copy it as raw bytes.
     private readonly struct PlantMessage
     {
@@ -294,15 +219,16 @@ internal static class VictoryBanner
 }
 
 /// <summary>
-/// One banner, set down (not thrown) and stuck where it landed. Pulses an expanding ring every
-/// <see cref="VictoryBanner.PulseSeconds"/> out to <see cref="VictoryBanner.Radius"/>; every client
-/// checks its own local player against the ring for both the heal and the damage buff, so neither
-/// ever has to cross the network. Picking it back up, planting a new one for the same owner, or the
+/// One banner, set down (not thrown) and stuck where it landed. Every
+/// <see cref="VictoryBanner.HealSeconds"/> each client heals its own local player if they're within
+/// <see cref="VictoryBanner.Radius"/>, so nothing has to cross the network; an expanding ring shows
+/// every couple of seconds. Picking it back up, planting a new one for the same owner, or the
 /// owner switching away from the Victory Banner in their tool slot all retire it, on every client.
 /// </summary>
 internal sealed class BannerPylon : MonoBehaviour
 {
     private const float RingSeconds = 0.6f;
+    private const float RingEverySeconds = 2f; // the expanding ring is only a look
     private const float ToolCheckSeconds = 0.5f;
     private static readonly Color BannerColor = new(0.25f, 0.95f, 0.35f, 1f);
 
@@ -310,7 +236,7 @@ internal sealed class BannerPylon : MonoBehaviour
 
     private ulong ownerLookup;
     private bool retired;
-    private float placedAt, nextPulseAt, nextToolCheckAt, ringProgress = -1f;
+    private float placedAt, nextHealAt, nextRingAt, nextToolCheckAt, ringProgress = -1f;
     private LineRenderer ring = null!, aura = null!;
     private EffectLight glow = null!;
     private Transform? flag;
@@ -330,12 +256,13 @@ internal sealed class BannerPylon : MonoBehaviour
         go.transform.position = position;
         go.transform.rotation = Quaternion.FromToRotation(Vector3.up, normal);
         var flag = BuildModel(go.transform);
+        SitOnFloor(go.transform, position);
 
         var pylon = go.AddComponent<BannerPylon>();
         pylon.flag = flag;
         pylon.ownerLookup = ownerLookup;
         pylon.placedAt = Time.time;
-        pylon.nextPulseAt = Time.time; // heals right away
+        pylon.nextHealAt = pylon.nextRingAt = Time.time; // heals right away
 
         var ringObject = new GameObject("Ring");
         ringObject.transform.SetParent(go.transform, false);
@@ -386,15 +313,6 @@ internal sealed class BannerPylon : MonoBehaviour
         Destroy(gameObject);
     }
 
-    [HideFromIl2Cpp]
-    internal static bool IsPositionBuffed(Vector3 position)
-    {
-        foreach (var pylon in activeByOwner.Values)
-            if (pylon != null && !pylon.retired && Vector3.Distance(position, pylon.transform.position) <= VictoryBanner.Radius.Value)
-                return true;
-        return false;
-    }
-
     private void Update()
     {
         if (retired) return;
@@ -421,10 +339,16 @@ internal sealed class BannerPylon : MonoBehaviour
             UpdatePickup();
             if (retired) return;
 
-            if (Time.time >= nextPulseAt)
+            if (Time.time >= nextHealAt)
             {
-                nextPulseAt = Time.time + VictoryBanner.PulseSeconds.Value;
-                Pulse();
+                nextHealAt = Time.time + Mathf.Max(0.05f, VictoryBanner.HealSeconds.Value);
+                Heal();
+            }
+            if (Time.time >= nextRingAt)
+            {
+                nextRingAt = Time.time + RingEverySeconds;
+                ringProgress = 0f;
+                flash = 1f;
             }
             AnimateRing(Time.deltaTime);
             AnimateAura(Time.deltaTime);
@@ -492,12 +416,10 @@ internal sealed class BannerPylon : MonoBehaviour
         return item.GearIDRange.GetCompID(eGearComponent.Category) == GunInjector.VictoryBannerId;
     }
 
-    // Heals the local player if they're standing in the ring, and lights the ring up to show it.
+    // Heals the local player if they're standing within the radius.
     [HideFromIl2Cpp]
-    private void Pulse()
+    private void Heal()
     {
-        ringProgress = 0f;
-        flash = 1f;
         var local = PlayerManager.GetLocalPlayerAgent();
         if (local == null || !local.Alive) return;
         if (Vector3.Distance(local.Position, transform.position) > VictoryBanner.Radius.Value) return;
@@ -507,7 +429,8 @@ internal sealed class BannerPylon : MonoBehaviour
             var damage = local.Damage;
             if (damage == null) return;
             // The game's own heal (synced), a share of max health.
-            damage.AddHealth(damage.HealthMax * VictoryBanner.HealPerPulse.Value / 100f, local.Cast<Agent>());
+            if (damage.Health >= damage.HealthMax) return;
+            damage.AddHealth(damage.HealthMax * VictoryBanner.HealPercent.Value / 100f, local.Cast<Agent>());
         }
         catch (Exception e)
         {
@@ -579,6 +502,23 @@ internal sealed class BannerPylon : MonoBehaviour
         }
     }
 
+    // Lifts the banner so the lowest vertex of its meshes sits on `floor` (along its own up), not
+    // into it - measured from the meshes themselves rather than the numbers they were built with.
+    [HideFromIl2Cpp]
+    private static void SitOnFloor(Transform root, Vector3 floor)
+    {
+        var up = root.up;
+        var lowest = float.MaxValue;
+        foreach (var filter in root.GetComponentsInChildren<MeshFilter>(true))
+        {
+            var mesh = filter.sharedMesh;
+            if (mesh == null) continue;
+            foreach (var vertex in mesh.vertices)
+                lowest = Mathf.Min(lowest, Vector3.Dot(filter.transform.TransformPoint(vertex) - floor, up));
+        }
+        if (lowest != float.MaxValue) root.position -= up * lowest;
+    }
+
     // A flag: a dark pole on a small base with a green banner flying from its top - primitives,
     // no new assets shipped (same style as the grenade's fallback). Returns the banner, which waves.
     [HideFromIl2Cpp]
@@ -631,18 +571,4 @@ internal sealed class BannerPylon : MonoBehaviour
 
     [HideFromIl2Cpp]
     private static Material RingMaterial() => ringMaterial ??= new Material(Shader.Find("Sprites/Default")) { color = BannerColor };
-}
-
-/// <summary>Always-on: feeds <see cref="VictoryBanner.UpdateLocalRange"/> every frame, independent of
-/// whether any banner currently exists, so the buff clears even after the last banner is gone.</summary>
-internal sealed class VictoryBannerBuff : MonoBehaviour
-{
-    public VictoryBannerBuff(IntPtr ptr) : base(ptr) { }
-
-    private void Update()
-    {
-        var local = PlayerManager.GetLocalPlayerAgent();
-        if (local != null) VictoryBanner.UpdateLocalRange(local);
-        VictoryBanner.ProcessPendingKills();
-    }
 }

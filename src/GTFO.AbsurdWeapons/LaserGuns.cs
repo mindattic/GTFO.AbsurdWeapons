@@ -115,10 +115,16 @@ internal static class LaserGuns
 
     // One beam tick from the local shooter: damage to whatever enemy the beam is on, and the beam
     // kept lit (it follows the gun every frame by itself while ticks keep coming).
+    // `dealDamage` false: just the beam kept lit and following the gun (every frame between ticks).
     internal static void Tick(LaserKind kind, PlayerAgent owner, Transform? muzzle, Vector3 eye, Vector3 aim,
-        float damage, float staggerMulti, float precisionMulti, uint gearCategoryId)
+        float damage, float staggerMulti, float precisionMulti, uint gearCategoryId, bool dealDamage = true)
     {
         var (start, end, hitKind, normal, hit) = Trace(kind, eye, aim, owner, muzzle);
+        if (!dealDamage)
+        {
+            LaserBeam.Show(owner.Owner != null ? owner.Owner.Lookup : 0UL, kind, owner, start, end, hitKind, normal);
+            return;
+        }
         if (hitKind == BeamHit.Enemy)
         {
             var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
@@ -127,6 +133,10 @@ internal static class LaserGuns
                 limb.BulletDamage(damage, owner.Cast<Agent>(), hit.point, aim, hit.normal,
                     allowDirectionalBonus: true, staggerMulti, precisionMulti, gearCategoryId);
             }
+        }
+        else if (hitKind == BeamHit.Surface)
+        {
+            LockDamage.TryHit(hit.collider, damage, owner.Cast<Agent>(), hit.point, aim, hit.normal);
         }
 
         var lookup = owner.Owner != null ? owner.Owner.Lookup : 0UL;
@@ -161,7 +171,7 @@ internal enum BeamHit : byte { None, Surface, Enemy }
 /// </summary>
 internal sealed class LaserBeam : MonoBehaviour
 {
-    private const float HoldSeconds = 0.15f; // a few ticks' grace, so the beam never blinks out mid-burn
+    private const float HoldSeconds = 0.25f; // a teammate's copy hears only the ticks: a few ticks' grace, so it never blinks out mid-burn
     private const float SparkSeconds = 0.06f;
     private const string TripMinePrefab = "Assets/AssetPrefabs/Items/Tools/MineDeployer/TripMine_1.prefab";
     private static readonly Color BeamColor = new(1f, 0.15f, 0.1f, 1f);
@@ -374,12 +384,15 @@ internal sealed class LaserDriver : MonoBehaviour
             var archetype = gun?.ArchetypeData;
             var kind = LaserGuns.ForGun(archetype?.persistentID ?? 0);
             if (gun == null || archetype == null || kind == null) return;
-            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS) || Time.time < nextTick) return;
+            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS)) return;
             var camera = player.FPSCamera;
             if (camera == null) return;
 
-            nextTick = Time.time + Mathf.Max(0.02f, archetype.ShotDelay);
-            LaserGuns.Tick(kind, player, gun.MuzzleAlign, camera.Position, camera.Forward, archetype.Damage, 1f, 1f, kind.GunId);
+            // Lit every frame the trigger is held, so it's one constant beam until it's released;
+            // the damage comes on the ticks.
+            var damageTick = Time.time >= nextTick;
+            if (damageTick) nextTick = Time.time + Mathf.Max(0.02f, archetype.ShotDelay);
+            LaserGuns.Tick(kind, player, gun.MuzzleAlign, camera.Position, camera.Forward, archetype.Damage, 1f, 1f, kind.GunId, damageTick);
         }
         catch (Exception e)
         {

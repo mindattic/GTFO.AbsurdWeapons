@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Agents;
 using Enemies;
+using FX_EffectSystem;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -23,7 +24,6 @@ internal sealed class SeekerProjectile : MonoBehaviour
     private const float RetargetInterval = 0.2f;
     private const float FadeOutSeconds = 1f;
     private const float FlashSeconds = 0.12f;
-    private const float FlashIntensity = 3f;
 
     // The first tinted projectile's renderers, shaders and color slots go to the log once, to
     // show where a borrowed projectile keeps its color if the tint doesn't take.
@@ -50,7 +50,8 @@ internal sealed class SeekerProjectile : MonoBehaviour
 
     public SeekerProjectile(IntPtr ptr) : base(ptr) { }
 
-    private static int HitMask => LayerManager.MASK_ENEMY_DAMAGABLE | LayerManager.MASK_PROJECTILE_BLOCKERS;
+    // Bullet-ray layers too, so a round can land on a door lock (LockDamage), not only enemies and walls.
+    private static int HitMask => LayerManager.MASK_ENEMY_DAMAGABLE | LayerManager.MASK_PROJECTILE_BLOCKERS | LayerManager.MASK_BULLETWEAPON_RAY;
 
     [HideFromIl2Cpp]
     internal static void Spawn(SeekerKind kind, Vector3 position, Vector3 direction, PlayerAgent? owner,
@@ -220,7 +221,18 @@ internal sealed class SeekerProjectile : MonoBehaviour
         var enemy = limb?.m_base?.Owner;
 
         if (kind.FlashRange > 0f)
-            BurstFlash.Spawn(hit.point - heading * 0.3f, kind.FlashColor, kind.FlashRange, FlashIntensity, FlashSeconds);
+            BurstFlash.Spawn(hit.point - heading * 0.3f, kind.FlashColor, kind.FlashRange, kind.FlashIntensity, FlashSeconds);
+        if (kind.Sparks)
+        {
+            try
+            {
+                FX_Manager.PlayEffect(false, FX_GroupName.Impact_Electronics, hit.point, Quaternion.LookRotation(hit.normal), false);
+            }
+            catch (Exception)
+            {
+                // Sparks are a nicety; the flash still shows.
+            }
+        }
 
         // The shooter's game deals all the damage; a teammate's copy only shows it.
         if (owner != null)
@@ -231,6 +243,11 @@ internal sealed class SeekerProjectile : MonoBehaviour
                 var dealt = kind.DamageDie > 0 ? kind.DamageScale * UnityEngine.Random.Range(1, kind.DamageDie + 1) : damage;
                 limb.BulletDamage(dealt, source, hit.point, heading, hit.normal,
                     allowDirectionalBonus: true, staggerMulti, precisionMulti, gearCategoryId);
+            }
+            else if (limb == null)
+            {
+                var dealt = kind.DamageDie > 0 ? kind.DamageScale * UnityEngine.Random.Range(1, kind.DamageDie + 1) : damage;
+                LockDamage.TryHit(hit.collider, dealt, source, hit.point, heading, hit.normal);
             }
             if (kind.BlastRadius > 0f)
             {

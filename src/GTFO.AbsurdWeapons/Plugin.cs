@@ -45,6 +45,7 @@ public class Plugin : BasePlugin
         Sounds.Bind(Config);
         HiveLocks.Bind(Config);
         VictoryBanner.Bind(Config);
+        ConfigMigrations.Apply(Config); // after every Bind: stale old defaults move to the new ones
         ClassInjector.RegisterTypeInIl2Cpp<SeekerProjectile>();
         ClassInjector.RegisterTypeInIl2Cpp<BurstFlash>();
         ClassInjector.RegisterTypeInIl2Cpp<TentacleLash>();
@@ -74,7 +75,6 @@ public class Plugin : BasePlugin
         AddComponent<WarhammerSlam>();
         AddComponent<GearCycler>();
         AddComponent<InfiniteAmmo>();
-        AddComponent<VictoryBannerBuff>();
         AddComponent<HandGrenadeSupply>();
         AddComponent<LaserDriver>();
         AddComponent<LoopSounds>();

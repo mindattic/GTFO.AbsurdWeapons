@@ -211,6 +211,7 @@ internal static class AreaDamage
                 allowDirectionalBonus: false, staggerMulti, 1f, gearCategoryId);
             if (limb.m_base?.Owner != null) caught.Add(limb.m_base.Owner);
         }
+        LockDamage.Radius(center, radius, damage, source);
         return caught;
     }
 }
