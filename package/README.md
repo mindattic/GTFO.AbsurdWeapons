@@ -220,8 +220,7 @@ around, flashing red faster and faster, and blows after **3 seconds**: 60 damage
 falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
 Every player is handed **1** in their consumable slot when they drop into a level, and **each one
-you find** - as loot, or where an artifact would have been - **is 1 more**, with **no limit** on how
-many you carry. Thrown ones are gone.
+you find** - as loot, or where an artifact would have been - **is 1 more**, up to **6** carried. Thrown ones are gone.
 
 ### Stim Pack
 
@@ -542,6 +541,7 @@ Shared by everything that flings enemies (the Warhammer).
 | `PickupCount` † | 1 | How many one pickup holds (loot, or an artifact spot). |
 | `GiveOnDrop` | true | Hand every player `StartingCount` when they drop into a level (the host's setting decides). |
 | `StartingCount` | 1 | How many each player is handed on dropping in. |
+| `MaxCarried` | 6 | The most you can carry. |
 
 ### `[Stim Pack]`
 

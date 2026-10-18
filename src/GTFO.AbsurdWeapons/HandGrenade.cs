@@ -36,6 +36,7 @@ internal static class HandGrenade
     internal static ConfigEntry<bool> GiveOnDrop = null!;
     internal static ConfigEntry<int> PickupCount = null!;
     internal static ConfigEntry<int> StartingCount = null!;
+    internal static ConfigEntry<int> MaxCarried = null!;
     internal static ConfigEntry<float> ThrowForceMultiplier = null!;
     internal static ConfigEntry<bool> Enabled = null!;
 
@@ -53,21 +54,21 @@ internal static class HandGrenade
         GiveOnDrop = config.Bind("Hand Grenade", "GiveOnDrop", true,
             "Every player is given StartingCount Hand Grenades in their consumable slot when they drop into a level (the host's setting decides).");
         StartingCount = config.Bind("Hand Grenade", "StartingCount", 1, "How many Hand Grenades each player is handed on dropping in (with GiveOnDrop on).");
+        MaxCarried = config.Bind("Hand Grenade", "MaxCarried", 6, "The most Hand Grenades you can carry.");
         PickupCount = config.Bind("Hand Grenade", "PickupCount", 1, "How many Hand Grenades one pickup holds - loot, or an artifact spot. Takes effect on restart.");
         ThrowForceMultiplier = config.Bind("Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
     }
 
     internal static bool IsOurs(ItemDataBlock? block) => block != null && block.persistentID == ItemId;
 
-    // No carrying limit: while Hand Grenades are in the local consumable slot, the slot holds this
-    // many, so you keep every one you collect.
-    private const int Uncapped = 9999;
-
+    // While Hand Grenades are in the local consumable slot, the slot holds MaxCarried of them (the
+    // item's own cap is the pickup size, 1).
     internal static void Uncap(InventorySlotAmmo? ammo)
     {
-        if (ammo == null || ammo.BulletsMaxCap >= Uncapped || !InLocalConsumableSlot()) return;
-        ammo.AmmoMaxCap = Mathf.Max(0.0001f, ammo.CostOfBullet) * Uncapped;
-        ammo.BulletsMaxCap = Uncapped;
+        var cap = Mathf.Max(1, MaxCarried.Value);
+        if (ammo == null || ammo.BulletsMaxCap == cap || !InLocalConsumableSlot()) return;
+        ammo.AmmoMaxCap = Mathf.Max(0.0001f, ammo.CostOfBullet) * cap;
+        ammo.BulletsMaxCap = cap;
     }
 
     private static bool InLocalConsumableSlot()
@@ -89,7 +90,7 @@ internal static class HandGrenade
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't lift the Hand Grenade cap: {e.Message}");
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't set the Hand Grenade cap: {e.Message}");
         }
     }
 
@@ -359,7 +360,7 @@ internal sealed class HandGrenadeFuse : MonoBehaviour
 }
 
 /// <summary>
-/// Keeps the local Hand Grenade stack uncapped, and on the host gives every player StartingCount
+/// Keeps the local Hand Grenade stack's cap at MaxCarried, and on the host gives every player StartingCount
 /// Hand Grenades when they drop into a level.
 /// </summary>
 internal sealed class HandGrenadeSupply : MonoBehaviour

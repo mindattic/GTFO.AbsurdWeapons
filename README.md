@@ -257,8 +257,8 @@ thrown item's rigidbody bounce and its replication all stay vanilla.
 - **Supply:** a pickup holds `PickupCount` (1, the item's `ConsumableAmmoMin/Max`), and on the host
   `HandGrenadeSupply` gives every player `StartingCount` (1) straight into their consumable slot once
   per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`). While the
-  local consumable slot holds item 1203, its `InventorySlotAmmo` cap is lifted to 9999 (every frame,
-  and after each `PlayerAmmoStorage.SetupAmmoType` for `CurrentConsumable`), so there's no carry limit.
+  local consumable slot holds item 1203, its `InventorySlotAmmo` cap is set to `MaxCarried` (6; every frame,
+  and after each `PlayerAmmoStorage.SetupAmmoType` for `CurrentConsumable`), since the item's own cap is the pickup size (1).
 All of it is `[Hand Grenade]`.
 
 ### Loot mix (`LootMix`) and Stim Pack (`StimPack`, `Overheal`)
