@@ -30,6 +30,7 @@ internal static class VictoryBanner
     internal static ConfigEntry<float> HealSeconds = null!;
     internal static ConfigEntry<float> HealPercent = null!;
     internal static ConfigEntry<float> SafetyLifetimeSeconds = null!;
+    internal static ConfigEntry<float> PickupRange = null!;
 
     private const string PlantEvent = "MindAttic.GTFO.AbsurdWeapons.BannerPlant";
     private const string PickUpEvent = "MindAttic.GTFO.AbsurdWeapons.BannerPickUp";
@@ -45,6 +46,7 @@ internal static class VictoryBanner
         HealPercent = config.Bind("Victory Banner", "HealPercent", 1f, "Percent of max health restored per heal to whoever is inside the radius.");
         SafetyLifetimeSeconds = config.Bind("Victory Banner", "SafetyLifetimeSeconds", 600f,
             "A safety-net despawn in case it's never picked back up and its owner's tool never changes.");
+        PickupRange = config.Bind("Victory Banner", "PickupRange", 2.5f, "Metres from your planted banner within which looking at it and pressing Use picks it back up.");
     }
 
     [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.FireBurst))]
@@ -360,7 +362,7 @@ internal sealed class BannerPylon : MonoBehaviour
         }
     }
 
-    private const float PickupRange = 2.5f, PickupConeDegrees = 40f;
+    private const float PickupConeDegrees = 40f;
     private static bool promptShown;
 
     // Like a sentry: the owner walks up to their banner, looks at it, and presses Use to pick it up.
@@ -373,7 +375,7 @@ internal sealed class BannerPylon : MonoBehaviour
         var camera = local.FPSCamera;
         var pole = transform.position + transform.up * 1.1f;
         var canPick = local.Alive && camera != null && FocusStateManager.CurrentState == eFocusState.FPS
-            && Vector3.Distance(local.Position, transform.position) <= PickupRange
+            && Vector3.Distance(local.Position, transform.position) <= VictoryBanner.PickupRange.Value
             && Vector3.Angle(camera.Forward, pole - camera.Position) <= PickupConeDegrees;
         var layer = GuiManager.InteractionLayer;
         if (canPick)

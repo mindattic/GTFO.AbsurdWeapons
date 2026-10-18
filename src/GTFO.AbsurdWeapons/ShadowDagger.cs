@@ -15,7 +15,7 @@ using UnityEngine;
 namespace GTFO.AbsurdWeapons;
 
 /// <summary>
-/// The Shadow Dagger: lightning-fast stabs (its light attacks play <see cref="StabSpeed"/>x as fast),
+/// The Shadow Dagger: lightning-fast stabs (its light attacks play 2.5x as fast; WeaponSettings),
 /// and a fully charged hit that lands on an enemy hides its wielder for <see cref="Seconds"/> (a
 /// further one restarts the count). While hidden, enemies can't detect
 /// them by sight or noise, can't lock on or be alerted to them, and drop them as a target if they
@@ -27,12 +27,12 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class Stealth
 {
-    internal const float StabSpeed = 2.5f; // the fallback for WeaponSettings.ShadowDagger.LightAttackSpeed
-
     internal static ConfigEntry<float> Seconds = null!;
     internal static ConfigEntry<float> KillTimeBonus = null!;
     internal static ConfigEntry<float> BonusPerKill = null!;
     internal static ConfigEntry<float> MaxBonus = null!;
+    internal static ConfigEntry<float> Transparency = null!;
+    internal static ConfigEntry<float> WarningSeconds = null!;
 
     // A charged hit counts as full when it deals at least this share of the full charged damage.
     private const float FullChargeShare = 0.95f;
@@ -47,6 +47,11 @@ internal static class Stealth
         KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.25f, "Seconds added to the stealth for a full-windup kill made while hidden (balances the shorter base stealth).");
         BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
         MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
+        Transparency = config.Bind("Shadow Dagger", "StealthTransparency", 0.95f,
+            new ConfigDescription("How see-through you are at full stealth (0.95 = 5% visible). Visual only - enemies can't see you either way.",
+                new AcceptableValueRange<float>(0f, 1f)));
+        WarningSeconds = config.Bind("Shadow Dagger", "StealthWarningSeconds", 1f,
+            "With this many seconds of stealth left you start flickering back in, faster and faster, as a warning. 0 turns the flicker off.");
     }
 
     internal static void Init()
@@ -245,8 +250,8 @@ internal static class Stealth
 /// <summary>
 /// Shows stealth on every game, from the shared hidden list, so everyone sees the same thing: the
 /// hidden player tints the same purple as the dagger's own glow and fades out to
-/// <see cref="MostTransparent"/> transparent, tied straight to how much stealth is left - filling
-/// back in as the time runs down - and under <see cref="WarningSeconds"/> left, flickers between
+/// <see cref="Stealth.Transparency"/> transparent, tied straight to how much stealth is left - filling
+/// back in as the time runs down - and under <see cref="Stealth.WarningSeconds"/> left, flickers between
 /// that tint and fully visible, faster and faster, until it reverts. Anything that adds time
 /// (another full hit, a full-windup kill) makes them more see-through again. Every part of them
 /// shown (each renderer) is switched to a tinted, see-through copy of its own materials for the
@@ -257,11 +262,9 @@ internal static class Stealth
 /// </summary>
 internal sealed class StealthVisuals : MonoBehaviour
 {
-    private const float MostTransparent = 0.95f; // fully stealthed: 5% there
     private const float FadeRate = 6f;          // how quickly the shown transparency follows the time left
     private const float RescanSeconds = 0.25f;  // how often to pick up renderers that appeared (a swapped-in weapon)
-    private const float WarningSeconds = 1f;    // under this much left, it starts flickering back in
-    private const float FlickerMinHz = 2f;      // flicker rate at the start of the warning
+    private const float FlickerMinHz = 2f;     // flicker rate at the start of the warning
     private const float FlickerMaxHz = 20f;     // flicker rate right before it reverts
 
     // One part of a hidden player: its own materials, and the tinted see-through copies shown meanwhile.
@@ -389,15 +392,16 @@ internal sealed class StealthVisuals : MonoBehaviour
     [HideFromIl2Cpp]
     private static void Fade(Hidden state, float remaining)
     {
-        var target = MostTransparent * Mathf.Clamp01(remaining / Mathf.Max(0.1f, Stealth.Seconds.Value));
+        var target = Stealth.Transparency.Value * Mathf.Clamp01(remaining / Mathf.Max(0.1f, Stealth.Seconds.Value));
         state.Transparency = Mathf.Lerp(state.Transparency, target, 1f - Mathf.Exp(-FadeRate * Time.deltaTime));
         var tint = new Color(GlowColor.r, GlowColor.g, GlowColor.b, 1f - state.Transparency);
 
-        // Under a second left: flickers back toward fully visible, faster and faster as it runs
-        // out, so it reads as the stealth glitching off rather than just quietly ending.
-        if (remaining < WarningSeconds)
+        // Near the end: flickers back toward fully visible, faster and faster as it runs out, so it
+        // reads as the stealth glitching off rather than just quietly ending.
+        var warning = Stealth.WarningSeconds.Value;
+        if (remaining < warning)
         {
-            var urgency = 1f - Mathf.Clamp01(remaining / WarningSeconds); // 0 entering the warning, 1 at zero
+            var urgency = 1f - Mathf.Clamp01(remaining / warning); // 0 entering the warning, 1 at zero
             var hz = Mathf.Lerp(FlickerMinHz, FlickerMaxHz, urgency);
             if (Mathf.PingPong(Time.time * hz, 1f) < 0.5f) tint = Color.white;
         }

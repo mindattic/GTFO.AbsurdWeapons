@@ -1,4 +1,5 @@
 using System;
+using BepInEx.Configuration;
 using GameData;
 using HarmonyLib;
 using Localization;
@@ -66,18 +67,34 @@ internal static class MeleeInjector
 
             add(name, id);
 
-            // Reach override from the config, applied to the archetype just registered.
             var archetype = GameDataBlockBase<MeleeArchetypeDataBlock>.GetBlock(id);
-            if (archetype != null && settings.Reach.Value > 0f)
-            {
-                archetype.CameraDamageRayLength = settings.Reach.Value;
-                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {name} reach set to {settings.Reach.Value} from the config.");
-            }
+            if (archetype == null) return;
+            ApplyOverrides(archetype, settings);
+            var light = SwordTempo.SpeedFor(id);
+            var charged = SwordTempo.ChargedSpeedFor(id);
+            if (light != 1f || charged != 1f) WithTempo(archetype, id, light, charged);
         }
         catch (Exception e)
         {
             Plugin.Logger.LogError($"GTFO.AbsurdWeapons failed to add the {name}: {e}");
         }
+    }
+
+    // Every non-zero number in the weapon's config section replaces the built-in one.
+    private static void ApplyOverrides(MeleeArchetypeDataBlock archetype, WeaponSettings settings)
+    {
+        static void Set(ConfigEntry<float> entry, Action<float> apply)
+        {
+            if (entry.Value > 0f) apply(entry.Value);
+        }
+        Set(settings.Reach, v => archetype.CameraDamageRayLength = v);
+        Set(settings.LightAttackDamage, v => archetype.LightAttackDamage = v);
+        Set(settings.ChargedAttackDamage, v => archetype.ChargedAttackDamage = v);
+        Set(settings.LightStaggerMulti, v => archetype.LightStaggerMulti = v);
+        Set(settings.ChargedStaggerMulti, v => archetype.ChargedStaggerMulti = v);
+        Set(settings.ChargedEnvironmentMulti, v => archetype.ChargedEnvironmentMulti = v);
+        Set(settings.AttackSphereRadius, v => archetype.AttackSphereRadius = v);
+        Set(settings.ChargeSpeedMulti, v => archetype.PlayerRunSpeedMultiWhileCharging = v);
     }
 
     // The Mastaba Fixed Blade's blade is a separate part, so BladeStretcher sizes just the blade
@@ -92,11 +109,10 @@ internal static class MeleeInjector
         var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife");
 
         var archetype = Clone(bat);
-        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Katana.LightAttackDamage, 4f);       // bat 3
-        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Katana.ChargedAttackDamage, 14f);  // bat 12
+        archetype.LightAttackDamage = 4f;       // bat 3
+        archetype.ChargedAttackDamage = 14f;    // bat 12
         archetype.CameraDamageRayLength = 3.5f; // bat 1.75; reaches the tip of its ~1.85 m blade
         archetype.CanHitMultipleEnemies = true;
-        WithChargedSwingTempo(archetype, id, SwordTempo.ChargedSpeedFor(id)); // the end-of-dash cut, twice as fast
 
         Register(name, id, archetype, Clone(batCategory), knifeCategory.persistentID, mastaba,
             "A Japanese long sword swung in wide two-handed arcs, cutting through everything in its path. Release a full charge to dash forward, slashing all you pass.");
@@ -123,17 +139,17 @@ internal static class MeleeInjector
         // The hammer's own swing and charge (full damage at 1.8 s). A fully charged blow kills
         // almost anything short of a tank; taps stay hammer-light.
         var archetype = Clone(hammer);
-        archetype.ChargedAttackDamage = WeaponSettings.Or(WeaponSettings.Warhammer.ChargedAttackDamage, 500f); // vanilla hammer 20
-        archetype.LightAttackDamage = WeaponSettings.Or(WeaponSettings.Warhammer.LightAttackDamage, 6f); // vanilla hammer 3
+        archetype.ChargedAttackDamage = 500f; // vanilla hammer 20
+        archetype.LightAttackDamage = 6f;     // vanilla hammer 3
         // Stagger makes an enemy reel: x55 charged (vanilla 1.3), x11 light (vanilla 1). The actual
         // shove - sliding enemies back - is runtime (ImpactBursts.Shockwave / Knockback).
-        archetype.ChargedStaggerMulti = WeaponSettings.Or(WeaponSettings.Warhammer.ChargedStaggerMulti, 55f);
-        archetype.LightStaggerMulti = WeaponSettings.Or(WeaponSettings.Warhammer.LightStaggerMulti, 11f);
+        archetype.ChargedStaggerMulti = 55f;
+        archetype.LightStaggerMulti = 11f;
         archetype.ChargedEnvironmentMulti = 10f; // doors and locks too
         archetype.CanHitMultipleEnemies = true; // the head is big enough to catch a crowd
-        archetype.AttackSphereRadius = WeaponSettings.Or(WeaponSettings.Warhammer.AttackSphereRadius, 0.6f); // vanilla hammer 0.3
+        archetype.AttackSphereRadius = 0.6f;    // vanilla hammer 0.3
         archetype.CameraDamageRayLength = 2.4f; // vanilla hammer 1.8 - the giant head reaches further
-        archetype.PlayerRunSpeedMultiWhileCharging = WeaponSettings.Or(WeaponSettings.Warhammer.ChargeSpeedMulti, 0.5f); // lugging it at the ready slows you down
+        archetype.PlayerRunSpeedMultiWhileCharging = 0.5f; // lugging it at the ready slows you down
 
         Register(name, id, archetype, Clone(hammerCategory), hammerCategory.persistentID, sledgehammer,
             "A sledgehammer with a head the size of a crate. Every hit sends enemies reeling, and a full charge leaves nothing standing.");
@@ -145,18 +161,17 @@ internal static class MeleeInjector
         var knifeCategory = Lookup<GearCategoryDataBlock>("MeleeKnife");
         var mastaba = Lookup<PlayerOfflineGearDataBlock>("Knife"); // Mastaba Fixed Blade, normal size
 
-        // The knife, with stabs 2.5x as fast; what it does on a hit is runtime (Stealth).
+        // The knife, with stabs 2.5x as fast (WeaponSettings); what it does on a hit is runtime (Stealth).
         var archetype = Clone(knife);
-        archetype.name = "ShadowDagger";
-        WithLightAttackTempo(archetype, id, SwordTempo.SpeedFor(id));
         Register(name, id, archetype, Clone(knifeCategory), knifeCategory.persistentID, mastaba,
-            "Strike from the shadows. A fully charged hit makes you vanish for six seconds: no enemy can see, hear or chase you. Kills while hidden sharpen the blade.");
+            $"Strike from the shadows. A fully charged hit makes you vanish for {Stealth.Seconds.Value:0.##} seconds: no enemy can see, hear or chase you. Kills while hidden sharpen the blade.");
     }
 
-    // Light attacks `speed` times as fast: the weapon gets its own copy of its animation set (id =
-    // the weapon's id) with the light attacks' timings - hit, damage window, combo, length -
-    // divided by `speed`. SwordTempo speeds the animation itself up to match.
-    private static void WithLightAttackTempo(MeleeArchetypeDataBlock archetype, uint id, float speed)
+    // The weapon gets its own copy of its animation set (id = the weapon's id) with the light
+    // attacks' timings - hit, damage window, combo, length - divided by `light`, and the charged
+    // swing's release and hit divided by `charged` (not the charge-up, which the full-charge checks
+    // time). SwordTempo speeds the animation itself up to match.
+    private static void WithTempo(MeleeArchetypeDataBlock archetype, uint id, float light, float charged)
     {
         var source = GameDataBlockBase<MeleeAnimationSetDataBlock>.GetBlock(archetype.MeleeAnimationSet)
             ?? throw new InvalidOperationException($"melee animation set {archetype.MeleeAnimationSet} wasn't found");
@@ -165,30 +180,20 @@ internal static class MeleeInjector
         var set = Clone(source);
         set.persistentID = id;
         set.name = archetype.name + "_Tempo";
-        set.FPAttackMissRight = Faster(set.FPAttackMissRight, speed);
-        set.FPAttackMissLeft = Faster(set.FPAttackMissLeft, speed);
-        set.FPAttackHitRight = Faster(set.FPAttackHitRight, speed);
-        set.FPAttackHitLeft = Faster(set.FPAttackHitLeft, speed);
-        GameDataBlockBase<MeleeAnimationSetDataBlock>.AddBlock(set, -1);
-        archetype.MeleeAnimationSet = id;
-    }
-
-    // The charged swing (its release and its hit - not the charge-up, which the full-charge checks
-    // time) `speed` times as fast, in the weapon's own copy of its animation set (id = the weapon's
-    // id). SwordTempo speeds the animation up to match.
-    private static void WithChargedSwingTempo(MeleeArchetypeDataBlock archetype, uint id, float speed)
-    {
-        var source = GameDataBlockBase<MeleeAnimationSetDataBlock>.GetBlock(archetype.MeleeAnimationSet)
-            ?? throw new InvalidOperationException($"melee animation set {archetype.MeleeAnimationSet} wasn't found");
-        if (GameDataBlockBase<MeleeAnimationSetDataBlock>.HasBlock(id))
-            throw new InvalidOperationException($"melee animation set id {id} is taken by another mod");
-        var set = Clone(source);
-        set.persistentID = id;
-        set.name = archetype.name + "_ChargedTempo";
-        set.FPAttackChargeUpReleaseLeft = Faster(set.FPAttackChargeUpReleaseLeft, speed);
-        set.FPAttackChargeUpReleaseRight = Faster(set.FPAttackChargeUpReleaseRight, speed);
-        set.FPAttackChargeUpHitLeft = Faster(set.FPAttackChargeUpHitLeft, speed);
-        set.FPAttackChargeUpHitRight = Faster(set.FPAttackChargeUpHitRight, speed);
+        if (light != 1f)
+        {
+            set.FPAttackMissRight = Faster(set.FPAttackMissRight, light);
+            set.FPAttackMissLeft = Faster(set.FPAttackMissLeft, light);
+            set.FPAttackHitRight = Faster(set.FPAttackHitRight, light);
+            set.FPAttackHitLeft = Faster(set.FPAttackHitLeft, light);
+        }
+        if (charged != 1f)
+        {
+            set.FPAttackChargeUpReleaseLeft = Faster(set.FPAttackChargeUpReleaseLeft, charged);
+            set.FPAttackChargeUpReleaseRight = Faster(set.FPAttackChargeUpReleaseRight, charged);
+            set.FPAttackChargeUpHitLeft = Faster(set.FPAttackChargeUpHitLeft, charged);
+            set.FPAttackChargeUpHitRight = Faster(set.FPAttackChargeUpHitRight, charged);
+        }
         GameDataBlockBase<MeleeAnimationSetDataBlock>.AddBlock(set, -1);
         archetype.MeleeAnimationSet = id;
     }

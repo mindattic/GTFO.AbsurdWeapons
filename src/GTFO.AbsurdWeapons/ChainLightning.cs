@@ -21,10 +21,11 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class ChainLightning
 {
-    // Fixed, not config: the network message below has exactly 7 point fields (X0..X6) sized for
-    // this many jumps plus the start and first strike - raising it needs a bigger message, too.
+    // The ceiling for the Jumps setting: the network message below has exactly 7 point fields
+    // (X0..X6) sized for this many jumps plus the start and first strike.
     internal const int MaxJumps = 5;
 
+    private static ConfigEntry<int> Jumps = null!;
     private static ConfigEntry<float> Range = null!;
     private static ConfigEntry<float> AssistConeDegrees = null!; // a near miss still finds its first target
     private static ConfigEntry<float> JumpRange = null!;
@@ -43,6 +44,9 @@ internal static class ChainLightning
         JumpRange = config.Bind("Chain Lightning Gun", "JumpRange", 8f, "Metres each jump can reach the next enemy.");
         JumpFalloff = config.Bind("Chain Lightning Gun", "JumpFalloff", 0.75f, "Share of the previous strike's damage each jump does.");
         StaggerMulti = config.Bind("Chain Lightning Gun", "StaggerMulti", 2f, "Stagger multiplier per strike.");
+        Jumps = config.Bind("Chain Lightning Gun", "Jumps", MaxJumps,
+            new ConfigDescription($"How many times a bolt leaps on to another enemy after the first strike (at most {MaxJumps}). 0 strikes one enemy only.",
+                new AcceptableValueRange<int>(0, MaxJumps)));
     }
 
     internal static void Init()
@@ -98,7 +102,8 @@ internal static class ChainLightning
         }
 
         var strike = damage;
-        for (var jump = 0; jump <= MaxJumps && current != null && limb != null; jump++)
+        var jumps = Mathf.Clamp(Jumps.Value, 0, MaxJumps);
+        for (var jump = 0; jump <= jumps && current != null && limb != null; jump++)
         {
             struck.Add(current.Pointer);
             var from = path[path.Count - 1];

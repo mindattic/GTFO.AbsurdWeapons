@@ -104,7 +104,7 @@ internal static class GunInjector
         RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
         RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Clip size (infinite ammo refills it anyway).");
         RailgunEnabled = config.Bind("Railgun", "Railgun Enabled", true, "Adds the Railgun to the loadout screen. Takes effect on restart.");
-        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump is 75% of the last).");
+        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump then does JumpFalloff of the one before).");
         ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
         ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
         ChainLightningGunEnabled = config.Bind("Chain Lightning Gun", "Chain Lightning Gun Enabled", true, "Adds the Chain Lightning Gun to the loadout screen. Takes effect on restart.");
@@ -150,7 +150,7 @@ internal static class GunInjector
         TryAdd("Laser Rifle", LaserRifleId, LaserRifleEnabled, (name, id) => AddLaser(name, id, "SMGHeavyAuto", null, laser, forceSpecialSlot: true));   // Accrat ND6, no animated parts, forced into the special slot (it's a main-slot SMG in vanilla)
         TryAdd("Railgun", RailgunId, RailgunEnabled, AddRailgun);
         TryAdd("Chain Lightning Gun", ChainLightningId, ChainLightningGunEnabled, AddChainLightning);
-        const string grenade = "A heavy semi-auto launcher: every shot is a lock melter rigged to blow - it goes off on the first enemy it hits, or bounces around and blows after 3 seconds.";
+        var grenade = $"A heavy semi-auto launcher: every shot is a lock melter rigged to blow - it goes off on the first enemy it hits, or bounces around and blows after {GrenadeLauncher.FuseSeconds.Value:0.##} seconds.";
         TryAdd("Grenade Pistol", GrenadePistolId, GrenadePistolEnabled, (name, id) => AddGrenadeGun(name, id, "RevolverHEL", grenade));    // Bataldo 3RB (heavy revolver), main slot
         TryAdd("Grenade Rifle", GrenadeRifleId, GrenadeRifleEnabled, (name, id) => AddGrenadeGun(name, id, "MachinegunAuto", grenade)); // TechMan Veruta XII (heavy machine gun), special slot
         TryAdd("Rocket Launcher", RocketLauncherId, RocketLauncherEnabled, AddRocketLauncher);
@@ -161,7 +161,7 @@ internal static class GunInjector
     // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id,
     // same as the Grenade Launcher - the glob becomes a plantable banner (VictoryBanner) instead.
     private static void AddVictoryBanner(string name, uint id) => AddGlueTool(name, id,
-        "Sets a banner down like a turret; fire again to pick it back up. Pulses healing to every teammate in its ring and buffs your own damage while you're standing in it, climbing the more you kill without leaving.");
+        "Sets a banner down in front of you like a sentry; walk up to it and press Use to pick it back up. Pulses healing to every teammate standing in its ring.");
 
     // The C-Foam launcher's category and gear cloned under `id` with a new name and description.
     // Tools have no archetype - the launcher's own prefab drives its pressure and bursts - so only

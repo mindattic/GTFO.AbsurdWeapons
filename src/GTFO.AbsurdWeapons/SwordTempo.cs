@@ -13,15 +13,12 @@ namespace GTFO.AbsurdWeapons;
 [HarmonyPatch]
 internal static class SwordTempo
 {
-    internal static float SpeedFor(uint id) => id switch
-    {
-        MeleeInjector.ShadowDaggerId => WeaponSettings.Or(WeaponSettings.ShadowDagger.LightAttackSpeed, Stealth.StabSpeed),
-        _ => 1f,
-    };
+    internal static float SpeedFor(uint id) =>
+        WeaponSettings.ForCategory(id) is { } s ? WeaponSettings.Or(s.LightAttackSpeed, s.BuiltInLightAttackSpeed) : 1f;
 
-    // The charged swing's pace (its release and hit; MeleeInjector.WithChargedSwingTempo): the
-    // Katana's end-of-dash cut is twice as fast.
-    internal static float ChargedSpeedFor(uint id) => id == MeleeInjector.KatanaId ? 2f : 1f;
+    // The charged swing's pace (its release and hit; MeleeInjector.WithTempo).
+    internal static float ChargedSpeedFor(uint id) =>
+        WeaponSettings.ForCategory(id) is { } s ? WeaponSettings.Or(s.ChargedAttackSpeed, s.BuiltInChargedAttackSpeed) : 1f;
 
     [HarmonyPatch(typeof(MeleeWeaponFirstPerson), nameof(MeleeWeaponFirstPerson.ChangeState))]
     [HarmonyPostfix]
