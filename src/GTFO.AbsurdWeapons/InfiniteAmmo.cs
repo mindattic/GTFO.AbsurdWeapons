@@ -25,8 +25,8 @@ internal sealed class InfiniteAmmo : MonoBehaviour
     {
         Enabled = config.Bind("Ammo", "InfiniteAmmo", false,
             "On: this mod's guns never run out or reload. Off: they use ammo like vanilla guns (each starts full the first time it's equipped in a level).");
-        StreamPercentPerSecond = config.Bind("Ammo", "StreamPercentPerSecond", 1f,
-            "The lasers, Chain Lightning and Shrink Beam have no magazine and never reload: every second of sustained fire uses this percent of a full ammo reserve.");
+        StreamPercentPerSecond = config.Bind("Ammo", "StreamPercentPerSecond", 2f,
+            "The lasers, Chain Lightning and Shrink Beam have no magazine and never reload: every second of sustained fire uses this percent of a full ammo reserve (2 = 1% every half second).");
     }
 
     // The stream guns (lasers, Chain Lightning, Shrink Beam) have no magazine and never reload:

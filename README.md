@@ -104,7 +104,7 @@ homes onto and damages players only, so it can't be used as-is.
     own; a smart round's message carries its target's position, which the copy curves to.
 - **Ammo:** our guns use ammo like vanilla ones, except the stream guns, which never reach `Fire`
   and have no magazine: their drivers call `InfiniteAmmo.TrySpend(player, tickSeconds)`, which takes
-  `StreamPercentPerSecond` (1%) of the slot's `AmmoMaxCap` per second straight off the reserve
+  `StreamPercentPerSecond` (2%) of the slot's `AmmoMaxCap` per second straight off the reserve
   (`SetAmmo`), shows the magazine full while any reserve is left and empty after, and stops the
   beam once it's gone. They never reload. With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
   every shot and the `InfiniteAmmo` component keeps the wielded gun's clip and reserve full.

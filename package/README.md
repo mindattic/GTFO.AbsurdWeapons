@@ -30,8 +30,8 @@ in the config file BepInEx creates on first launch — see [Config](#config).
 The guns use ammo like any vanilla gun - a magazine, a reserve in the slot's ammo pool, reloads,
 and ammo packs top them up. Each one starts **completely full** the first time you equip it in a
 level, and keeps its own ammo from then on (see [Swapping weapons in a level](#swapping-weapons-in-a-level)).
-The beam guns (lasers, Chain Lightning, Shrink Beam) have **no magazine and never reload**: every
-second of sustained fire uses **1%** of a full ammo reserve, so a full one is 100 seconds of beam,
+The beam guns (lasers, Chain Lightning, Shrink Beam) have **no magazine and never reload**:
+sustained fire uses **1%** of a full ammo reserve every **half second**, so a full one is 50 seconds of beam,
 and they stop when it's empty. (`[Ammo] InfiniteAmmo` brings back bottomless guns.) They're tuned
 to be fun first; balance comes later.
 
@@ -571,7 +571,7 @@ Shared by everything that flings enemies (the Warhammer).
 | Setting | Default | What it does |
 |---|---|---|
 | `InfiniteAmmo` | false | On: this mod's guns never run out or reload. |
-| `StreamPercentPerSecond` | 1 | Percent of a full reserve the beam guns (lasers, Chain Lightning, Shrink Beam) use per second of fire. They never reload. |
+| `StreamPercentPerSecond` | 2 | Percent of a full reserve the beam guns (lasers, Chain Lightning, Shrink Beam) use per second of fire (2 = 1% every half second). They never reload. |
 
 ### `[Gear Cycling]`
 
