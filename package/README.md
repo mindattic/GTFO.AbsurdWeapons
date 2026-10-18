@@ -60,7 +60,7 @@ to be fun first; balance comes later.
 
 | Item | Model | In one line |
 |---|---|---|
-| **Hand Grenade** | Lock melter, thrown like a glowstick | Hold to wind up, release to throw; bounces, then blows after 3 s. Everyone starts each level with 99, and they never run out |
+| **Hand Grenade** | Lock melter, thrown like a glowstick | Hold to wind up, release to throw; bounces, then blows after 3 s. Everyone starts each level with 3; each one you find is 1 more |
 
 ## Melee weapons
 
@@ -219,8 +219,8 @@ melter's look. Hold to wind up and release to throw (twice as hard as a glowstic
 around, flashing red faster and faster, and blows after **3 seconds**: 60 damage at the center,
 falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
-Every player is handed a stack of **99** in their consumable slot when they drop into a level, and
-the stack never goes down.
+Every player is handed **3** in their consumable slot when they drop into a level, and **each one
+you find** - as loot, or where an artifact would have been - **is 1 more**. Thrown ones are gone.
 
 ### Stim Pack
 
@@ -535,8 +535,9 @@ Shared by everything that flings enemies (the Warhammer).
 | `BlastDamage` | 60 | Damage at the blast's center. |
 | `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
 | `BlastStagger` | 6 | Blast stagger multiplier. |
-| `StackSize` † | 99 | How many the stack holds (it's kept full). |
-| `GiveOnDrop` | true | Hand every player a stack when they drop into a level (the host's setting decides). |
+| `PickupCount` † | 1 | How many one pickup holds (loot, or an artifact spot). |
+| `GiveOnDrop` | true | Hand every player `StartingCount` when they drop into a level (the host's setting decides). |
+| `StartingCount` | 3 | How many each player is handed on dropping in. |
 
 ### `[Stim Pack]`
 

@@ -43,7 +43,7 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Rocket Launcher | 1118 | the XDist2's archetype for its fire mode | the XDist2's (`ShotgunRanged`) | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `AddRocketLauncher`: Semi, 1 pellet, no cone or spread, damage shown 110 (the blast's own center, for the loadout screen), shot delay 0.8 s, clip 5, no brass, keeps the model's own kick (not kickless - a rocket launcher should thump); each shot is a rocket (`RocketLauncher`) |
 | Shrink Beam | 1119 | the exp1's archetype for its fire mode | the exp1's (`HELGun`) | `HELGun` (Omneco exp1, special) | `AddShrinkBeam`: Auto, 1 pellet, no cone or spread, damage shown 0 (the loadout screen - it shrinks, it doesn't deal a plain number), shot delay 0.08 s, clip 100, no brass, kickless recoil 1119; the ray is runtime (`ShrinkBeam`) |
 | Victory Banner | 1202 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddVictoryBanner`: category and gear only; placing, picking up and healing are runtime (`VictoryBanner`) |
-| Hand Grenade | 1203 (an `ItemDataBlock`, not gear) | - | - | the glowstick's item, found by name/prefab | `HandGrenade.AddItem`: the glowstick's `ItemDataBlock` cloned and renamed; the look, fuse, blast, infinite stack and handing it out are runtime (`HandGrenade`) |
+| Hand Grenade | 1203 (an `ItemDataBlock`, not gear) | - | - | the glowstick's item, found by name/prefab | `HandGrenade.AddItem`: the glowstick's `ItemDataBlock` cloned and renamed; the look, fuse, blast and handing it out are runtime (`HandGrenade`); a pickup holds `PickupCount` (1) |
 | Stim Pack | 1204 (an `ItemDataBlock`) | - | - | the I2-LP (item 140) | `StimPack.AddItem`: the I2-LP's `ItemDataBlock` cloned and renamed; the overheal is runtime (`StimPack`, `Overheal`) |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
@@ -254,9 +254,9 @@ thrown item's rigidbody bounce and its replication all stay vanilla.
   and at 3 s shows `Explosion` everywhere; the item's `Owner` (or the host, if it has none) deals
   `AreaDamage` (6 m, 60 falling to 25%, x6 stagger). The host then despawns the item
   (`ItemReplicationManager.DeSpawn`); other games hide it until that arrives.
-- **Infinite / supply:** `HandGrenadeSupply` keeps the consumable ammo full while the local
-  consumable slot holds item 1203, and on the host gives every player a stack of 99 (`StackSize`) straight into their consumable
-  slot once per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`).
+- **Supply:** a pickup holds `PickupCount` (1, the item's `ConsumableAmmoMin/Max`), and on the host
+  `HandGrenadeSupply` gives every player `StartingCount` (3) straight into their consumable slot once
+  per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`).
 All of it is `[Hand Grenade]`.
 
 ### Loot mix (`LootMix`) and Stim Pack (`StimPack`, `Overheal`)
@@ -445,7 +445,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   HiveLocks.cs          Hive guns' Titanfall-style lock-on: pips, markers, locked-target cycling
   VictoryBanner.cs      Victory Banner placement/pickup and healing
   GrenadeLauncher.cs    Grenade Pistol/Rifle launch, grenade flight, fuse, blast
-  HandGrenade.cs        Hand Grenade consumable: item clone, lock-melter look, throw force, loot takeover, fuse, infinite stack, hand-out
+  HandGrenade.cs        Hand Grenade consumable: item clone, lock-melter look, throw force, fuse, hand-out
   SwordTempo.cs         the swords' light-attack speeds
   GearCycler.cs         PageUp/PageDown in-level weapon swapping, Home restores the starting loadout
   LaserGuns.cs          trigger-driven laser beam (no shots), its ticks and burn
