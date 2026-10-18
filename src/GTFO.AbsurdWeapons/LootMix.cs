@@ -14,8 +14,8 @@ namespace GTFO.AbsurdWeapons;
 /// kits. The kits are the game's own resource packs; those normally get their contents from the
 /// zone's resource budget (those spawn as normal), so the ones found as consumable loot are given
 /// <see cref="KitSize"/> as their consumable contents - 20% of a pack by default. The table's in-a-box chance is
-/// set so <see cref="OutInTheOpenShare"/> of them lie around the zone instead, and every artifact
-/// spot gets a Hand Grenade instead of an artifact (<see cref="ArtifactsBecomeHandGrenades"/>).
+/// set so <see cref="OutInTheOpenShare"/> of them lie around the zone instead. Artifacts are left
+/// alone - as rare as vanilla, with Hand Grenades common alongside them.
 /// After GTFO.EZ's own loot tweaks, and it takes precedence over them: a table GTFO.EZ already
 /// turned into kits only (its Consumables Are Kits) gets this mix too, so the kits follow this
 /// mod's weights and KitSize. The host's settings decide what spawns.
@@ -31,7 +31,6 @@ internal static class LootMix
     internal static ConfigEntry<float> AmmoKitWeight = null!;
     internal static ConfigEntry<int> KitSize = null!;
     internal static ConfigEntry<float> OutInTheOpenShare = null!;
-    internal static ConfigEntry<bool> ArtifactsBecomeHandGrenades = null!;
 
     internal static void Bind(ConfigFile config)
     {
@@ -47,28 +46,6 @@ internal static class LootMix
         OutInTheOpenShare = config.Bind(s, "OutInTheOpenShare", 0.6f,
             new ConfigDescription("Share (0-1) of loot consumables left lying out in the open instead of in boxes and lockers. Takes effect on restart.",
                 new AcceptableValueRange<float>(0f, 1f)));
-        ArtifactsBecomeHandGrenades = config.Bind(s, "ArtifactsBecomeHandGrenades", true,
-            "Every artifact the level would place - out in the open or in a box - is a Hand Grenade instead. Every player needs the same setting (the level is built on each game).");
-    }
-
-    // Level generation sets each pickup spot up as one thing or another; an artifact spot is set up
-    // as a Hand Grenade instead, through the game's own consumable path. Generation runs on every
-    // game from the same seed, so everyone gets the same grenades.
-    [HarmonyPatch(typeof(LevelGeneration.LG_PickupItem), nameof(LevelGeneration.LG_PickupItem.SetupAsArtifact))]
-    [HarmonyPrefix]
-    private static bool InsteadOfArtifact(LevelGeneration.LG_PickupItem __instance, int randomSeed)
-    {
-        try
-        {
-            if (!ArtifactsBecomeHandGrenades.Value || !GameDataBlockBase<ItemDataBlock>.HasBlock(HandGrenade.ItemId)) return true;
-            __instance.SetupAsConsumable(randomSeed, HandGrenade.ItemId);
-            return false;
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't turn an artifact into a Hand Grenade: {e.Message}");
-            return true;
-        }
     }
 
     [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]

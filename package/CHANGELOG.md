@@ -2,6 +2,9 @@
 
 ## v1
 
+- Artifacts stay: Hand Grenades now join artifacts instead of replacing them - artifacts are as rare
+  as vanilla, grenades common through the loot mix. The `ArtifactsBecomeHandGrenades` setting is
+  gone.
 - Loot: where it clashes with GTFO.EZ, this mod's loot wins - GTFO.EZ's kit-only tables (its
   *Consumables Are Kits*) get this mod's mix too, Hand Grenades and Stim Packs alongside kits at
   this mod's own kit odds and size.
@@ -28,8 +31,8 @@
     like Doom's: +50% health, up to 200%, draining back to 100%).
 - Guns use ammo like vanilla guns; each starts full the first time it's equipped in a level and keeps
   its own ammo after that (`[Ammo] InfiniteAmmo` brings back bottomless guns).
-- Loot consumables are only Hand Grenades, Stim Packs and health, tool and ammo kits (`[Loot]`), and
-  every artifact spot holds a Hand Grenade instead.
+- Loot consumables are only Hand Grenades, Stim Packs and health, tool and ammo kits (`[Loot]`).
+  Artifacts stay as rare as vanilla.
 - Swap weapons in a level with Page Up / Page Down (configurable): the gear you dropped in with joins
   the cycle the first time you swap, and Home puts it all back.
 - Config: every weapon has its own on/off switch (`<Weapon> Enabled`, pistol and rifle versions

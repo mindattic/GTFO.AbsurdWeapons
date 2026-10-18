@@ -220,7 +220,7 @@ around, flashing red faster and faster, and blows after **3 seconds**: 60 damage
 falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
 Every player is handed **1** in their consumable slot when they drop into a level, and **each one
-you find** - as loot, or where an artifact would have been - **is 1 more**, up to **6** carried. Thrown ones are gone.
+you find** as loot **is 1 more**, up to **6** carried. Thrown ones are gone.
 
 ### Stim Pack
 
@@ -239,8 +239,7 @@ With **GTFO.EZ** installed, this mod's loot settings take precedence: its own ki
 Grenades and Stim Packs alongside, at this mod's kit odds and sizes, whatever GTFO.EZ's *Consumables
 Are Kits* settings say.
 
-And **there are no artifacts**: everywhere the level would have placed one - out in the open or in a
-box - there's a **Hand Grenade** instead.
+**Artifacts stay** as rare as in vanilla, with Hand Grenades common alongside them.
 
 ## Swapping weapons in a level
 
@@ -539,7 +538,7 @@ Shared by everything that flings enemies (the Warhammer).
 | `BlastDamage` | 60 | Damage at the blast's center. |
 | `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
 | `BlastStagger` | 6 | Blast stagger multiplier. |
-| `PickupCount` † | 1 | How many one pickup holds (loot, or an artifact spot). |
+| `PickupCount` † | 1 | How many one pickup holds. |
 | `GiveOnDrop` | true | Hand every player `StartingCount` when they drop into a level (the host's setting decides). |
 | `StartingCount` | 1 | How many each player is handed on dropping in. |
 | `MaxCarried` | 6 | The most you can carry. |
@@ -563,7 +562,6 @@ Shared by everything that flings enemies (the Warhammer).
 | `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
 | `KitSize` † | 20 | Contents of a kit found as consumable loot, in percent of a full pack. Zone resource packs are unaffected. |
 | `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
-| `ArtifactsBecomeHandGrenades` | true | Every artifact spot gets a Hand Grenade instead. Every player needs the same setting. |
 
 ### `[Ammo]`
 
