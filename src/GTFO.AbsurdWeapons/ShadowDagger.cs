@@ -30,6 +30,7 @@ internal static class Stealth
     internal static ConfigEntry<float> Seconds = null!;
     internal static ConfigEntry<float> KillTimeBonus = null!;
     internal static ConfigEntry<float> MaxSeconds = null!;
+    internal static ConfigEntry<float> CapDecaySeconds = null!;
     internal static ConfigEntry<float> BonusPerKill = null!;
     internal static ConfigEntry<float> MaxBonus = null!;
     internal static ConfigEntry<float> Transparency = null!;
@@ -47,6 +48,8 @@ internal static class Stealth
         Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 2f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
         KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.33f, "Seconds added to the stealth for a full-windup kill made while hidden, up to StealthMaxSeconds.");
         MaxSeconds = config.Bind("Shadow Dagger", "StealthMaxSeconds", 3f, "The most stealth you can have at once, however many kills stretch it.");
+        CapDecaySeconds = config.Bind("Shadow Dagger", "StealthCapDecaySeconds", 0.1f,
+            "Every time a kill bumps into the cap, the cap drops by this much (never below StealthSeconds) until the stealth ends, when it goes back to StealthMaxSeconds.");
         BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
         MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
         Transparency = config.Bind("Shadow Dagger", "StealthTransparency", 0.95f,
@@ -103,6 +106,7 @@ internal static class Stealth
     private const float KillCheckDelay = 0.4f; // the kill is confirmed by the host; look a moment later
 
     private static float damageBonus;      // the local player's, while hidden
+    private static float cap = -1f;        // the local player's current stealth cap, while hidden (-1: StealthMaxSeconds)
     private static float chargeStarted = -1f, lastWindup;
     private static readonly List<(EnemyAgent Enemy, float CheckAt, float Windup)> pendingKills = new();
 
@@ -138,6 +142,7 @@ internal static class Stealth
         if (Remaining(local) <= 0f)
         {
             damageBonus = 0f;
+            cap = -1f;
             pendingKills.Clear();
             return;
         }
@@ -152,7 +157,10 @@ internal static class Stealth
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: kill while hidden - damage +{damageBonus * 100f:0}%.");
             if (windup > 0f && local.Owner != null)
             {
-                var stretched = Mathf.Min(Remaining(local) + KillTimeBonus.Value, Mathf.Max(Seconds.Value, MaxSeconds.Value));
+                var limit = cap >= 0f ? cap : Mathf.Max(Seconds.Value, MaxSeconds.Value);
+                var wanted = Remaining(local) + KillTimeBonus.Value;
+                var stretched = Mathf.Min(wanted, limit);
+                cap = wanted >= limit ? Mathf.Max(Seconds.Value, limit - CapDecaySeconds.Value) : limit;
                 Hide(local.Owner.Lookup, stretched);
                 NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(stretched));
             }
