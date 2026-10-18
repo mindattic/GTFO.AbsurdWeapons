@@ -109,7 +109,13 @@ internal static class StimPack
     // and a max raised for it is put back on the object the game reuses.
     [HarmonyPatch(typeof(Dam_PlayerDamageLocal), nameof(Dam_PlayerDamageLocal.Setup))]
     [HarmonyPostfix]
-    private static void Setup(Dam_PlayerDamageLocal __instance) => Overheal.Clear(__instance);
+    private static void Setup(Dam_PlayerDamageLocal __instance)
+    {
+        // A bot taking a slot mid-level sets up its own damage too; that mustn't drop the player's
+        // overheal (and strand their raised max health).
+        if (__instance.Owner?.Owner is { IsBot: true }) return;
+        Overheal.Clear(__instance);
+    }
 }
 
 /// <summary>
