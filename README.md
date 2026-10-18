@@ -255,7 +255,7 @@ thrown item's rigidbody bounce and its replication all stay vanilla.
   `AreaDamage` (6 m, 60 falling to 25%, x6 stagger). The host then despawns the item
   (`ItemReplicationManager.DeSpawn`); other games hide it until that arrives.
 - **Supply:** a pickup holds `PickupCount` (1, the item's `ConsumableAmmoMin/Max`), and on the host
-  `HandGrenadeSupply` gives every player `StartingCount` (3) straight into their consumable slot once
+  `HandGrenadeSupply` gives every player `StartingCount` (1) straight into their consumable slot once
   per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`).
 All of it is `[Hand Grenade]`.
 

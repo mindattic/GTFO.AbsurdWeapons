@@ -21,7 +21,7 @@
   - **Tool:** Victory
     Banner (plant a flag with a glowing healing aura, pick it back up; heals everyone standing in it).
   - **Consumable:** Hand Grenade (a lock melter thrown like a glowstick, lobbed twice as hard, that bounces and blows after
-    3 s; every player starts each level with 3, and each one found is 1 more) and Stim Pack (an overheal
+    3 s; every player starts each level with 1, and each one found is 1 more) and Stim Pack (an overheal
     like Doom's: +50% health, up to 200%, draining back to 100%).
 - Guns use ammo like vanilla guns; each starts full the first time it's equipped in a level and keeps
   its own ammo after that (`[Ammo] InfiniteAmmo` brings back bottomless guns).

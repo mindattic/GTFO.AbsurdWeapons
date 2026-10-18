@@ -30,6 +30,7 @@ internal static class ConfigMigrations
         (5, "Shadow Dagger", "StealthKillTimeBonus", 0.25f),
         (6, "Shadow Dagger", "StealthSeconds", 2f),
         (7, "Loot", "KitSize", 100),
+        (8, "Hand Grenade", "StartingCount", 3),
     };
 
     // After every setting is bound.

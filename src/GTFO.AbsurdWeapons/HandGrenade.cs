@@ -52,7 +52,7 @@ internal static class HandGrenade
         BlastStagger = config.Bind("Hand Grenade", "BlastStagger", 6f, "Blast stagger multiplier.");
         GiveOnDrop = config.Bind("Hand Grenade", "GiveOnDrop", true,
             "Every player is given StartingCount Hand Grenades in their consumable slot when they drop into a level (the host's setting decides).");
-        StartingCount = config.Bind("Hand Grenade", "StartingCount", 3, "How many Hand Grenades each player is handed on dropping in (with GiveOnDrop on).");
+        StartingCount = config.Bind("Hand Grenade", "StartingCount", 1, "How many Hand Grenades each player is handed on dropping in (with GiveOnDrop on).");
         PickupCount = config.Bind("Hand Grenade", "PickupCount", 1, "How many Hand Grenades one pickup holds - loot, or an artifact spot. Takes effect on restart.");
         ThrowForceMultiplier = config.Bind("Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
     }
