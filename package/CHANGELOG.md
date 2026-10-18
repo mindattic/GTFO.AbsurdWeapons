@@ -32,7 +32,8 @@
     like Doom's: +50% health, up to 200%, draining back to 100%).
 - Guns use ammo like vanilla guns; each starts full the first time it's equipped in a level and keeps
   its own ammo after that (`[Ammo] InfiniteAmmo` brings back bottomless guns).
-- Loot consumables are only Hand Grenades, Stim Packs and health, tool and ammo kits (`[Loot]`).
+- Loot consumables are only Hand Grenades and health, tool and ammo kits (`[Loot]`), plus Stim
+  Packs when switched on - the Stim Pack is off by default for now.
   Artifacts stay as rare as vanilla.
 - Swap weapons in a level with Page Up / Page Down (configurable): the gear you dropped in with joins
   the cycle the first time you swap, and Home puts it all back.

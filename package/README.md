@@ -222,17 +222,19 @@ falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
 Nobody starts with any: **each one you find** as loot **is 1 more**, up to **6** carried. Thrown ones are gone.
 
-### Stim Pack
+### Stim Pack (off for now)
 
-A consumable of its own (the I2-LP syringe is left as it is): an **overheal like Doom's**. It gives
+**Switched off by default for now** (`[Stim Pack] Stim Pack Enabled`): while it's off it isn't added
+to the game or the loot. When on, it's a consumable of its own (the I2-LP syringe is left as it is):
+an **overheal like Doom's**. It gives
 **50%** of your max health and can take you **past max, up to 200%**; anything above max then
 **drains back down to 100%** at 1% of max a second. Damage eats into the overheal first.
 
 ### Loot
 
 Consumables in boxes and lockers - and lying around, like artifacts (60% of them) - are only five
-things: **Hand Grenades** (half of them), **Stim Packs**, **health kits**, **tool kits** and **ammo
-kits** (1 in 8 each) - and there's half as much loot again as vanilla, so grenades are common. Kits found this way always hold **20%** of a pack. The zone's own resource packs
+things: **Hand Grenades** (4 in 7), **health kits**, **tool kits** and **ammo kits** (1 in 7 each),
+plus **Stim Packs** when they're switched on - and there's half as much loot again as vanilla, so grenades are common. Kits found this way always hold **20%** of a pack. The zone's own resource packs
 still spawn as normal, at their usual sizes, on top.
 
 With **GTFO.EZ** installed, this mod's loot settings take precedence: its own kits come with Hand
@@ -302,7 +304,7 @@ and nothing else about the game changes. Pistol and rifle versions of a gun are 
 | `[Shrink Beam]` | `Shrink Beam Enabled` |
 | `[Victory Banner]` | `Victory Banner Enabled` |
 | `[Hand Grenade]` | `Hand Grenade Enabled` |
-| `[Stim Pack]` | `Stim Pack Enabled` |
+| `[Stim Pack]` | `Stim Pack Enabled` (off by default for now) |
 | `[Loot]` | `Loot Mix Enabled` (off: vanilla consumable loot) |
 
 ### Melee weapons (shared settings)
@@ -556,7 +558,7 @@ Shared by everything that flings enemies (the Warhammer).
 | Setting | Default | What it does |
 |---|---|---|
 | `HandGrenadeWeight` † | 4 | Relative odds a loot consumable is a Hand Grenade. |
-| `StimPackWeight` † | 1 | Relative odds it's a Stim Pack. |
+| `StimPackWeight` † | 1 | Relative odds it's a Stim Pack (only while the Stim Pack is switched on). |
 | `HealthKitWeight` † | 1 | Relative odds it's a health kit. |
 | `ToolKitWeight` † | 1 | Relative odds it's a tool kit. |
 | `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |

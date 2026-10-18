@@ -35,7 +35,7 @@ internal static class StimPack
 
     internal static void Bind(ConfigFile config)
     {
-        Enabled = config.Bind("Stim Pack", "Stim Pack Enabled", true,
+        Enabled = config.Bind("Stim Pack", "Stim Pack Enabled", false,
             "Adds the Stim Pack, a consumable of its own (the I2-LP is left as it is). Takes effect on restart.");
         HealPercent = config.Bind("Stim Pack", "HealPercent", 50f, "Health a Stim Pack gives, as a percent of max health.");
         MaxHealthPercent = config.Bind("Stim Pack", "MaxHealthPercent", 200f, "How high a Stim Pack can take your health, as a percent of max health.");

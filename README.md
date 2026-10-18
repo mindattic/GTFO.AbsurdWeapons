@@ -273,7 +273,8 @@ this mod wins: a table GTFO.EZ's `Consumables Are Kits` already made kits-only g
 kit odds and contents follow `[Loot]` here, not GTFO.EZ's kit settings (logged when it happens). Each
 table's `SpawnsPerZone` is scaled by `SpawnsPerZoneMultiplier` (1.5). Artifacts are left alone.
 
-The Stim Pack is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
+The Stim Pack (off by default for now - `Stim Pack Enabled`; while off it isn't added and
+`LootMix` leaves it out) is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
 (`SyringeFirstPerson._ApplySyringe_d__18.MoveNext`) flags a Stim Pack's use - not the I2-LP's - so
 the `Dam_SyncedDamageBase.AddHealth` call inside it is rewritten to `HealPercent` of max. `Overheal` then pushes health past the native cap
 with `SendSetHealth` (raising `HealthMax` if that alone doesn't stick), capped at

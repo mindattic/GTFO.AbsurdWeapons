@@ -32,6 +32,7 @@ internal static class ConfigMigrations
         (7, "Loot", "KitSize", 100),
         (8, "Hand Grenade", "StartingCount", 3),
         (9, "Loot", "HandGrenadeWeight", 2f),
+        (10, "Stim Pack", "Stim Pack Enabled", true),
     };
 
     // After every setting is bound.

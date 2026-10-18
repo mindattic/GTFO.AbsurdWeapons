@@ -70,7 +70,7 @@ internal static class LootMix
 
             var mix = new List<(uint Id, float Weight)>();
             Add(mix, GameDataBlockBase<ItemDataBlock>.HasBlock(HandGrenade.ItemId) ? HandGrenade.ItemId : null, HandGrenadeWeight, "Hand Grenade");
-            Add(mix, GameDataBlockBase<ItemDataBlock>.HasBlock(StimPack.ItemId) ? StimPack.ItemId : null, StimPackWeight, "Stim Pack");
+            if (StimPack.Enabled.Value) Add(mix, GameDataBlockBase<ItemDataBlock>.HasBlock(StimPack.ItemId) ? StimPack.ItemId : null, StimPackWeight, "Stim Pack");
             Add(mix, Kit("health", "medi", "health"), HealthKitWeight, "health kit");
             Add(mix, Kit("tool", "tool"), ToolKitWeight, "tool kit");
             Add(mix, Kit("ammo", "ammo"), AmmoKitWeight, "ammo kit");
