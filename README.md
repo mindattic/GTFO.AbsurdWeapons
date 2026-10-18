@@ -110,7 +110,7 @@ homes onto and damages players only, so it can't be used as-is.
   The Tentacle Cannon fires normally but its shots are refunded (the magazine before the outermost
   `Fire` is put back in `EndFire`); each lash that `BulletDamage`s an enemy costs one round instead
   (`InfiniteAmmo.SpendTentacleBite`). With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
-  every shot and the `InfiniteAmmo` component keeps the wielded gun's clip and reserve full.
+  every shot so firing costs nothing - any gun, vanilla included. Insert (`InfiniteAmmoToggleKey`) toggles it in a level.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.
 - **Multiplayer:** each shot is sent to teammates with GTFO-API's `NetworkAPI`
@@ -463,7 +463,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   WarhammerSlam.cs      the Warhammer's full-charge ground slam and its scattered debris
   MjolnirThrow.cs       Mjolnir's full-charge throw, flight and return
   LockDamage.cs         lets this mod's weapons (which only look for enemy limbs) also melt door locks
-  InfiniteAmmo.cs       keeps the locally wielded gun's clip and reserve topped up every frame
+  InfiniteAmmo.cs       ammo settings, stream-gun drain, the InfiniteAmmo toggle
   ConfigMigrations.cs   one-time moves of a changed default onto configs still sitting on the old one
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
   ImpactBursts.cs       hammer impact bursts (Mjolnir thunderclap, Warhammer shockwave) and their flash

@@ -575,7 +575,8 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `InfiniteAmmo` | false | On: this mod's guns never run out or reload. |
+| `InfiniteAmmo` | false | On: every gun (this mod's and vanilla) never runs out or reloads. |
+| `InfiniteAmmoToggleKey` | Insert | Toggles InfiniteAmmo in a level and shows ON/OFF as a warden message. |
 | `StreamPercentPerSecond` | 2 | Percent of a full reserve the beam guns (lasers, Chain Lightning, Shrink Beam) use per second of fire (2 = 1% every half second). They never reload. |
 
 ### `[Gear Cycling]`

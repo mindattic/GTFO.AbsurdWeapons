@@ -232,16 +232,17 @@ internal static class SeekerGuns
     [HarmonyFinalizer]
     private static void AfterSyncedShotgunFire(ShotgunSynced __instance, uint __state) => EndFire(__instance, __state);
 
-    // The Tentacle Cannon's magazine before the outermost Fire of a shot: firing costs it nothing -
-    // only a tentacle that bites an enemy does (TentacleLash.Bite) - so it's put back after.
-    private static int tentacleClipBefore = -1;
+    // The magazine before the outermost Fire of a shot, put back after so the shot costs nothing:
+    // any gun with InfiniteAmmo on, and the Tentacle Cannon always (only a tentacle that bites an
+    // enemy costs it a round - TentacleLash.Bite).
+    private static int clipBefore = -1;
 
     private static void BeginFire(BulletWeapon weapon, out uint previous)
     {
         previous = firingArchetype;
-        if (previous == 0 && !InfiniteAmmo.Enabled.Value && TentacleCannon.IsTentacleGun(weapon.ArchetypeData?.persistentID ?? 0)
-            && weapon.Owner != null && weapon.Owner.IsLocallyOwned)
-            tentacleClipBefore = weapon.GetCurrentClip();
+        if (previous == 0 && weapon.Owner != null && weapon.Owner.IsLocallyOwned
+            && (InfiniteAmmo.Enabled.Value || TentacleCannon.IsTentacleGun(weapon.ArchetypeData?.persistentID ?? 0)))
+            clipBefore = weapon.GetCurrentClip();
         firingArchetype = weapon.ArchetypeData?.persistentID ?? 0;
         firingWeapon = weapon;
         if (LaserGuns.ForGun(firingArchetype) != null || firingArchetype is GunInjector.RailgunId or GunInjector.ChainLightningId or GunInjector.ShrinkBeamId)
@@ -255,32 +256,18 @@ internal static class SeekerGuns
         firingArchetype = previous;
         if (previous == 0) firingWeapon = null;
 
-        if (previous == 0 && tentacleClipBefore >= 0)
+        if (previous == 0 && clipBefore >= 0)
         {
-            var before = tentacleClipBefore;
-            tentacleClipBefore = -1;
+            var before = clipBefore;
+            clipBefore = -1;
             try
             {
                 if (weapon.GetCurrentClip() < before) InfiniteAmmo.SetClip(weapon, before);
             }
             catch (Exception e)
             {
-                Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't refund a Tentacle Cannon shot: {e.Message}");
+                Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't refund a shot: {e.Message}");
             }
-        }
-
-        // With InfiniteAmmo on, our guns' clips are topped back up after every shot, so they never
-        // run dry, never reload and never draw on the ammo reserve.
-        try
-        {
-            if (!InfiniteAmmo.Enabled.Value || !GunInjector.IsOurs(weapon.ArchetypeData?.persistentID ?? 0)) return;
-            var owner = weapon.Owner;
-            if (owner == null || !owner.IsLocallyOwned) return;
-            if (weapon.GetCurrentClip() < weapon.ClipSize) weapon.SetCurrentClip(weapon.ClipSize);
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't refill a clip: {e.Message}");
         }
     }
 

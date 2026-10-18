@@ -81,7 +81,6 @@ public class Plugin : BasePlugin
         AddComponent<DashRunner>();
         AddComponent<WarhammerSlam>();
         AddComponent<GearCycler>();
-        AddComponent<InfiniteAmmo>();
         AddComponent<HandGrenadeSupply>();
         AddComponent<LaserDriver>();
         AddComponent<LoopSounds>();

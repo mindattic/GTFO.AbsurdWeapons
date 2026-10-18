@@ -93,6 +93,7 @@ internal sealed class GearCycler : MonoBehaviour
             else if (Input.GetKeyDown(nextKey.Value)) Cycle(1);
             else if (Input.GetKeyDown(previousKey.Value)) Cycle(-1);
             else if (slotKeysCycle.Value && SlotKeyPressedAgain()) Cycle(1);
+            else if (Input.GetKeyDown(InfiniteAmmo.ToggleKey.Value)) InfiniteAmmo.Toggle();
         }
         catch (Exception e)
         {
@@ -265,7 +266,7 @@ internal sealed class GearCycler : MonoBehaviour
     // A new message replaces ours if one is still up, instead of queueing behind it. The game's own
     // messages are never cut short: only while ours is up is the panel's sequence stopped and its
     // queue reset.
-    private static void Show(string message)
+    internal static void Show(string message)
     {
         try
         {
