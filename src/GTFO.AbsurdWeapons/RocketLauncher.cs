@@ -48,7 +48,7 @@ internal static class RocketLauncher
         BlastEdgeFraction = config.Bind("Rocket Launcher", "BlastEdgeFraction", 0.33f, "Share of damage left at the blast's edge (Quake 1's falloff leaves a third at 160 units - same as the Grenade Launcher's).");
         BlastStagger = config.Bind("Rocket Launcher", "BlastStagger", 5f, "Blast stagger multiplier.");
         GunShotDelay = config.Bind("Rocket Launcher", "GunShotDelay", 0.8f, "Seconds between shots (semi-auto; Quake 1: 0.8 s).");
-        GunClipSize = config.Bind("Rocket Launcher", "GunClipSize", 5, "Clip size (infinite ammo refills it anyway).");
+        GunClipSize = config.Bind("Rocket Launcher", "GunClipSize", 5, "Magazine size.");
     }
 
     internal static void Init()

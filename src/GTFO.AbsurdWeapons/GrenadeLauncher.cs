@@ -50,7 +50,7 @@ internal static class GrenadeLauncher
         BlastStagger = config.Bind("Grenade Launcher", "BlastStagger", 5f, "Blast stagger multiplier.");
         GrenadeBounciness = config.Bind("Grenade Launcher", "GrenadeBounciness", 0.5f, "Speed kept per bounce off the world (Quake 1: half).");
         GunShotDelay = config.Bind("Grenade Launcher", "GunShotDelay", 0.6f, "Seconds between shots (semi-auto) - the Grenade Pistol and Rifle alike.");
-        GunClipSize = config.Bind("Grenade Launcher", "GunClipSize", 6, "Clip size (infinite ammo refills it anyway).");
+        GunClipSize = config.Bind("Grenade Launcher", "GunClipSize", 6, "Magazine size.");
     }
 
     internal static void Init()

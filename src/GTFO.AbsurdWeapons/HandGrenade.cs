@@ -35,8 +35,6 @@ internal static class HandGrenade
     internal static ConfigEntry<float> BlastStagger = null!;
     internal static ConfigEntry<bool> GiveOnDrop = null!;
     internal static ConfigEntry<int> StackSize = null!;
-    internal static ConfigEntry<bool> OnlyLootConsumable = null!;
-    internal static ConfigEntry<float> OutInTheOpenShare = null!;
     internal static ConfigEntry<float> ThrowForceMultiplier = null!;
     internal static ConfigEntry<bool> Enabled = null!;
 
@@ -54,10 +52,6 @@ internal static class HandGrenade
         GiveOnDrop = config.Bind("Hand Grenade", "GiveOnDrop", true,
             "Every player is given a stack of Hand Grenades in their consumable slot when they drop into a level (the host's setting decides).");
         StackSize = config.Bind("Hand Grenade", "StackSize", 99, "How many Hand Grenades the stack holds (it's kept full: they never run out).");
-        OnlyLootConsumable = config.Bind("Hand Grenade", "OnlyLootConsumable", true,
-            "Every consumable found in boxes and lockers is a Hand Grenade instead (takes effect on restart; the host's setting decides what spawns).");
-        OutInTheOpenShare = config.Bind("Hand Grenade", "OutInTheOpenShare", 0.6f,
-            "With OnlyLootConsumable on: the share (0-1) of Hand Grenades left lying around the level, out in the open like artifacts, instead of in boxes and lockers.");
         ThrowForceMultiplier = config.Bind("Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
     }
 
@@ -98,31 +92,11 @@ internal static class HandGrenade
             GameDataBlockBase<ItemDataBlock>.AddBlock(item, -1);
             added = true;
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons added the Hand Grenade (consumable; item id {ItemId}, cloned from '{source.name}' {source.persistentID}; sync id {item.syncID} vs source {source.syncID}).");
-            if (OnlyLootConsumable.Value) MakeOnlyLoot();
         }
         catch (Exception e)
         {
             Plugin.Logger.LogError($"GTFO.AbsurdWeapons failed to add the Hand Grenade: {e}");
         }
-    }
-
-    // Every consumable loot table's entries point at the Hand Grenade, weights kept, so whatever a
-    // box or locker would have held is one. (Med, ammo and tool packs aren't in these tables - the
-    // zone's resource budget fills those - so they still spawn.) The table's own in-a-box chance
-    // decides the rest: OutInTheOpenShare of them are left lying around the zone instead, scattered
-    // like artifacts. After GTFO.EZ's own loot tweaks.
-    private static void MakeOnlyLoot()
-    {
-        var tables = 0;
-        var inBoxes = 1f - Mathf.Clamp01(OutInTheOpenShare.Value);
-        foreach (var block in GameDataBlockBase<ConsumableDistributionDataBlock>.GetAllBlocks())
-        {
-            if (block?.SpawnData == null || block.SpawnData.Count == 0) continue;
-            foreach (var entry in block.SpawnData) entry.ItemID = ItemId;
-            block.ChanceToSpawnInResourceContainer = inBoxes;
-            tables++;
-        }
-        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: Hand Grenades are the only loot consumable ({tables} loot tables, {1f - inBoxes:P0} out in the open).");
     }
 
     // The plain glowstick: a consumable whose thrown prefab is a glowstick, preferring the one

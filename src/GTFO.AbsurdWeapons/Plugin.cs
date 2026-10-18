@@ -27,6 +27,8 @@ public class Plugin : BasePlugin
         WeaponSettings.Bind(Config);
         TentaclePool.Bind(Config);
         GearCycler.Bind(Config);
+        InfiniteAmmo.Bind(Config);
+        StimPack.Bind(Config);
         Stealth.Bind(Config);
         KatanaDash.Bind(Config);
         WarhammerSlam.Bind(Config);
@@ -43,6 +45,7 @@ public class Plugin : BasePlugin
         RocketLauncher.Bind(Config);
         ShrinkBeam.Bind(Config);
         HandGrenade.Bind(Config);
+        LootMix.Bind(Config);
         Sounds.Bind(Config);
         HiveLocks.Bind(Config);
         VictoryBanner.Bind(Config);

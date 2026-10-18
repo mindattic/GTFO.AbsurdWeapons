@@ -248,11 +248,11 @@ internal static class SeekerGuns
         firingArchetype = previous;
         if (previous == 0) firingWeapon = null;
 
-        // Infinite ammo: our guns' clips are topped back up after every shot, so they never run
-        // dry, never reload and never draw on the ammo reserve.
+        // With InfiniteAmmo on, our guns' clips are topped back up after every shot, so they never
+        // run dry, never reload and never draw on the ammo reserve.
         try
         {
-            if (!GunInjector.IsOurs(weapon.ArchetypeData?.persistentID ?? 0)) return;
+            if (!InfiniteAmmo.Enabled.Value || !GunInjector.IsOurs(weapon.ArchetypeData?.persistentID ?? 0)) return;
             var owner = weapon.Owner;
             if (owner == null || !owner.IsLocallyOwned) return;
             if (weapon.GetCurrentClip() < weapon.ClipSize) weapon.SetCurrentClip(weapon.ClipSize);

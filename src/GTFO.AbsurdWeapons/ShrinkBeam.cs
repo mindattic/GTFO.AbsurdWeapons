@@ -55,7 +55,7 @@ internal static class ShrinkBeam
         StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 1f, "Metres from a small-enough enemy within which looking down at it steps on it.");
         StepOnLookConeDegrees = config.Bind("Shrink Beam", "StepOnLookConeDegrees", 35f, "How close to your crosshair a small-enough enemy has to be for you to count as looking down at it.");
         GunShotDelay = config.Bind("Shrink Beam", "GunShotDelay", 0.08f, "Seconds between beam ticks (it never actually fires - the stream is trigger-driven).");
-        GunClipSize = config.Bind("Shrink Beam", "GunClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        GunClipSize = config.Bind("Shrink Beam", "GunClipSize", 100, "Magazine size.");
     }
 
     internal static void Init()
@@ -374,7 +374,12 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
             // only lands on the throttled ticks.
             var tick = Mathf.Max(0.02f, ShrinkBeam.GunShotDelay.Value);
             var applyShrink = Time.time >= nextTick;
-            if (applyShrink) nextTick = Time.time + tick;
+            if (applyShrink)
+            {
+                if (!InfiniteAmmo.TrySpend(player, gun)) return; // empty or reloading: no beam
+                nextTick = Time.time + tick;
+            }
+            else if (gun.GetCurrentClip() <= 0 && !InfiniteAmmo.Enabled.Value) return;
             ShrinkBeam.Tick(player, camera.Position, camera.Forward, gun.MuzzleAlign, tick, GunInjector.ShrinkBeamId, applyShrink);
         }
         catch (Exception e)

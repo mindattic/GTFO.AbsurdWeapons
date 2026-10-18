@@ -44,6 +44,7 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Shrink Beam | 1119 | the exp1's archetype for its fire mode | the exp1's (`HELGun`) | `HELGun` (Omneco exp1, special) | `AddShrinkBeam`: Auto, 1 pellet, no cone or spread, damage shown 0 (the loadout screen - it shrinks, it doesn't deal a plain number), shot delay 0.08 s, clip 100, no brass, kickless recoil 1119; the ray is runtime (`ShrinkBeam`) |
 | Victory Banner | 1202 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddVictoryBanner`: category and gear only; placing, picking up and healing are runtime (`VictoryBanner`) |
 | Hand Grenade | 1203 (an `ItemDataBlock`, not gear) | - | - | the glowstick's item, found by name/prefab | `HandGrenade.AddItem`: the glowstick's `ItemDataBlock` cloned and renamed; the look, fuse, blast, infinite stack and handing it out are runtime (`HandGrenade`) |
+| Stim Pack | 1204 (an `ItemDataBlock`) | - | - | the I2-LP (item 140) | `StimPack.AddItem`: the I2-LP's `ItemDataBlock` cloned and renamed; the overheal is runtime (`StimPack`, `Overheal`) |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
 uses an id, that weapon isn't added and an error is logged. The rest still load. Vanilla names,
@@ -101,10 +102,11 @@ homes onto and damages players only, so it can't be used as-is.
   - `Shard` (split seekers) is still defined but nothing uses it right now.
   - Every impact flashes a small `EffectLight`. Teammates' visual copies fly and flash on their
     own; a smart round's message carries its target's position, which the copy curves to.
-- **Infinite ammo:** the `Fire` postfixes top the clip back up (`SetCurrentClip(ClipSize)`) after
-  every shot from one of our guns, for the local player. `InfiniteAmmo` (a per-frame component)
-  also keeps the wielded gun's clip and its slot's reserve full, so a gun swapped in by gear
-  cycling starts loaded.
+- **Ammo:** our guns use ammo like vanilla ones. The stream guns never reach `Fire`, so their
+  drivers call `InfiniteAmmo.TrySpend` per tick: one round off `SetCurrentClip`, synced with
+  `SetClipAmmoInSlot`; empty, it calls `PlayerInventoryBase.TriggerReload` and the beam stops until
+  the reload lands. With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
+  every shot and the `InfiniteAmmo` component keeps the wielded gun's clip and reserve full.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.
 - **Multiplayer:** each shot is sent to teammates with GTFO-API's `NetworkAPI`
@@ -224,7 +226,7 @@ teammates as `MindAttic.GTFO.AbsurdWeapons.ChainLightning`.
   so a shot does the same from either; each keeps its own model's recoil. The `CastWeaponRay`
   prefix swallows their ray and, for the local shooter, calls `GrenadeLauncher.Launch`: a grenade
   from that model's barrel as drawn on screen (`Barrel.Shot`), aimed at the crosshair point, at 30 m/s.
-  Infinite ammo like every gun here; no brass.
+  No brass.
 - **Flight:** `LauncherGrenade` flies by hand - gravity, `SphereCast` against
   `MASK_ENEMY_DAMAGABLE` (shooter's game only: explode) and `MASK_WORLD` (reflect, x0.5, settle on
   floors) - so it never touches players. The look is the lock melter's meshes copied from its loaded
@@ -255,10 +257,22 @@ thrown item's rigidbody bounce and its replication all stay vanilla.
 - **Infinite / supply:** `HandGrenadeSupply` keeps the consumable ammo full while the local
   consumable slot holds item 1203, and on the host gives every player a stack of 99 (`StackSize`) straight into their consumable
   slot once per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`).
-- **Only loot consumable (`OnlyLootConsumable`):** every consumable loot table's entries are
-  repointed at the Hand Grenade, weights kept, so whatever a box or locker would have held is one;
-  `OutInTheOpenShare` of them spawn out in the open instead, like artifacts.
 All of it is `[Hand Grenade]`.
+
+### Loot mix (`LootMix`) and Stim Pack (`StimPack`, `Overheal`)
+
+`LootMix` (after the item registrations, at low priority) replaces every
+`ConsumableDistributionDataBlock.SpawnData` with `ConsumableSpawnData` entries at `[Loot]` weights:
+the Hand Grenade (1203), the Stim Pack (1204) and the health, tool and ammo resource packs (found by
+`InventorySlot.ResourcePack` and name, logged). Resource packs normally get their contents from the
+zone budget, so a pack item with no `ConsumableAmmoMin/Max` of its own is given `KitSize`.
+`ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`.
+
+The Stim Pack is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
+(`SyringeFirstPerson._ApplySyringe_d__18.MoveNext`) flags a Stim Pack's use - not the I2-LP's - so
+the `Dam_SyncedDamageBase.AddHealth` call inside it is rewritten to `HealPercent` of max. `Overheal` then pushes health past the native cap
+with `SendSetHealth` (raising `HealthMax` if that alone doesn't stick), capped at
+`MaxHealthPercent`, and steps it back down to max once a second at `DrainPercentPerSecond`.
 
 ### Sounds (`Sounds`, `LoopSounds`)
 
@@ -308,16 +322,18 @@ stealth by the windup, sent to everyone. Wielding anything but the dagger ends t
 
 An injected MonoBehaviour reads `[Gear Cycling]` keys (PageUp / PageDown) while
 `FocusStateManager.CurrentState` is `FPS`. For the wielded slot (standard, special, class or melee)
-it takes `GearManager.GetAllGearForSlot`, keeps the entries whose category is in
-`DataBlocks.AddedCategories` (filled as each weapon registers), and equips the next or previous
-with `PlayerBackpackManager.EquipLocalGear` - the lobby's own path, which syncs - then re-wields the
-slot 0.4 s later and shows a five-second `PUI_WardenIntel` sub-objective message.
+the cycle is the slot's starting gear (its `BackpackItem.GearIDRange`, recorded on the slot's first
+swap of the level) followed by the `GearManager.GetAllGearForSlot` entries whose category is in
+`DataBlocks.AddedCategories`. It equips the next or previous with
+`PlayerBackpackManager.EquipLocalGear` - the lobby's own path, which syncs - and shows a
+five-second `PUI_WardenIntel` sub-objective message.
 
-**Restore (Home):** before a slot's first swap in a level, `Save` records its `BackpackItem.GearIDRange`,
-the gun's `GetCurrentClip()` and the slot's `GetAmmoInPack` reserve. Home re-equips every saved slot
-whose category differs (`EquipLocalGear`, so an unchanged tool - a deployed sentry - is left alone),
-then `FinishRestore` waits until each item `IsLoaded` (5 s at most) to `SetAmmo` the reserves,
-`SetCurrentClip` the magazines and re-wield the slot that was held. Saves clear on leaving `InLevel`.
+**Per-weapon ammo:** before swapping a slot away, `SaveAmmo` stores the gun's `GetCurrentClip()`
+and the slot's `GetAmmoInPack` reserve under the outgoing gear's category. `FinishPending` waits
+until each newly equipped item `IsLoaded` (5 s at most), then puts its saved ammo back - or, for
+one of ours never seen this level, a full magazine and `AmmoMaxCap` reserve - and re-wields the
+slot. **Home** re-equips every slot whose category differs from its starting gear the same way.
+Everything clears on leaving `InLevel`.
 
 ### Mjolnir's throw (`MjolnirThrow`, `ThrownHammer`)
 

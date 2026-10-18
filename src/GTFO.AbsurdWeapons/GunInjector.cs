@@ -87,30 +87,30 @@ internal static class GunInjector
     {
         PlasmaDamage = config.Bind("Plasma Guns", "Damage", 22.5f, "Average damage per ball (it's actually rolled, 5 x 1d8).");
         PlasmaShotDelay = config.Bind("Plasma Guns", "ShotDelay", 3f / 35f, "Seconds between balls (Doom: one every 3 tics, ~11.7 a second).");
-        PlasmaClipSize = config.Bind("Plasma Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        PlasmaClipSize = config.Bind("Plasma Guns", "ClipSize", 100, "Magazine size.");
         PlasmaPistolEnabled = config.Bind("Plasma Guns", "Plasma Pistol Enabled", true, "Adds the Plasma Pistol (main slot) to the loadout screen. Takes effect on restart.");
         PlasmaRifleEnabled = config.Bind("Plasma Guns", "Plasma Rifle Enabled", true, "Adds the Plasma Rifle (special slot) to the loadout screen. Takes effect on restart.");
         HiveDamage = config.Bind("Hive Guns", "Damage", 1f, "Damage per round.");
         HiveShotDelay = config.Bind("Hive Guns", "ShotDelay", 0.09f, "Seconds between rounds.");
-        HiveClipSize = config.Bind("Hive Guns", "ClipSize", 30, "Clip size (infinite ammo refills it anyway).");
+        HiveClipSize = config.Bind("Hive Guns", "ClipSize", 30, "Magazine size.");
         HivePistolEnabled = config.Bind("Hive Guns", "Hive Pistol Enabled", true, "Adds the Hive Pistol (main slot) to the loadout screen. Takes effect on restart.");
         HiveRifleEnabled = config.Bind("Hive Guns", "Hive Rifle Enabled", true, "Adds the Hive Rifle (special slot) to the loadout screen. Takes effect on restart.");
         LaserDamage = config.Bind("Laser Guns", "Damage", 2f, "Damage per tick (20 ticks a second).");
         LaserShotDelay = config.Bind("Laser Guns", "ShotDelay", 0.05f, "Seconds between ticks.");
-        LaserClipSize = config.Bind("Laser Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        LaserClipSize = config.Bind("Laser Guns", "ClipSize", 100, "Magazine size.");
         LaserPistolEnabled = config.Bind("Laser Guns", "Laser Pistol Enabled", true, "Adds the Laser Pistol (main slot) to the loadout screen. Takes effect on restart.");
         LaserRifleEnabled = config.Bind("Laser Guns", "Laser Rifle Enabled", true, "Adds the Laser Rifle (special slot) to the loadout screen. Takes effect on restart.");
         RailgunDamage = config.Bind("Railgun", "Damage", 150f, "Damage to every enemy on the line (Quake's rail kills outright).");
         RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
-        RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Clip size (infinite ammo refills it anyway).");
+        RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Magazine size.");
         RailgunEnabled = config.Bind("Railgun", "Railgun Enabled", true, "Adds the Railgun to the loadout screen. Takes effect on restart.");
         ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump then does JumpFalloff of the one before).");
         ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
-        ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
+        ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Magazine size.");
         ChainLightningGunEnabled = config.Bind("Chain Lightning Gun", "Chain Lightning Gun Enabled", true, "Adds the Chain Lightning Gun to the loadout screen. Takes effect on restart.");
         TentacleDamage = config.Bind("Tentacle Guns", "Damage", 25f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
         TentacleShotDelay = config.Bind("Tentacle Guns", "ShotDelay", 0.235f, "Seconds between tentacles.");
-        TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
+        TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Magazine size.");
         TentacleCannonEnabled = config.Bind("Tentacle Guns", "Tentacle Cannon Enabled", true, "Adds the Tentacle Cannon to the loadout screen. Takes effect on restart.");
         GrenadePistolEnabled = config.Bind("Grenade Launcher", "Grenade Pistol Enabled", true, "Adds the Grenade Pistol (main slot) to the loadout screen. Takes effect on restart.");
         GrenadeRifleEnabled = config.Bind("Grenade Launcher", "Grenade Rifle Enabled", true, "Adds the Grenade Rifle (special slot) to the loadout screen. Takes effect on restart.");
@@ -119,7 +119,7 @@ internal static class GunInjector
         VictoryBannerEnabled = config.Bind("Victory Banner", "Victory Banner Enabled", true, "Adds the Victory Banner to the loadout screen. Takes effect on restart.");
     }
 
-    // Every gun this mod adds (infinite ammo applies to all of them).
+    // Every gun this mod adds.
     internal static bool IsOurs(uint id) => GunArchetypes.Contains(id);
 
     // The gun archetypes this mod registered (melee and the tool have none of these).
@@ -282,7 +282,7 @@ internal static class GunInjector
     }
 
     // A laser beam gun (LaserGuns) on the given model: forced full-auto at 20 ticks a second - every
-    // tick burns 2 into whatever the beam is on - with no spread, no recoil and infinite ammo.
+    // tick burns 2 into whatever the beam is on - with no spread and no recoil.
     // Stats come from the Drekker DEL P1. `hold`, if given, replaces the model's first-person hold.
     // `forceSpecialSlot`: the Accrat ND6 (SMGHeavyAuto) is actually a main-slot SMG in vanilla - its
     // gear category's own BaseItem decides the loadout slot - so swap that BaseItem for the special
@@ -339,7 +339,7 @@ internal static class GunInjector
     }
 
     // The Omneco exp1 HEL machine gun, full-auto at ~6.7 bolts a second, no recoil, no spread, no
-    // brass, infinite ammo. Each bolt does 10 to its first enemy, then 75% of the last on each of
+    // brass. Each bolt does 10 to its first enemy, then 75% of the last on each of
     // up to five jumps (ChainLightning).
     private static void AddChainLightning(string name, uint id)
     {
@@ -361,7 +361,7 @@ internal static class GunInjector
     }
 
     // The Omneco exp1 (the Chain Lightning Gun's own model), full-auto, no recoil, no spread, no
-    // brass, infinite ammo: a continuous ray (ShrinkBeam) while the trigger is held, same as Chain
+    // brass: a continuous ray (ShrinkBeam) while the trigger is held, same as Chain
     // Lightning's own stream.
     private static void AddShrinkBeam(string name, uint id)
     {

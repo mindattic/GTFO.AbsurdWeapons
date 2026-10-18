@@ -27,9 +27,12 @@ in the config file BepInEx creates on first launch — see [Config](#config).
 
 ### Guns
 
-All guns have **infinite ammo** (the clip refills after every shot and the reserve stays full, so
-they never reload, and a gun you switch to starts fully loaded). They're tuned to be fun first;
-balance comes later.
+The guns use ammo like any vanilla gun - a magazine, a reserve in the slot's ammo pool, reloads,
+and ammo packs top them up. Each one starts **completely full** the first time you equip it in a
+level, and keeps its own ammo from then on (see [Swapping weapons in a level](#swapping-weapons-in-a-level)).
+The beam guns (lasers, Chain Lightning, Shrink Beam) spend a round per tick of the beam and reload
+themselves when they run dry. (`[Ammo] InfiniteAmmo` brings back bottomless guns.) They're tuned
+to be fun first; balance comes later.
 
 | Weapon | Slot | Model | In one line |
 |---|---|---|---|
@@ -217,19 +220,38 @@ around, flashing red faster and faster, and blows after **3 seconds**: 60 damage
 falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
 Every player is handed a stack of **99** in their consumable slot when they drop into a level, and
-the stack never goes down. By default every consumable that would have spawned in boxes and lockers
-is a Hand Grenade instead, and 60% of them are left lying out in the open.
+the stack never goes down.
+
+### Stim Pack
+
+A consumable of its own (the I2-LP syringe is left as it is): an **overheal like Doom's**. It gives
+**50%** of your max health and can take you **past max, up to 200%**; anything above max then
+**drains back down to 100%** at 1% of max a second. Damage eats into the overheal first.
+
+### Loot
+
+Consumables in boxes and lockers - and lying around, like artifacts (60% of them) - are only five
+things: **Hand Grenades** (2 in 6), **Stim Packs**, **health kits**, **tool kits** and **ammo kits**
+(1 in 6 each). Kits found this way are full packs. The zone's own resource packs still spawn as
+normal on top.
 
 ## Swapping weapons in a level
 
-Hold a main, special, tool or melee weapon and press **Page Up** for the next of this mod's weapons
-for that slot, or **Page Down** for the previous one. A five-second message names what you switched
-to. Only this mod's weapons are in the cycle, never vanilla gear (and never one you've switched off
-in the config). Teammates get the swap too.
+Hold a main, special, tool or melee weapon and press **Page Up** for the next weapon for that slot,
+or **Page Down** for the previous one. A five-second message names what you switched to.
+Teammates get the swap too.
+
+The first time you swap a slot, **the gear you dropped in with joins that slot's cycle**, ahead of
+this mod's weapons - so your own main, special, tool and melee are always one press away. (Weapons
+you've switched off in the config aren't in it.)
+
+**Every weapon keeps its own ammo** for the rest of the level: swap away and its magazine and
+reserve are put aside; swap back and you get exactly that back. One of this mod's weapons starts
+completely full the first time you equip it in a level.
 
 Press **Home** to go back to a serious run: every slot you've swapped this level - main, special,
-tool and melee, all at once - goes back to the gear you started with, with the magazines and
-reserve ammo you had the moment you first swapped it away. Slots you never swapped aren't touched.
+tool and melee, all at once - goes back to the gear you dropped in with, with its own ammo. Slots
+you never swapped aren't touched.
 
 ## Config
 
@@ -271,7 +293,9 @@ and nothing else about the game changes. Pistol and rifle versions of a gun are 
 | `[Rocket Launcher]` | `Rocket Launcher Enabled` |
 | `[Shrink Beam]` | `Shrink Beam Enabled` |
 | `[Victory Banner]` | `Victory Banner Enabled` |
-| `[Hand Grenade]` | `Hand Grenade Enabled` (off: glowsticks and loot stay vanilla) |
+| `[Hand Grenade]` | `Hand Grenade Enabled` |
+| `[Stim Pack]` | `Stim Pack Enabled` |
+| `[Loot]` | `Loot Mix Enabled` (off: vanilla consumable loot) |
 
 ### Melee weapons (shared settings)
 
@@ -366,7 +390,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `Damage` † | 22.5 | Damage shown in the loadout screen (each ball actually rolls `DamageScale` x 1d`DamageDie`). |
 | `ShotDelay` † | 0.0857 | Seconds between balls (~11.7 a second). |
-| `ClipSize` † | 100 | Clip size (infinite ammo refills it anyway). |
+| `ClipSize` † | 100 | Magazine size. |
 | `BallSpeed` † | 57.2 | Ball speed, m/s. |
 | `DamageDie` † | 8 | Each hit rolls `DamageScale` x 1d`DamageDie`. |
 | `DamageScale` † | 5 | Each hit rolls `DamageScale` x 1d`DamageDie`. |
@@ -380,7 +404,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `Damage` † | 1 | Damage per round. |
 | `ShotDelay` † | 0.09 | Seconds between rounds. |
-| `ClipSize` † | 30 | Clip size. |
+| `ClipSize` † | 30 | Magazine size. |
 | `RoundSpeed` † | 45 | Round speed, m/s. |
 | `TurnRate` † | 1500 | How fast a homing round can turn, degrees/second. |
 | `LockConeDegrees` † | 35 | Cone around the crosshair that locks count as nearby. |
@@ -396,7 +420,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `Damage` † | 2 | Damage per tick (20 ticks a second). |
 | `ShotDelay` † | 0.05 | Seconds between ticks. |
-| `ClipSize` † | 100 | Clip size. |
+| `ClipSize` † | 100 | Magazine size. |
 | `BeamRange` † | 70 | Metres the beam reaches. |
 | `BeamWidth` † | 0.025 | The beam's visual width. |
 
@@ -406,7 +430,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `Damage` † | 25 | Damage per bite (enemies' own tentacles are untouched). |
 | `ShotDelay` † | 0.235 | Seconds between bursts. |
-| `ClipSize` † | 60 | Clip size. |
+| `ClipSize` † | 60 | Magazine size. |
 | `TentaclesPerShot` | 3 | Tentacles each burst sends out (each needs a free one of twelve spawn spots). |
 | `EngageConeDegrees` | 20 | The enemy nearest the crosshair within this cone (and in reach) draws every tentacle. |
 | `GrabConeDegrees` | 25 | With no enemy in reach, each tentacle reaches along its own random line within this cone. |
@@ -425,7 +449,7 @@ Shared by everything that flings enemies (the Warhammer).
 | Setting | Default | What it does |
 |---|---|---|
 | `GunShotDelay` † | 0.6 | Seconds between shots. |
-| `GunClipSize` † | 6 | Clip size. |
+| `GunClipSize` † | 6 | Magazine size. |
 | `LaunchSpeed` | 30 | Launch speed along the aim, m/s. |
 | `LaunchLift` | 5 | Extra upward speed every grenade is thrown with, m/s - the lob. |
 | `Gravity` | 18 | Gravity on a grenade in flight, m/s². |
@@ -442,7 +466,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `Damage` † | 150 | Damage to every enemy on the line. |
 | `ShotDelay` † | 1.5 | Seconds between shots. |
-| `ClipSize` † | 5 | Clip size. |
+| `ClipSize` † | 5 | Magazine size. |
 | `PenetrationRange` | 200 | Metres the piercing slug reaches. |
 
 ### `[Chain Lightning Gun]`
@@ -451,7 +475,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `Damage` † | 5 | Damage of the first strike. |
 | `ShotDelay` † | 0.15 | Seconds between shots. |
-| `ClipSize` † | 60 | Clip size. |
+| `ClipSize` † | 60 | Magazine size. |
 | `Range` | 40 | Metres the first strike reaches. |
 | `AssistConeDegrees` | 6 | A near-miss within this cone still finds a first target. |
 | `Jumps` | 5 | How many times a bolt leaps on to another enemy (0-5). |
@@ -464,7 +488,7 @@ Shared by everything that flings enemies (the Warhammer).
 | Setting | Default | What it does |
 |---|---|---|
 | `GunShotDelay` † | 0.8 | Seconds between shots. |
-| `GunClipSize` † | 5 | Clip size. |
+| `GunClipSize` † | 5 | Magazine size. |
 | `LaunchSpeed` | 32.7 | Rocket speed, m/s. |
 | `Lifetime` | 10 | Seconds a rocket flies before it disappears if it never hits anything. |
 | `BlastRadius` | 5.2 | Metres the blast reaches. |
@@ -477,7 +501,7 @@ Shared by everything that flings enemies (the Warhammer).
 | Setting | Default | What it does |
 |---|---|---|
 | `GunShotDelay` † | 0.08 | Seconds between beam ticks. |
-| `GunClipSize` † | 100 | Clip size. |
+| `GunClipSize` † | 100 | Magazine size. |
 | `Range` | 40 | Metres the beam reaches. |
 | `ShrinkPerSecond` | 0.25 | Share of full size (and speed) removed per second on the beam. |
 | `RegrowDelaySeconds` | 1 | Seconds off the beam before a shrunk enemy starts growing back. |
@@ -510,16 +534,40 @@ Shared by everything that flings enemies (the Warhammer).
 | `BlastStagger` | 6 | Blast stagger multiplier. |
 | `StackSize` † | 99 | How many the stack holds (it's kept full). |
 | `GiveOnDrop` | true | Hand every player a stack when they drop into a level (the host's setting decides). |
-| `OnlyLootConsumable` † | true | Every consumable in boxes and lockers is a Hand Grenade instead (the host's setting decides). |
-| `OutInTheOpenShare` † | 0.6 | With `OnlyLootConsumable` on: the share (0-1) left lying out in the open instead. |
+
+### `[Stim Pack]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `HealPercent` | 50 | Health a Stim Pack gives, in percent of max health. |
+| `MaxHealthPercent` | 200 | How high it can take your health, in percent of max health. |
+| `DrainPercentPerSecond` | 1 | How fast health above max drains back to max, in percent of max a second. |
+
+### `[Loot]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `HandGrenadeWeight` † | 2 | Relative odds a loot consumable is a Hand Grenade. |
+| `StimPackWeight` † | 1 | Relative odds it's a Stim Pack. |
+| `HealthKitWeight` † | 1 | Relative odds it's a health kit. |
+| `ToolKitWeight` † | 1 | Relative odds it's a tool kit. |
+| `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
+| `KitSize` † | 100 | Contents of a kit found as loot, in the game's pack units (100 = a full pack). |
+| `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
+
+### `[Ammo]`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `InfiniteAmmo` | false | On: this mod's guns never run out or reload. |
 
 ### `[Gear Cycling]`
 
 | Setting | Default | What it does |
 |---|---|---|
-| `NextWeaponKey` | PageUp | Swap to the next of this mod's weapons for the slot you're holding. |
+| `NextWeaponKey` | PageUp | Swap to the next weapon in the held slot's cycle: the gear you dropped in with, then this mod's weapons. |
 | `PreviousWeaponKey` | PageDown | Swap to the previous one. |
-| `RestoreLoadoutKey` | Home | Put back every swapped slot, ammo included, as it was before its first swap. |
+| `RestoreLoadoutKey` | Home | Put every swapped slot back to the gear you dropped in with, with its own ammo. |
 
 Any [Unity `KeyCode`](https://docs.unity3d.com/ScriptReference/KeyCode.html) name works; `None` disables that key.
 
@@ -557,7 +605,7 @@ the host, who owns enemy positions.
 
 - **GTFO.EZ:** compatible, in either load order. Weapons are built after EZ's tuning, so each
   starts from EZ's version of the weapon it's copied from. Stats this mod sets itself stay fixed.
-- **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202 tool, 1203
+- **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202 tool, 1203-1204
   consumable): if one already uses an id, that weapon isn't added and `LogOutput.log` says so. The
   rest still load. A melee weapon whose attack speed isn't 1 also adds a melee animation set at its
   own id, and the guns add recoil profiles at 1101-1109 and 1119 and a first-person hold at 1103; a

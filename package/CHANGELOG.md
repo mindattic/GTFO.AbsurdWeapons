@@ -10,7 +10,7 @@
     flings enemies up to 12 m, and walls hurt them), Shadow Dagger
     (a fully charged hit makes you unseen for 3 s; kills while hidden add +25% damage up to +100%,
     every kill while hidden also adds +0.33 s, up to a 3 s cap that drains 5% with every enemy hit, resetting when the stealth ends; putting it away ends it).
-  - **Guns (infinite ammo):** Plasma Pistol/Rifle (Doom plasma), Hive Pistol/Rifle (Titanfall smart
+  - **Guns:** Plasma Pistol/Rifle (Doom plasma), Hive Pistol/Rifle (Titanfall smart
     rounds, with lock-on markers), Laser Pistol/Rifle (continuous burning beams), Tentacle Cannon (bursts of striker tentacles
     from spots around the edge of your view, biting a nearby enemy or reaching for walls and floors otherwise), Railgun (a slow, devastating hitscan slug with infinite penetration and a double-helix beam),
     Chain Lightning Gun (bolts that jump between up to six enemies), Grenade Pistol/Rifle (lobbed lock-melter grenades that blow on
@@ -21,8 +21,13 @@
   - **Tool:** Victory
     Banner (plant a flag with a glowing healing aura, pick it back up; heals everyone standing in it).
   - **Consumable:** Hand Grenade (a lock melter thrown like a glowstick, lobbed twice as hard, that bounces and blows after
-    3 s; can replace every other loot consumable in the level; every player starts each level with 99, and they never run out).
-- Swap between this mod's weapons in a level with Page Up / Page Down (configurable).
+    3 s; every player starts each level with 99, and they never run out) and Stim Pack (an overheal
+    like Doom's: +50% health, up to 200%, draining back to 100%).
+- Guns use ammo like vanilla guns; each starts full the first time it's equipped in a level and keeps
+  its own ammo after that (`[Ammo] InfiniteAmmo` brings back bottomless guns).
+- Loot consumables are only Hand Grenades, Stim Packs and health, tool and ammo kits (`[Loot]`).
+- Swap weapons in a level with Page Up / Page Down (configurable): the gear you dropped in with joins
+  the cycle the first time you swap, and Home puts it all back.
 - Config: every weapon has its own on/off switch (`<Weapon> Enabled`, pistol and rifle versions
   separately), and 200+ settings retune them - damage, rate of fire, ranges, blasts, the Katana's
   dash, Mjolnir's throw, the Warhammer's shockwave and slam, the Shadow Dagger's stealth, Chain
