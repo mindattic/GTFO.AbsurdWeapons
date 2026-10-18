@@ -86,7 +86,7 @@ internal static class GunInjector
         ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump is 75% of the last).");
         ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
         ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
-        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 100f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
+        TentacleDamage = config.Bind("Tentacle Guns", "Damage", 25f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
         TentacleShotDelay = config.Bind("Tentacle Guns", "ShotDelay", 0.235f, "Seconds between tentacles.");
         TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
     }

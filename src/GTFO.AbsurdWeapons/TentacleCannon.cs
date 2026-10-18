@@ -258,6 +258,7 @@ internal sealed class TentacleLash : MonoBehaviour
 
     private static int diagnosticLashes = 5;
     private static int diagnosticDraws = 5;
+    private static float lastBiteLog = -10f;
     private bool loggedMidLash;
 
     public TentacleLash(IntPtr ptr) : base(ptr) { }
@@ -439,9 +440,18 @@ internal sealed class TentacleLash : MonoBehaviour
         }
         if (nearest == null) return;
 
+        var healthBefore = nearest.m_health;
         var direction = (end - start).normalized;
         nearest.BulletDamage(damage, owner.Cast<Agent>(), end, direction, -direction,
             allowDirectionalBonus: false, staggerMulti, 1f, gearCategoryId);
+
+        // Proof it landed, not just that it was sent: the limb's own health before and after,
+        // throttled so continuous fire doesn't flood the log.
+        if (Time.time - lastBiteLog > 0.5f)
+        {
+            lastBiteLog = Time.time;
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Tentacle Cannon bite: {enemy.name} limb health {healthBefore:0.#} -> {nearest.m_health:0.#} (dealt {damage:0.#}).");
+        }
     }
 
     private void OnDestroy()

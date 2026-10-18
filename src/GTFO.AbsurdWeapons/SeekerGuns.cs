@@ -354,12 +354,14 @@ internal static class SeekerGuns
                 weaponRayData.maxRayDist = 0f;
                 __result = false;
                 // Shotgun pellets come without an owner in the hit data: fall back to the gun's.
+                // Shotgun pellets also come with damage 0 (the game splits a shotgun's damage across
+                // its own pellet count, not ours) - read it straight from our own config instead.
                 var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
                 if (shooter != null && shooter.IsLocallyOwned)
                 {
                     // A burst of tentacles per pellet, from the spawn spots under the view.
                     TentacleCannon.FirePellet(shooter, originPos, PelletDirection(alignTransform, weaponRayData),
-                        weaponRayData.damage, weaponRayData.gearCategoryId);
+                        GunInjector.TentacleDamage.Value, weaponRayData.gearCategoryId);
                 }
                 return false;
             }

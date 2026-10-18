@@ -21,6 +21,7 @@ internal static class ConfigMigrations
         (2, "Chain Lightning Gun", "Damage", 10f),
         (2, "Tentacle Guns", "Damage", 35f),
         (2, "Tentacle Guns", "StaggerMulti", 5f),
+        (3, "Tentacle Guns", "Damage", 100f),
     };
 
     // After every setting is bound.
