@@ -14,10 +14,12 @@ namespace GTFO.AbsurdWeapons;
 /// <summary>
 /// The Shrink Beam: a continuous ray (<see cref="ShrinkBeamDriver"/>; the gun itself never fires)
 /// that holds on whatever's under the crosshair and steadily shrinks it - smaller and slower by the
-/// same share of its own full size - until it shrinks past <see cref="MinScale"/> and pops. Stop
-/// holding the beam on it and, after <see cref="RegrowDelaySeconds"/> off it, it grows back to full
-/// size at its own pace: a shrink has to be finished in one sustained hold, not nibbled away at
-/// across several bursts. The shrink and regrow are cosmetic (scale and move speed aren't
+/// same share of its own full size - until it shrinks past <see cref="MinScale"/> and pops. Once
+/// it's under <see cref="StepOnScale"/>, just getting within <see cref="StepOnRadius"/> of it pops
+/// it too - small enough that walking near it counts as stepping on it. Stop holding the beam on it
+/// and, after <see cref="RegrowDelaySeconds"/> off it, it grows back to full size at its own pace: a
+/// shrink has to be finished in one sustained hold, not nibbled away at across several bursts. The
+/// shrink and regrow are cosmetic (scale and move speed aren't
 /// networked, so every client that sees the beam's line - the shooter's own tick, or the message
 /// everyone else gets - runs the same shrink math on its own copy of whatever that line is on);
 /// the kill itself goes through the shooter's own bullet path, so it syncs like any other hit.
@@ -30,6 +32,8 @@ internal static class ShrinkBeam
     internal static ConfigEntry<float> RegrowPerSecond = null!;
     internal static ConfigEntry<float> MinScale = null!;
     internal static ConfigEntry<float> PopDamage = null!;
+    internal static ConfigEntry<float> StepOnScale = null!;
+    internal static ConfigEntry<float> StepOnRadius = null!;
     internal static ConfigEntry<float> GunShotDelay = null!;
     internal static ConfigEntry<int> GunClipSize = null!;
 
@@ -44,8 +48,10 @@ internal static class ShrinkBeam
         ShrinkPerSecond = config.Bind("Shrink Beam", "ShrinkPerSecond", 0.25f, "Share of full size (and speed) removed per second the beam holds on an enemy.");
         RegrowDelaySeconds = config.Bind("Shrink Beam", "RegrowDelaySeconds", 1f, "Seconds off the beam before a shrunk enemy starts growing back.");
         RegrowPerSecond = config.Bind("Shrink Beam", "RegrowPerSecond", 0.15f, "Share of full size regained per second once it starts growing back.");
-        MinScale = config.Bind("Shrink Beam", "MinScale", 0.15f, "Share of full size that pops it.");
+        MinScale = config.Bind("Shrink Beam", "MinScale", 0.25f, "Share of full size that pops it.");
         PopDamage = config.Bind("Shrink Beam", "PopDamage", 99999f, "Damage dealt on the pop (enough to kill anything outright).");
+        StepOnScale = config.Bind("Shrink Beam", "StepOnScale", 0.4f, "Below this share of full size, just getting close enough pops it too - you've stepped on it.");
+        StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 0.6f, "Metres counted as \"standing on it\" once it's small enough.");
         GunShotDelay = config.Bind("Shrink Beam", "GunShotDelay", 0.08f, "Seconds between beam ticks (it never actually fires - the stream is trigger-driven).");
         GunClipSize = config.Bind("Shrink Beam", "GunClipSize", 100, "Clip size (infinite ammo refills it anyway).");
     }
@@ -74,10 +80,11 @@ internal static class ShrinkBeam
 
     private static readonly Dictionary<IntPtr, Shrunk> shrunk = new();
 
-    // One tick of the beam from the local shooter: whatever's dead ahead shrinks (and, on the
-    // shooter's own game, pops if it's shrunk enough) - everyone else is sent the beam's line so
-    // they see the same ray and shrink their own copy of whatever it's on.
-    internal static void Tick(PlayerAgent owner, Vector3 eye, Vector3 aim, Transform? muzzle, float dt, uint gearCategoryId)
+    // One beam update from the local shooter, called every frame so the beam's start always sits
+    // right at the gun's own barrel on screen, not just wherever it was at the last shrink tick.
+    // `applyShrink` false: just the beam kept lit and following the gun (every frame between
+    // ticks) - no shrink math, no network message (same split as the laser beam's).
+    internal static void Tick(PlayerAgent owner, Vector3 eye, Vector3 aim, Transform? muzzle, float dt, uint gearCategoryId, bool applyShrink = true)
     {
         var start = muzzle != null ? Barrel.Start(owner, muzzle, eye, aim) : eye + aim * 0.5f;
         var end = eye + aim * Range.Value;
@@ -86,6 +93,12 @@ internal static class ShrinkBeam
         {
             end = hit.point;
             hitEnemy = hit.collider.GetComponent<Dam_EnemyDamageLimb>()?.m_base?.Owner;
+        }
+
+        if (!applyShrink)
+        {
+            ShrinkStream.Spawn(start, end, owner.Owner != null ? owner.Owner.Lookup : 0UL);
+            return;
         }
 
         if (hitEnemy != null && hitEnemy.Alive)
@@ -187,6 +200,26 @@ internal static class ShrinkBeam
         }
         if (done == null) return;
         foreach (var pointer in done) shrunk.Remove(pointer);
+    }
+
+    // Once an enemy's shrunk below StepOnScale, just getting close enough to it pops it too - as if
+    // the local player stepped on it. Each client checks this for its own local player only, same
+    // as the regrow above: no network message needed, the kill still goes through the bullet path.
+    internal static void CheckStepOn()
+    {
+        if (shrunk.Count == 0) return;
+        var local = PlayerManager.GetLocalPlayerAgent();
+        if (local == null || !local.Alive) return;
+
+        List<EnemyAgent>? stepped = null;
+        foreach (var state in shrunk.Values)
+        {
+            if (state.Scale > StepOnScale.Value || state.Enemy == null || !state.Enemy.Alive) continue;
+            if (Vector3.Distance(local.Position, state.Enemy.transform.position) > StepOnRadius.Value) continue;
+            (stepped ??= new List<EnemyAgent>()).Add(state.Enemy);
+        }
+        if (stepped == null) return;
+        foreach (var enemy in stepped) Pop(local, enemy, GunInjector.ShrinkBeamId);
     }
 
     // The living enemy nearest `point` within `radius` - how a receiving client finds the same
@@ -322,13 +355,16 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
             var gun = player.Inventory?.WieldedItem?.TryCast<Gear.BulletWeapon>();
             var archetype = gun?.ArchetypeData;
             if (gun == null || archetype == null || archetype.persistentID != GunInjector.ShrinkBeamId) return;
-            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS) || Time.time < nextTick) return;
+            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS)) return;
             var camera = player.FPSCamera;
             if (camera == null) return;
 
+            // Lit (and locked to the barrel) every frame the trigger is held; the shrink itself
+            // only lands on the throttled ticks.
             var tick = Mathf.Max(0.02f, ShrinkBeam.GunShotDelay.Value);
-            nextTick = Time.time + tick;
-            ShrinkBeam.Tick(player, camera.Position, camera.Forward, gun.MuzzleAlign, tick, GunInjector.ShrinkBeamId);
+            var applyShrink = Time.time >= nextTick;
+            if (applyShrink) nextTick = Time.time + tick;
+            ShrinkBeam.Tick(player, camera.Position, camera.Forward, gun.MuzzleAlign, tick, GunInjector.ShrinkBeamId, applyShrink);
         }
         catch (Exception e)
         {
@@ -338,7 +374,10 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
     }
 }
 
-/// <summary>Always-on: regrows every tracked shrunk enemy that's fallen off the beam.</summary>
+/// <summary>
+/// Always-on: regrows every tracked shrunk enemy that's fallen off the beam, and pops any that are
+/// small enough for the local player to have just stepped on.
+/// </summary>
 internal sealed class ShrinkRegrowth : MonoBehaviour
 {
     public ShrinkRegrowth(IntPtr ptr) : base(ptr) { }
@@ -348,6 +387,7 @@ internal sealed class ShrinkRegrowth : MonoBehaviour
         try
         {
             ShrinkBeam.Regrow(Time.deltaTime);
+            ShrinkBeam.CheckStepOn();
         }
         catch (Exception e)
         {

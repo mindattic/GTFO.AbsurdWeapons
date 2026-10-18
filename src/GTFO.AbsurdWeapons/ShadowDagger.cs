@@ -44,7 +44,7 @@ internal static class Stealth
     internal static void Bind(ConfigFile config)
     {
         Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 2f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
-        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.5f, "Seconds added to the stealth for a full-windup kill made while hidden (balances the shorter base stealth).");
+        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.25f, "Seconds added to the stealth for a full-windup kill made while hidden (balances the shorter base stealth).");
         BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
         MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
     }
@@ -246,11 +246,12 @@ internal static class Stealth
 /// Shows stealth on every game, from the shared hidden list, so everyone sees the same thing: the
 /// hidden player tints the same purple as the dagger's own glow and fades out to
 /// <see cref="MostTransparent"/> transparent, tied straight to how much stealth is left - filling
-/// back in as the time runs down. Anything that adds time (another full hit, a full-windup kill)
-/// makes them more see-through again. Every part of them shown (each renderer) is switched to a
-/// tinted, see-through copy of its own materials for the duration, and back to its own when it
-/// ends. Teammates see the whole body; the hidden player sees their first-person view (arms and the
-/// dagger itself).
+/// back in as the time runs down - and under <see cref="WarningSeconds"/> left, flickers between
+/// that tint and fully visible, faster and faster, until it reverts. Anything that adds time
+/// (another full hit, a full-windup kill) makes them more see-through again. Every part of them
+/// shown (each renderer) is switched to a tinted, see-through copy of its own materials for the
+/// duration, and back to its own when it ends. Teammates see the whole body; the hidden player sees
+/// their first-person view (arms and the dagger itself).
 /// Even out of stealth, the Shadow Dagger in anyone's hand gives off a faint pulsing violet glow -
 /// a whisper of the Gravity Hammer's old light, not the thing itself.
 /// </summary>
@@ -259,6 +260,9 @@ internal sealed class StealthVisuals : MonoBehaviour
     private const float MostTransparent = 0.95f; // fully stealthed: 5% there
     private const float FadeRate = 6f;          // how quickly the shown transparency follows the time left
     private const float RescanSeconds = 0.25f;  // how often to pick up renderers that appeared (a swapped-in weapon)
+    private const float WarningSeconds = 1f;    // under this much left, it starts flickering back in
+    private const float FlickerMinHz = 2f;      // flicker rate at the start of the warning
+    private const float FlickerMaxHz = 20f;     // flicker rate right before it reverts
 
     // One part of a hidden player: its own materials, and the tinted see-through copies shown meanwhile.
     private sealed class Part
@@ -388,6 +392,16 @@ internal sealed class StealthVisuals : MonoBehaviour
         var target = MostTransparent * Mathf.Clamp01(remaining / Mathf.Max(0.1f, Stealth.Seconds.Value));
         state.Transparency = Mathf.Lerp(state.Transparency, target, 1f - Mathf.Exp(-FadeRate * Time.deltaTime));
         var tint = new Color(GlowColor.r, GlowColor.g, GlowColor.b, 1f - state.Transparency);
+
+        // Under a second left: flickers back toward fully visible, faster and faster as it runs
+        // out, so it reads as the stealth glitching off rather than just quietly ending.
+        if (remaining < WarningSeconds)
+        {
+            var urgency = 1f - Mathf.Clamp01(remaining / WarningSeconds); // 0 entering the warning, 1 at zero
+            var hz = Mathf.Lerp(FlickerMinHz, FlickerMaxHz, urgency);
+            if (Mathf.PingPong(Time.time * hz, 1f) < 0.5f) tint = Color.white;
+        }
+
         foreach (var part in state.Parts)
         {
             foreach (var ghost in part.Ghosts)
