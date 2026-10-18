@@ -25,8 +25,9 @@ namespace GTFO.AbsurdWeapons;
 /// own firing - sound, recoil, ammo (infinite, like every gun here) - stays vanilla. The shooter's
 /// game deals the damage, through the bullet path so it syncs; everyone else is sent the launch and
 /// the blast and sees the same rocket.
-/// It can't aim down sights: right-click instead detonates every rocket the shooter has in flight,
-/// right where it is (<see cref="RocketProjectile"/>).
+/// It can't aim down sights: right-click instead detonates the shooter's oldest rocket still in
+/// flight, right where it is - one per click, so a volley can be set off as a chain
+/// (<see cref="RocketProjectile"/>).
 /// </summary>
 [HarmonyPatch]
 internal static class RocketLauncher
@@ -141,7 +142,8 @@ internal sealed class RocketProjectile : MonoBehaviour
     private uint id, gearCategoryId;
     private PlayerAgent? owner; // null on a teammate's (visual-only) copy
     private Vector3 direction;
-    private float age, nextSpark, nextDust;
+    private float age, nextSpark, nextDust, launchedAt;
+    private static int detonatedFrame = -1; // a right-click detonates one rocket, whichever runs first that frame
     private bool exploded;
 
     public RocketProjectile(IntPtr ptr) : base(ptr) { }
@@ -158,6 +160,7 @@ internal sealed class RocketProjectile : MonoBehaviour
         rocket.gearCategoryId = gearCategoryId;
         rocket.owner = owner;
         rocket.direction = direction.normalized;
+        rocket.launchedAt = Time.time;
 
         live[id] = rocket;
     }
@@ -191,12 +194,18 @@ internal sealed class RocketProjectile : MonoBehaviour
 
             var position = transform.position;
 
-            // Right-click: it stops dead and blows up right where it is.
-            if (owner != null && RocketLauncher.DetonatePressed(owner))
+            // Right-click: the shooter's oldest rocket in flight stops dead and blows up right
+            // where it is - one per click.
+            if (owner != null && detonatedFrame != Time.frameCount && RocketLauncher.DetonatePressed(owner))
             {
-                RocketLauncher.SendDetonate(id, position);
-                Explode();
-                return;
+                detonatedFrame = Time.frameCount;
+                var oldest = Oldest(owner);
+                if (oldest != null)
+                {
+                    RocketLauncher.SendDetonate(oldest.id, oldest.transform.position);
+                    oldest.Explode();
+                    if (oldest == this) return;
+                }
             }
 
             var step = RocketLauncher.Speed.Value * dt;
@@ -218,6 +227,19 @@ internal sealed class RocketProjectile : MonoBehaviour
             Plugin.Logger.LogError($"GTFO.AbsurdWeapons rocket failed: {e.Message}");
             Remove();
         }
+    }
+
+    // The shooter's rocket launched longest ago that's still flying.
+    [HideFromIl2Cpp]
+    private static RocketProjectile? Oldest(PlayerAgent owner)
+    {
+        RocketProjectile? oldest = null;
+        foreach (var rocket in live.Values)
+        {
+            if (rocket == null || rocket.exploded || rocket.owner == null || rocket.owner.Pointer != owner.Pointer) continue;
+            if (oldest == null || rocket.launchedAt < oldest.launchedAt) oldest = rocket;
+        }
+        return oldest;
     }
 
     // No smoke trail - just a spray of sparks every few centimetres of flight, kicked out behind
