@@ -141,3 +141,12 @@ _Nothing recorded yet._
 | G.AWPN-T114 | 2026-10-18 | fix | closed | Cross-mod review: with GTFO.EZ's Consumables Are Kits on, LootMix (since G.AWPN-T112) kept GTFO.EZ's kit sizes and odds, so GTFO.EZ's settings beat AbsurdWeapons' KitSize and kit weights - against the rule that AbsurdWeapons wins clashes. Every table now gets AbsurdWeapons' full mix; documented in Compatibility | 9500b6c on main (local; not pushed), build clean, 39/39 tests |
 | G.AWPN-T115 | 2026-10-18 | feature | closed | Artifacts stay: remove ArtifactsBecomeHandGrenades (and its LG_PickupItem.SetupAsArtifact prefix) so Hand Grenades join artifacts instead of replacing them - artifacts as rare as vanilla, grenades common via the loot mix; works with GTFO.EZ's artifact buffs - user request 2026-10-18 | e248a13 on main (local; not pushed), build clean, 39/39 tests |
 | G.AWPN-T116 | 2026-10-18 | feature | closed | Hand Grenades common: half the loot mix (weight 4) and 1.5x loot consumables per zone; artifacts unchanged | — |
+| G.AWPN-T117 | 2026-10-18 | fix | closed | Playtest: beam guns (laser/electric/shrink) never reloaded and went dead when empty - now no magazine, drain 1% of reserve per second of fire; drop the starting Hand Grenade hand-out (player started with an empty grenade equipped) | — |
+| G.AWPN-T118 | 2026-10-18 | feature | closed | Pressing a slot's select key (1-4) again while that slot is in hand cycles it, like PageUp ([Gear Cycling] SlotKeysCycle) | — |
+| G.AWPN-T119 | 2026-10-18 | feature | closed | Stim Pack switched off by default for now: not added, not in the loot mix | — |
+| G.AWPN-T120 | 2026-10-18 | feature | closed | Beam guns drain 1% of the reserve every 0.5 s of sustained fire (StreamPercentPerSecond 2) | — |
+| G.AWPN-T121 | 2026-10-18 | feature | closed | Tentacle Cannon: only a tentacle that bites an enemy costs a round; shots themselves are free | — |
+| G.AWPN-T122 | 2026-10-18 | docs | closed | README: Tentacle Cannon ammo note no longer renders as a stray bullet | — |
+| G.AWPN-T123 | 2026-10-18 | feature | closed | Rocket Launcher: no ADS; right-click detonates the shooter's rockets in flight where they are | — |
+| G.AWPN-T124 | 2026-10-18 | feature | closed | Railgun beam: no center line; the double helix holds its shape and fades to transparent instead of unwinding | — |
+| G.AWPN-T125 | 2026-10-18 | feature | closed | Rocket Launcher: right-click detonates only the oldest rocket in flight, one per click (chain detonations) | — |
