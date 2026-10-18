@@ -268,10 +268,9 @@ All of it is `[Hand Grenade]`.
 the Hand Grenade (1203), the Stim Pack (1204) and the health, tool and ammo resource packs (found by
 `InventorySlot.ResourcePack` and name, logged). Resource packs normally get their contents from the
 zone budget, so the pack items' `ConsumableAmmoMin/Max` are set to `KitSize` (20) for the loot path.
-`ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`. A table that's already
-resource packs only - GTFO.EZ's `Consumables Are Kits` leaves them that way - isn't replaced: it
-keeps GTFO.EZ's kits, contents and odds and just gets the Hand Grenade and Stim Pack appended, and
-the kits' `ConsumableAmmoMin/Max` are only set here when some table does need the full mix. A prefix on
+`ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`. Where this clashes with GTFO.EZ
+this mod wins: a table GTFO.EZ's `Consumables Are Kits` already made kits-only gets this mix too, so
+kit odds and contents follow `[Loot]` here, not GTFO.EZ's kit settings (logged when it happens). A prefix on
 `LG_PickupItem.SetupAsArtifact` sets every artifact spot up with
 `SetupAsConsumable(randomSeed, 1203)` instead (`ArtifactsBecomeHandGrenades`); level generation runs
 on every game from the same seed, so all players get the same grenades.

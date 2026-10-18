@@ -2,9 +2,9 @@
 
 ## v1
 
-- Loot: with GTFO.EZ's *Consumables Are Kits* on, its kit-only loot tables keep GTFO.EZ's kits
-  (sizes and odds) and get the Hand Grenade and Stim Pack added, instead of being replaced by this
-  mod's own mix. Without GTFO.EZ (or with that setting off) the full mix applies as before.
+- Loot: where it clashes with GTFO.EZ, this mod's loot wins - GTFO.EZ's kit-only tables (its
+  *Consumables Are Kits*) get this mod's mix too, Hand Grenades and Stim Packs alongside kits at
+  this mod's own kit odds and size.
 - Initial release with nineteen weapons, each marked **(!)**:
   - **Melee:** Katana (the Mastaba blade at twice a real katana's length; a full charge dashes up to
     10 m with the swing held, cutting the moment you reach an enemy or a wall), Mjolnir (a thunderclap on

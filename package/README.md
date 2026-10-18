@@ -235,8 +235,9 @@ things: **Hand Grenades** (2 in 6), **Stim Packs**, **health kits**, **tool kits
 (1 in 6 each). Kits found this way always hold **20%** of a pack. The zone's own resource packs
 still spawn as normal, at their usual sizes, on top.
 
-With **GTFO.EZ** installed and its *Consumables Are Kits* on, its kits are kept as they are (its
-sizes and odds) and Hand Grenades and Stim Packs are added alongside them instead.
+With **GTFO.EZ** installed, this mod's loot settings take precedence: its own kits come with Hand
+Grenades and Stim Packs alongside, at this mod's kit odds and sizes, whatever GTFO.EZ's *Consumables
+Are Kits* settings say.
 
 And **there are no artifacts**: everywhere the level would have placed one - out in the open or in a
 box - there's a **Hand Grenade** instead.
@@ -612,8 +613,11 @@ the host, who owns enemy positions.
 
 ## Compatibility
 
-- **GTFO.EZ:** compatible, in either load order. Weapons are built after EZ's tuning, so each
-  starts from EZ's version of the weapon it's copied from. Stats this mod sets itself stay fixed.
+- **GTFO.EZ:** compatible, in either load order; where the two clash, this mod wins. Everything it
+  changes in the game's data is applied after GTFO.EZ's. Weapons are built after EZ's tuning, so
+  each starts from EZ's version of the weapon it's copied from; stats this mod sets itself stay
+  fixed. Loot follows this mod's `[Loot]` settings, not GTFO.EZ's kit settings. Keys don't
+  overlap (this mod uses Home/PgUp/PgDn; GTFO.EZ uses E, X, Z, Shift and W/A/S/D).
 - **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202 tool, 1203-1204
   consumable): if one already uses an id, that weapon isn't added and `LogOutput.log` says so. The
   rest still load. A melee weapon whose attack speed isn't 1 also adds a melee animation set at its
