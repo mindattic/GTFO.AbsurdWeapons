@@ -171,7 +171,7 @@ internal static class SeekerGuns
     [HarmonyPrefix]
     private static bool SkipSyncedStreamFire(BulletWeaponSynced __instance) => !FiresAStream(__instance.ArchetypeData?.persistentID ?? 0);
 
-    private static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId || id == GunInjector.ShrinkBeamId;
+    internal static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId || id == GunInjector.ShrinkBeamId;
 
     // For the lasers and the Chain Lightning Gun even the archetype's trigger logic is skipped - it
     // runs the gun's firing, fire animation and recoil before Fire is ever reached - so a held

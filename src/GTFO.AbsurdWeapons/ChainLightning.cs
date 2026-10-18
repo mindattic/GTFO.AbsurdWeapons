@@ -333,7 +333,7 @@ internal sealed class ChainLightningDriver : MonoBehaviour
             var camera = player.FPSCamera;
             if (camera == null) return;
 
-            if (!InfiniteAmmo.TrySpend(player, gun)) return; // empty or reloading
+            if (!InfiniteAmmo.TrySpend(player, ChainLightning.TickSeconds)) return; // out of ammo
             nextTick = Time.time + ChainLightning.TickSeconds;
             var damage = archetype.Damage * ChainLightning.TickSeconds / Mathf.Max(0.02f, archetype.ShotDelay);
             ChainLightning.Fire(player, camera.Position, camera.Forward, damage, GunInjector.ChainLightningId, gun.MuzzleAlign);

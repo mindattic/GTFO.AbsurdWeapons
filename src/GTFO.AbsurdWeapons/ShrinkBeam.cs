@@ -376,10 +376,10 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
             var applyShrink = Time.time >= nextTick;
             if (applyShrink)
             {
-                if (!InfiniteAmmo.TrySpend(player, gun)) return; // empty or reloading: no beam
+                if (!InfiniteAmmo.TrySpend(player, tick)) return; // out of ammo: no beam
                 nextTick = Time.time + tick;
             }
-            else if (gun.GetCurrentClip() <= 0 && !InfiniteAmmo.Enabled.Value) return;
+            else if (!InfiniteAmmo.HasStreamAmmo(player)) return;
             ShrinkBeam.Tick(player, camera.Position, camera.Forward, gun.MuzzleAlign, tick, GunInjector.ShrinkBeamId, applyShrink);
         }
         catch (Exception e)

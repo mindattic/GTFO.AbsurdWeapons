@@ -30,8 +30,9 @@ in the config file BepInEx creates on first launch — see [Config](#config).
 The guns use ammo like any vanilla gun - a magazine, a reserve in the slot's ammo pool, reloads,
 and ammo packs top them up. Each one starts **completely full** the first time you equip it in a
 level, and keeps its own ammo from then on (see [Swapping weapons in a level](#swapping-weapons-in-a-level)).
-The beam guns (lasers, Chain Lightning, Shrink Beam) spend a round per tick of the beam and reload
-themselves when they run dry. (`[Ammo] InfiniteAmmo` brings back bottomless guns.) They're tuned
+The beam guns (lasers, Chain Lightning, Shrink Beam) have **no magazine and never reload**: every
+second of sustained fire uses **1%** of a full ammo reserve, so a full one is 100 seconds of beam,
+and they stop when it's empty. (`[Ammo] InfiniteAmmo` brings back bottomless guns.) They're tuned
 to be fun first; balance comes later.
 
 | Weapon | Slot | Model | In one line |
@@ -60,7 +61,7 @@ to be fun first; balance comes later.
 
 | Item | Model | In one line |
 |---|---|---|
-| **Hand Grenade** | Lock melter, thrown like a glowstick | Hold to wind up, release to throw; bounces, then blows after 3 s. Everyone starts each level with 1; each one you find is 1 more |
+| **Hand Grenade** | Lock melter, thrown like a glowstick | Hold to wind up, release to throw; bounces, then blows after 3 s. Nobody starts with any; each one you find is 1 more, up to 6 |
 
 ## Melee weapons
 
@@ -219,8 +220,7 @@ melter's look. Hold to wind up and release to throw (twice as hard as a glowstic
 around, flashing red faster and faster, and blows after **3 seconds**: 60 damage at the center,
 falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
-Every player is handed **1** in their consumable slot when they drop into a level, and **each one
-you find** as loot **is 1 more**, up to **6** carried. Thrown ones are gone.
+Nobody starts with any: **each one you find** as loot **is 1 more**, up to **6** carried. Thrown ones are gone.
 
 ### Stim Pack
 
@@ -539,8 +539,6 @@ Shared by everything that flings enemies (the Warhammer).
 | `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
 | `BlastStagger` | 6 | Blast stagger multiplier. |
 | `PickupCount` † | 1 | How many one pickup holds. |
-| `GiveOnDrop` | true | Hand every player `StartingCount` when they drop into a level (the host's setting decides). |
-| `StartingCount` | 1 | How many each player is handed on dropping in. |
 | `MaxCarried` | 6 | The most you can carry. |
 
 ### `[Stim Pack]`
@@ -569,6 +567,7 @@ Shared by everything that flings enemies (the Warhammer).
 | Setting | Default | What it does |
 |---|---|---|
 | `InfiniteAmmo` | false | On: this mod's guns never run out or reload. |
+| `StreamPercentPerSecond` | 1 | Percent of a full reserve the beam guns (lasers, Chain Lightning, Shrink Beam) use per second of fire. They never reload. |
 
 ### `[Gear Cycling]`
 

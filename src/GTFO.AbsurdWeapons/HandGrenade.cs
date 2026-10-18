@@ -4,7 +4,6 @@ using Agents;
 using BepInEx.Configuration;
 using GameData;
 using HarmonyLib;
-using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Attributes;
 using LevelGeneration;
 using Localization;
@@ -20,8 +19,8 @@ namespace GTFO.AbsurdWeapons;
 /// but it's a lock melter rigged to blow. It's the glowstick's own item cloned under a new id, so
 /// the game's throw, physics bounce and sync all stay vanilla; this mod swaps the look for the lock
 /// melter's (in your hand and in flight), switches the glow off, and blows it up when its fuse
-/// runs out. Every pickup is <see cref="PickupCount"/> grenade(s), and everyone is handed
-/// <see cref="StartingCount"/> in their consumable slot when they drop in; thrown ones are gone.
+/// runs out. Nobody starts with any: every one is found as loot, <see cref="PickupCount"/> to a
+/// pickup, up to <see cref="MaxCarried"/> carried; thrown ones are gone.
 /// </summary>
 [HarmonyPatch]
 internal static class HandGrenade
@@ -34,9 +33,7 @@ internal static class HandGrenade
     internal static ConfigEntry<float> BlastDamage = null!;
     internal static ConfigEntry<float> BlastEdgeFraction = null!;
     internal static ConfigEntry<float> BlastStagger = null!;
-    internal static ConfigEntry<bool> GiveOnDrop = null!;
     internal static ConfigEntry<int> PickupCount = null!;
-    internal static ConfigEntry<int> StartingCount = null!;
     internal static ConfigEntry<int> MaxCarried = null!;
     internal static ConfigEntry<float> ThrowForceMultiplier = null!;
     internal static ConfigEntry<bool> Enabled = null!;
@@ -52,9 +49,6 @@ internal static class HandGrenade
         BlastDamage = config.Bind("Hand Grenade", "BlastDamage", 60f, "Damage at the blast's center.");
         BlastEdgeFraction = config.Bind("Hand Grenade", "BlastEdgeFraction", 0.25f, "Share of damage left at the blast's edge.");
         BlastStagger = config.Bind("Hand Grenade", "BlastStagger", 6f, "Blast stagger multiplier.");
-        GiveOnDrop = config.Bind("Hand Grenade", "GiveOnDrop", true,
-            "Every player is given StartingCount Hand Grenades in their consumable slot when they drop into a level (the host's setting decides).");
-        StartingCount = config.Bind("Hand Grenade", "StartingCount", 1, "How many Hand Grenades each player is handed on dropping in (with GiveOnDrop on).");
         MaxCarried = config.Bind("Hand Grenade", "MaxCarried", 6, "The most Hand Grenades you can carry.");
         PickupCount = config.Bind("Hand Grenade", "PickupCount", 1, "How many Hand Grenades one loot pickup holds. Takes effect on restart.");
         ThrowForceMultiplier = config.Bind("Hand Grenade", "ThrowForceMultiplier", 2f, "Multiplies the glowstick's own wind-up throw strength, so it lobs much farther.");
@@ -361,75 +355,22 @@ internal sealed class HandGrenadeFuse : MonoBehaviour
 }
 
 /// <summary>
-/// Keeps the local Hand Grenade stack's cap at MaxCarried, and on the host gives every player StartingCount
-/// Hand Grenades when they drop into a level.
+/// Keeps the local Hand Grenade stack's cap at MaxCarried while it's in the consumable slot.
 /// </summary>
 internal sealed class HandGrenadeSupply : MonoBehaviour
 {
-    private readonly HashSet<ulong> supplied = new();
-    private float nextSupplyCheck;
-
     public HandGrenadeSupply(IntPtr ptr) : base(ptr) { }
 
     private void Update()
     {
         try
         {
-            if (GameStateManager.CurrentStateName != eGameStateName.InLevel)
-            {
-                supplied.Clear();
-                return;
-            }
+            if (GameStateManager.CurrentStateName != eGameStateName.InLevel) return;
             HandGrenade.Uncap(PlayerBackpackManager.LocalBackpack?.AmmoStorage?.ConsumableAmmo);
-            if (!SNet.IsMaster || !HandGrenade.GiveOnDrop.Value || HandGrenade.StartingCount.Value <= 0 || Time.time < nextSupplyCheck) return;
-            nextSupplyCheck = Time.time + 2f;
-            foreach (var player in PlayerManager.PlayerAgentsInLevel)
-            {
-                if (player == null || !player.Alive || player.Owner == null || supplied.Contains(player.Owner.Lookup)) continue;
-                if (Give(player)) supplied.Add(player.Owner.Lookup);
-            }
         }
         catch (Exception e)
         {
-            Plugin.Logger.LogError($"GTFO.AbsurdWeapons Hand Grenade supply failed: {e.Message}");
-            nextSupplyCheck = Time.time + 10f;
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons Hand Grenade cap failed: {e.Message}");
         }
-    }
-
-    // StartingCount straight into the player's consumable slot (the host adds it; it syncs to them).
-    [HideFromIl2Cpp]
-    private static bool Give(PlayerAgent player)
-    {
-        var node = player.CourseNode;
-        if (GameDataBlockBase<ItemDataBlock>.GetBlock(HandGrenade.ItemId) == null || node == null) return false;
-
-        // Spawned through the replication manager first, so the item has a replicator: handing
-        // MasterAddItem bare pItemData (no replicatorRef) made every client log "Faulty replicator
-        // id incoming!". Once it exists it's added to the player's backpack like a picked-up item.
-        var data = new pItemData { itemID_gearCRC = HandGrenade.ItemId, slot = InventorySlot.Consumable };
-        data.custom.ammo = HandGrenade.StartingCount.Value;
-        data.originCourseNode.Set(node);
-        var count = HandGrenade.StartingCount.Value;
-        var name = player.Owner.NickName;
-        var callback = DelegateSupport.ConvertDelegate<ItemReplicationManager.delItemCallback>(new Action<ISyncedItem, PlayerAgent>((synced, _) =>
-        {
-            try
-            {
-                var item = synced?.GetItem();
-                if (item == null || player == null || !player.Alive)
-                {
-                    Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: the Hand Grenades for {name} didn't spawn - none given.");
-                    return;
-                }
-                PlayerBackpackManager.MasterAddItem(item, player);
-                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {count} Hand Grenade(s) given to {name}.");
-            }
-            catch (Exception e)
-            {
-                Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't give {name} their Hand Grenades: {e.Message}");
-            }
-        }));
-        ItemReplicationManager.SpawnItem(data, callback, ItemMode.Pickup, player.Position, Quaternion.identity, node, player);
-        return true;
     }
 }

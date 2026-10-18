@@ -102,10 +102,11 @@ homes onto and damages players only, so it can't be used as-is.
   - `Shard` (split seekers) is still defined but nothing uses it right now.
   - Every impact flashes a small `EffectLight`. Teammates' visual copies fly and flash on their
     own; a smart round's message carries its target's position, which the copy curves to.
-- **Ammo:** our guns use ammo like vanilla ones. The stream guns never reach `Fire`, so their
-  drivers call `InfiniteAmmo.TrySpend` per tick: one round off `SetCurrentClip`, synced with
-  `SetClipAmmoInSlot`; empty, it calls `PlayerInventoryBase.TriggerReload` and the beam stops until
-  the reload lands. With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
+- **Ammo:** our guns use ammo like vanilla ones, except the stream guns, which never reach `Fire`
+  and have no magazine: their drivers call `InfiniteAmmo.TrySpend(player, tickSeconds)`, which takes
+  `StreamPercentPerSecond` (1%) of the slot's `AmmoMaxCap` per second straight off the reserve
+  (`SetAmmo`), shows the magazine full while any reserve is left and empty after, and stops the
+  beam once it's gone. They never reload. With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
   every shot and the `InfiniteAmmo` component keeps the wielded gun's clip and reserve full.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.
@@ -254,9 +255,8 @@ thrown item's rigidbody bounce and its replication all stay vanilla.
   and at 3 s shows `Explosion` everywhere; the item's `Owner` (or the host, if it has none) deals
   `AreaDamage` (6 m, 60 falling to 25%, x6 stagger). The host then despawns the item
   (`ItemReplicationManager.DeSpawn`); other games hide it until that arrives.
-- **Supply:** a pickup holds `PickupCount` (1, the item's `ConsumableAmmoMin/Max`), and on the host
-  `HandGrenadeSupply` gives every player `StartingCount` (1) straight into their consumable slot once
-  per level (`PlayerBackpackManager.MasterAddItem`), drop-ins included (`GiveOnDrop`). While the
+- **Supply:** nobody starts with any; a pickup holds `PickupCount` (1, the item's
+  `ConsumableAmmoMin/Max`). While the
   local consumable slot holds item 1203, its `InventorySlotAmmo` cap is set to `MaxCarried` (6; every frame,
   and after each `PlayerAmmoStorage.SetupAmmoType` for `CurrentConsumable`), since the item's own cap is the pickup size (1).
 All of it is `[Hand Grenade]`.
