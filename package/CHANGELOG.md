@@ -9,7 +9,7 @@
     back), Warhammer (500-damage blow, shockwave, a crater of scattered debris on a full-charge slam,
     flings enemies up to 12 m, and walls hurt them), Shadow Dagger
     (a fully charged hit makes you unseen for 2 s; kills while hidden add +25% damage up to +100%,
-    a full-charge kill while hidden also adds +0.25 s; putting it away ends it).
+    a full-charge kill while hidden also adds +0.33 s, up to 3 s; putting it away ends it).
   - **Guns (infinite ammo):** Plasma Pistol/Rifle (Doom plasma), Hive Pistol/Rifle (Titanfall smart
     rounds, with lock-on markers), Laser Pistol/Rifle (continuous burning beams), Tentacle Cannon (bursts of striker tentacles
     from spots around the edge of your view, biting a nearby enemy or reaching for walls and floors otherwise), Railgun (a slow, devastating hitscan slug with infinite penetration and a double-helix beam),

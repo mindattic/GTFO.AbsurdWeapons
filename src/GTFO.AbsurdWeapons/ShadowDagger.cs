@@ -29,6 +29,7 @@ internal static class Stealth
 {
     internal static ConfigEntry<float> Seconds = null!;
     internal static ConfigEntry<float> KillTimeBonus = null!;
+    internal static ConfigEntry<float> MaxSeconds = null!;
     internal static ConfigEntry<float> BonusPerKill = null!;
     internal static ConfigEntry<float> MaxBonus = null!;
     internal static ConfigEntry<float> Transparency = null!;
@@ -44,7 +45,8 @@ internal static class Stealth
     internal static void Bind(ConfigFile config)
     {
         Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 2f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
-        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.25f, "Seconds added to the stealth for a full-windup kill made while hidden (balances the shorter base stealth).");
+        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.33f, "Seconds added to the stealth for a full-windup kill made while hidden, up to StealthMaxSeconds.");
+        MaxSeconds = config.Bind("Shadow Dagger", "StealthMaxSeconds", 3f, "The most stealth you can have at once, however many kills stretch it.");
         BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
         MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
         Transparency = config.Bind("Shadow Dagger", "StealthTransparency", 0.95f,
@@ -150,7 +152,7 @@ internal static class Stealth
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: kill while hidden - damage +{damageBonus * 100f:0}%.");
             if (windup > 0f && local.Owner != null)
             {
-                var stretched = Remaining(local) + KillTimeBonus.Value;
+                var stretched = Mathf.Min(Remaining(local) + KillTimeBonus.Value, Mathf.Max(Seconds.Value, MaxSeconds.Value));
                 Hide(local.Owner.Lookup, stretched);
                 NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(stretched));
             }

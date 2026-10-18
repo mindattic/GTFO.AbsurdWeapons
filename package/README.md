@@ -112,8 +112,8 @@ reverts. Another full-charge hit tops the stealth back up to the full 2 seconds 
 
 - **Kills while hidden** sharpen the dagger: each adds **+25% damage**, up to **+100%**, for the
   rest of that stealth.
-- **A kill made with a full charge while hidden** also adds **+0.25 seconds** to your stealth, so a
-  chain of charged kills keeps you hidden.
+- **A kill made with a full charge while hidden** also adds **+0.33 seconds** to your stealth, so a
+  chain of charged kills keeps you hidden - up to **3 seconds** at most.
 
 ## Guns
 
@@ -338,7 +338,8 @@ Each of `[Katana]`, `[Mjolnir]`, `[Warhammer]` and `[Shadow Dagger]` has these:
 | Setting | Default | What it does |
 |---|---|---|
 | `StealthSeconds` | 2 | Seconds a fully charged hit hides you for; a further one restarts the count. |
-| `StealthKillTimeBonus` | 0.25 | Seconds added for a full-windup kill made while hidden. |
+| `StealthKillTimeBonus` | 0.33 | Seconds added for a full-windup kill made while hidden. |
+| `StealthMaxSeconds` | 3 | The most stealth you can have at once, however many kills stretch it. |
 | `StealthBonusPerKill` | 0.25 | Damage bonus added per kill while hidden (0.25 = +25%). |
 | `StealthMaxBonus` | 1 | Cap on the stacked kill bonus (1 = +100%). |
 | `StealthTransparency` | 0.95 | How see-through you are at full stealth (0-1). Visual only. |
