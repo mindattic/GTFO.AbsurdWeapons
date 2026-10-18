@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
+using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -24,7 +25,10 @@ namespace GTFO.AbsurdWeapons;
 /// own firing - sound, recoil, ammo (infinite, like every gun here) - stays vanilla. The shooter's
 /// game deals the damage, through the bullet path so it syncs; everyone else is sent the launch and
 /// the blast and sees the same rocket.
+/// It can't aim down sights: right-click instead detonates every rocket the shooter has in flight,
+/// right where it is (<see cref="RocketProjectile"/>).
 /// </summary>
+[HarmonyPatch]
 internal static class RocketLauncher
 {
     internal static ConfigEntry<float> Speed = null!;           // launch speed, m/s
@@ -71,6 +75,20 @@ internal static class RocketLauncher
         RocketProjectile.Spawn(id, owner, position, direction, gearCategoryId);
         NetworkAPI.InvokeEvent(LaunchEvent, new LaunchMessage(id, position, direction));
     }
+
+    // No aiming down sights: right-click is the remote detonator instead.
+    [HarmonyPatch(typeof(ItemEquippable), nameof(ItemEquippable.AimingAllowed), MethodType.Getter)]
+    [HarmonyPostfix]
+    private static void NoAiming(ItemEquippable __instance, ref bool __result)
+    {
+        if (__result && __instance.GearCategoryData?.persistentID == GunInjector.RocketLauncherId) __result = false;
+    }
+
+    // Right-click this frame while the local player holds the Rocket Launcher.
+    internal static bool DetonatePressed(PlayerAgent owner) =>
+        owner.IsLocallyOwned && FocusStateManager.CurrentState == eFocusState.FPS
+        && owner.Inventory?.WieldedItem?.GearCategoryData?.persistentID == GunInjector.RocketLauncherId
+        && InputMapper.GetButtonDownKeyMouse(InputAction.Aim, eFocusState.FPS);
 
     internal static void SendDetonate(uint id, Vector3 position) =>
         NetworkAPI.InvokeEvent(DetonateEvent, new DetonateMessage(id, position));
@@ -172,6 +190,15 @@ internal sealed class RocketProjectile : MonoBehaviour
             Dust();
 
             var position = transform.position;
+
+            // Right-click: it stops dead and blows up right where it is.
+            if (owner != null && RocketLauncher.DetonatePressed(owner))
+            {
+                RocketLauncher.SendDetonate(id, position);
+                Explode();
+                return;
+            }
+
             var step = RocketLauncher.Speed.Value * dt;
 
             // Only the shooter's own copy ever decides it hit something; a teammate's copy has

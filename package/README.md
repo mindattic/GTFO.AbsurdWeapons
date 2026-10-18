@@ -190,6 +190,9 @@ then explodes: **110 damage** at the center, falling to a third at **5.2 m**, wi
 (x5). **The blast reaches nearby players too** (shooter, bots and teammates alike), Quake style.
 Semi-auto, one shot every **0.8 seconds**.
 
+It doesn't aim down sights: **right-click detonates** every rocket you have in flight - each stops
+dead and blows up right where it is, so you can burst one over a crowd or around a corner.
+
 ### Shrink Beam (special)
 
 A continuous green ray. Hold it on an enemy and it shrinks - smaller and slower by the same share -
