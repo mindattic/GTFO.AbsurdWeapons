@@ -2,6 +2,12 @@
 
 ## v1
 
+- Loot uses GTFO.EZ's kit loot, shared between the two mods: a few small kits of 1-2 charges
+  adding about 20% to the zone's resource packs (`KitLootPercent`, `KitChargesMin/Max`), with Hand
+  Grenades at 4 to the kits' 3 and Stim Packs alongside. `KitSize` and `SpawnsPerZoneMultiplier`
+  are gone.
+- Insert (infinite ammo) and Delete (infinite health) are the shared toggles every GTFO.* mod
+  has; `[Ammo] InfiniteAmmo` and `InfiniteAmmoToggleKey` are gone.
 - Artifacts stay: Hand Grenades now join artifacts instead of replacing them - artifacts are as rare
   as vanilla. Grenades are common instead: half the loot mix (`HandGrenadeWeight` 4) and half as
   much loot again per zone (`SpawnsPerZoneMultiplier` 1.5). The `ArtifactsBecomeHandGrenades` setting is

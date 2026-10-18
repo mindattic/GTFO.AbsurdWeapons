@@ -32,7 +32,7 @@ and ammo packs top them up. Each one starts **completely full** the first time y
 level, and keeps its own ammo from then on (see [Swapping weapons in a level](#swapping-weapons-in-a-level)).
 The beam guns (lasers, Chain Lightning, Shrink Beam) have **no magazine and never reload**:
 sustained fire uses **1%** of a full ammo reserve every **half second**, so a full one is 50 seconds of beam,
-and they stop when it's empty. (`[Ammo] InfiniteAmmo` brings back bottomless guns.) They're tuned
+and they stop when it's empty. (Infinite ammo, on **Insert**, brings back bottomless guns.) They're tuned
 to be fun first; balance comes later.
 
 | Weapon | Slot | Model | In one line |
@@ -237,14 +237,15 @@ an **overheal like Doom's**. It gives
 
 ### Loot
 
-Consumables in boxes and lockers - and lying around, like artifacts (60% of them) - are only five
-things: **Hand Grenades** (4 in 7), **health kits**, **tool kits** and **ammo kits** (1 in 7 each),
-plus **Stim Packs** when they're switched on - and there's half as much loot again as vanilla, so grenades are common. Kits found this way always hold **20%** of a pack. The zone's own resource packs
-still spawn as normal, at their usual sizes, on top.
+Consumables in lockers and boxes - and lying around, like artifacts (60% of them) - are GTFO.EZ's
+kit loot plus this mod's grenades: a few small **health**, **tool** and **ammo kits** of **1-2
+charges** each, adding about **20%** to the zone's own resource packs (which still spawn as
+normal, at their usual sizes), and **Hand Grenades** at 4 to the kits' 3, so grenades are common -
+plus **Stim Packs** when they're switched on. It's the same kit code GTFO.EZ runs, shared between
+the two mods.
 
-With **GTFO.EZ** installed, this mod's loot settings take precedence: its own kits come with Hand
-Grenades and Stim Packs alongside, at this mod's kit odds and sizes, whatever GTFO.EZ's *Consumables
-Are Kits* settings say.
+With **GTFO.EZ** installed, this mod's loot settings take precedence and GTFO.EZ's *Consumables
+Are Kits* steps aside.
 
 **Artifacts stay** as rare as in vanilla, with Hand Grenades common alongside them.
 
@@ -562,21 +563,26 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `HandGrenadeWeight` † | 4 | Relative odds a loot consumable is a Hand Grenade. |
+| `HandGrenadeWeight` † | 4 | Odds a loot consumable is a Hand Grenade, against the kits' weights. |
 | `StimPackWeight` † | 1 | Relative odds it's a Stim Pack (only while the Stim Pack is switched on). |
 | `HealthKitWeight` † | 1 | Relative odds it's a health kit. |
 | `ToolKitWeight` † | 1 | Relative odds it's a tool kit. |
 | `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
-| `KitSize` † | 20 | Contents of a kit found as consumable loot, in percent of a full pack. Zone resource packs are unaffected. |
+| `KitLootPercent` † | 20 | How much the kits found as loot add, in percent of a zone's normal health, ammo and tool pack budget. |
+| `KitChargesMin` † | 1 | Fewest charges a loot kit holds (one charge is one use, 20% of a pack). |
+| `KitChargesMax` † | 2 | Most charges a loot kit holds. |
 | `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
-| `SpawnsPerZoneMultiplier` † | 1.5 | Multiplies how many loot consumables spawn per zone (on top of GTFO.EZ's, if installed). |
 
 ### `[Ammo]`
 
 | Setting | Default | What it does |
 |---|---|---|
-| `InfiniteAmmo` | false | On: every gun (this mod's and vanilla) never runs out or reloads. |
-| `InfiniteAmmoToggleKey` | Insert | Toggles InfiniteAmmo in a level and shows ON/OFF as a warden message. |
+| `StreamPercentPerSecond` | 2 | Ammo reserve the beam guns use per second of fire, in percent of a full reserve. |
+
+**Insert** toggles infinite ammo (every gun, this mod's and vanilla, never runs out or reloads) and
+**Delete** infinite health, each announced as a warden message and off at the start. They're the
+same two keys every GTFO.* mod has, from one shared copy of the code; with several installed only
+one answers, so a press never toggles twice.
 | `StreamPercentPerSecond` | 2 | Percent of a full reserve the beam guns (lasers, Chain Lightning, Shrink Beam) use per second of fire (2 = 1% every half second). They never reload. |
 
 ### `[Gear Cycling]`
@@ -626,7 +632,8 @@ the host, who owns enemy positions.
   changes in the game's data is applied after GTFO.EZ's. Weapons are built after EZ's tuning, so
   each starts from EZ's version of the weapon it's copied from; stats this mod sets itself stay
   fixed. Loot follows this mod's `[Loot]` settings, not GTFO.EZ's kit settings. Keys don't
-  overlap (this mod uses Home/PgUp/PgDn; GTFO.EZ uses E, X, Z, Shift and W/A/S/D).
+  overlap (this mod uses Home/PgUp/PgDn; GTFO.EZ uses E, X and Z), and Insert/Delete are the shared
+  toggles both mods carry - only one answers.
 - **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202 tool, 1203-1204
   consumable): if one already uses an id, that weapon isn't added and `LogOutput.log` says so. The
   rest still load. A melee weapon whose attack speed isn't 1 also adds a melee animation set at its

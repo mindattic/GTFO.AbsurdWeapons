@@ -109,8 +109,9 @@ homes onto and damages players only, so it can't be used as-is.
   beam once it's gone. They never reload.
   The Tentacle Cannon fires normally but its shots are refunded (the magazine before the outermost
   `Fire` is put back in `EndFire`); each lash that `BulletDamage`s an enemy costs one round instead
-  (`InfiniteAmmo.SpendTentacleBite`). With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
-  every shot so firing costs nothing - any gun, vanilla included. Insert (`InfiniteAmmoToggleKey`) toggles it in a level.
+  (`InfiniteAmmo.SpendTentacleBite`). With infinite ammo on (`InfiniteAmmo.On`, the shared Insert toggle in
+  `Shared/InfiniteToggles.cs`), the `Fire` postfixes top the clip back up after every shot so firing
+  costs nothing - any gun, vanilla included.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.
 - **Multiplayer:** each shot is sent to teammates with GTFO-API's `NetworkAPI`
@@ -266,15 +267,15 @@ All of it is `[Hand Grenade]`.
 
 ### Loot mix (`LootMix`) and Stim Pack (`StimPack`, `Overheal`)
 
-`LootMix` (after the item registrations, at low priority) replaces every
-`ConsumableDistributionDataBlock.SpawnData` with `ConsumableSpawnData` entries at `[Loot]` weights:
-the Hand Grenade (1203), the Stim Pack (1204) and the health, tool and ammo resource packs (found by
-`InventorySlot.ResourcePack` and name, logged). Resource packs normally get their contents from the
-zone budget, so the pack items' `ConsumableAmmoMin/Max` are set to `KitSize` (20) for the loot path.
-`ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`. Where this clashes with GTFO.EZ
-this mod wins: a table GTFO.EZ's `Consumables Are Kits` already made kits-only gets this mix too, so
-kit odds and contents follow `[Loot]` here, not GTFO.EZ's kit settings (logged when it happens). Each
-table's `SpawnsPerZone` is scaled by `SpawnsPerZoneMultiplier` (1.5). Artifacts are left alone.
+`LootMix` (after the item registrations, at low priority) runs `KitLoot.Fill` from
+`Shared/KitLoot.cs` - GTFO.EZ's kit loot, published here by GTFO.EZ's `tools/publish-shared.ps1`,
+never edited in this repo - with `[Loot]` settings and the Hand Grenade (1203) and Stim Pack (1204)
+as extras. It fills every `ConsumableDistributionDataBlock` with the health, tool and ammo resource
+packs (`KitChargesMin`-`KitChargesMax` charges, rounded to whole charges as each spawns) and the
+extras, and sets each table's `SpawnsPerZone` so the kits add `KitLootPercent` of the zone's resource
+budget; the extras come on top at their odds against the kits. `ChanceToSpawnInResourceContainer`
+comes from `OutInTheOpenShare`. GTFO.EZ, if installed, sees this mod's Loot Mix on and leaves
+consumable loot to it. Artifacts are left alone.
 
 The Stim Pack (off by default for now - `Stim Pack Enabled`; while off it isn't added and
 `LootMix` leaves it out) is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
@@ -463,7 +464,9 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   WarhammerSlam.cs      the Warhammer's full-charge ground slam and its scattered debris
   MjolnirThrow.cs       Mjolnir's full-charge throw, flight and return
   LockDamage.cs         lets this mod's weapons (which only look for enemy limbs) also melt door locks
-  InfiniteAmmo.cs       ammo settings, stream-gun drain, the InfiniteAmmo toggle
+  InfiniteAmmo.cs       ammo settings, stream-gun drain (infinite ammo is the shared Insert toggle)
+  Shared/               generated from GTFO.EZ's src/GTFO.EZ/Shared - never edit here: the
+                        Insert/Delete infinite ammo/health toggles and the kit loot
   ConfigMigrations.cs   one-time moves of a changed default onto configs still sitting on the old one
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
   ImpactBursts.cs       hammer impact bursts (Mjolnir thunderclap, Warhammer shockwave) and their flash

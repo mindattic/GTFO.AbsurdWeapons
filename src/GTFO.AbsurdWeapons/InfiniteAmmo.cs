@@ -2,6 +2,7 @@ using System;
 using BepInEx.Configuration;
 using Gear;
 using Player;
+using MindAttic.GTFO.Shared;
 using UnityEngine;
 
 namespace GTFO.AbsurdWeapons;
@@ -11,29 +12,20 @@ namespace GTFO.AbsurdWeapons;
 /// in the slot's ammo pool, reloads, ammo packs - except the stream guns (lasers, Chain Lightning,
 /// Shrink Beam), which never fire through the game: they drain the reserve directly while firing
 /// and never reload (<see cref="TrySpend"/>).
-/// With [Ammo] InfiniteAmmo on, firing costs nothing: SeekerGuns puts the magazine back after every
-/// shot of any gun (vanilla ones too) and the stream guns skip their drain.
+/// With infinite ammo on (Insert - the shared toggle every GTFO.* mod has, Shared/InfiniteToggles.cs,
+/// published from GTFO.EZ), firing costs nothing: SeekerGuns puts the magazine back after every shot
+/// of any gun (vanilla ones too) and the stream guns skip their drain.
 /// </summary>
 internal static class InfiniteAmmo
 {
-    internal static ConfigEntry<bool> Enabled = null!;
     internal static ConfigEntry<float> StreamPercentPerSecond = null!;
-    internal static ConfigEntry<KeyCode> ToggleKey = null!;
+
+    internal static bool On => InfiniteToggles.InfiniteAmmoOn;
 
     internal static void Bind(ConfigFile config)
     {
-        Enabled = config.Bind("Ammo", "InfiniteAmmo", false,
-            "On: every gun - this mod's and the game's own - never runs out or reloads. Off: guns use ammo normally (this mod's each start full the first time they're equipped in a level).");
         StreamPercentPerSecond = config.Bind("Ammo", "StreamPercentPerSecond", 2f,
             "The lasers, Chain Lightning and Shrink Beam have no magazine and never reload: every second of sustained fire uses this percent of a full ammo reserve (2 = 1% every half second).");
-        ToggleKey = config.Bind("Ammo", "InfiniteAmmoToggleKey", KeyCode.Insert,
-            "Turns InfiniteAmmo on or off in a level and shows which as a warden message.");
-    }
-
-    internal static void Toggle()
-    {
-        Enabled.Value = !Enabled.Value;
-        GearCycler.Show($"Infinite ammo: {(Enabled.Value ? "ON" : "OFF")}");
     }
 
     // The stream guns (lasers, Chain Lightning, Shrink Beam) have no magazine and never reload:
@@ -41,7 +33,7 @@ internal static class InfiniteAmmo
     // per second. Their magazine just shows full while there's reserve left and empty when not.
     internal static bool HasStreamAmmo(PlayerAgent player)
     {
-        if (Enabled.Value) return true;
+        if (On) return true;
         var reserve = PlayerBackpackManager.LocalBackpack?.AmmoStorage?.GetInventorySlotAmmo(player.Inventory.WieldedSlot);
         return reserve != null && reserve.AmmoInPack > 0f;
     }
@@ -49,7 +41,7 @@ internal static class InfiniteAmmo
     // One tick of a stream gun's fire, `seconds` long. False (no tick) once the reserve is empty.
     internal static bool TrySpend(PlayerAgent player, float seconds)
     {
-        if (Enabled.Value) return true;
+        if (On) return true;
         var gun = player.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
         var slot = player.Inventory?.WieldedSlot ?? InventorySlot.None;
         var storage = PlayerBackpackManager.LocalBackpack?.AmmoStorage;
@@ -82,7 +74,7 @@ internal static class InfiniteAmmo
     // off the gun the shooter is holding - free if they've since put it away.
     internal static void SpendTentacleBite(PlayerAgent owner)
     {
-        if (Enabled.Value || !owner.IsLocallyOwned) return;
+        if (On || !owner.IsLocallyOwned) return;
         var gun = owner.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
         if (gun == null || !TentacleCannon.IsTentacleGun(gun.ArchetypeData?.persistentID ?? 0)) return;
         SetClip(gun, gun.GetCurrentClip() - 1);

@@ -241,7 +241,7 @@ internal static class SeekerGuns
     {
         previous = firingArchetype;
         if (previous == 0 && weapon.Owner != null && weapon.Owner.IsLocallyOwned
-            && (InfiniteAmmo.Enabled.Value || TentacleCannon.IsTentacleGun(weapon.ArchetypeData?.persistentID ?? 0)))
+            && (InfiniteAmmo.On || TentacleCannon.IsTentacleGun(weapon.ArchetypeData?.persistentID ?? 0)))
             clipBefore = weapon.GetCurrentClip();
         firingArchetype = weapon.ArchetypeData?.persistentID ?? 0;
         firingWeapon = weapon;

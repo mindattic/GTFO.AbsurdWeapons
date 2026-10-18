@@ -93,7 +93,6 @@ internal sealed class GearCycler : MonoBehaviour
             else if (Input.GetKeyDown(nextKey.Value)) Cycle(1);
             else if (Input.GetKeyDown(previousKey.Value)) Cycle(-1);
             else if (slotKeysCycle.Value && SlotKeyPressedAgain()) Cycle(1);
-            else if (Input.GetKeyDown(InfiniteAmmo.ToggleKey.Value)) InfiniteAmmo.Toggle();
         }
         catch (Exception e)
         {
