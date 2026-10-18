@@ -150,3 +150,4 @@ _Nothing recorded yet._
 | G.AWPN-T123 | 2026-10-18 | feature | closed | Rocket Launcher: no ADS; right-click detonates the shooter's rockets in flight where they are | — |
 | G.AWPN-T124 | 2026-10-18 | feature | closed | Railgun beam: no center line; the double helix holds its shape and fades to transparent instead of unwinding | — |
 | G.AWPN-T125 | 2026-10-18 | feature | closed | Rocket Launcher: right-click detonates only the oldest rocket in flight, one per click (chain detonations) | — |
+| G.AWPN-T126 | 2026-10-18 | feature | closed | InfiniteAmmo covers every gun (vanilla too) by refunding each shot on fire instead of refilling every frame; Insert toggles it with a warden message | Infinite ammo |
