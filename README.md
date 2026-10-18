@@ -326,7 +326,9 @@ stealth by the windup, sent to everyone. Wielding anything but the dagger ends t
 ### In-level weapon swapping (`GearCycler`)
 
 An injected MonoBehaviour reads `[Gear Cycling]` keys (PageUp / PageDown) while
-`FocusStateManager.CurrentState` is `FPS`. For the wielded slot (standard, special, class or melee)
+`FocusStateManager.CurrentState` is `FPS`, and - with `SlotKeysCycle` on - the game's own
+`SelectMelee`/`SelectStandard`/`SelectSpecial`/`SelectTool` actions when that slot is already the
+wielded one (the game ignores that press itself), which cycle forward like PageUp. For the wielded slot (standard, special, class or melee)
 the cycle is the slot's starting gear (its `BackpackItem.GearIDRange`, recorded on the slot's first
 swap of the level) followed by the `GearManager.GetAllGearForSlot` entries whose category is in
 `DataBlocks.AddedCategories`. It equips the next or previous with

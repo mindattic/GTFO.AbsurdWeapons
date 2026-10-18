@@ -244,7 +244,9 @@ Are Kits* settings say.
 ## Swapping weapons in a level
 
 Hold a main, special, tool or melee weapon and press **Page Up** for the next weapon for that slot,
-or **Page Down** for the previous one. A five-second message names what you switched to.
+or **Page Down** for the previous one. Or just **press that slot's own key again** - 1 to 4 by
+default (melee, main, special, tool): with the slot already in hand, each press moves on to its next
+weapon. A five-second message names what you switched to.
 Teammates get the swap too.
 
 The first time you swap a slot, **the gear you dropped in with joins that slot's cycle**, ahead of
@@ -575,6 +577,7 @@ Shared by everything that flings enemies (the Warhammer).
 |---|---|---|
 | `NextWeaponKey` | PageUp | Swap to the next weapon in the held slot's cycle: the gear you dropped in with, then this mod's weapons. |
 | `PreviousWeaponKey` | PageDown | Swap to the previous one. |
+| `SlotKeysCycle` | true | Pressing a slot's own select key (1-4 by default) while that slot is in hand cycles it, like `NextWeaponKey`. |
 | `RestoreLoadoutKey` | Home | Put every swapped slot back to the gear you dropped in with, with its own ammo. |
 
 Any [Unity `KeyCode`](https://docs.unity3d.com/ScriptReference/KeyCode.html) name works; `None` disables that key.

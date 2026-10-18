@@ -27,6 +27,17 @@ internal sealed class GearCycler : MonoBehaviour
     private static ConfigEntry<KeyCode> nextKey = null!;
     private static ConfigEntry<KeyCode> previousKey = null!;
     private static ConfigEntry<KeyCode> restoreKey = null!;
+    private static ConfigEntry<bool> slotKeysCycle = null!;
+
+    // The game's own select-slot actions (so rebinds are followed): pressed again while that slot is
+    // already in hand, it cycles the slot - the game itself does nothing with that press.
+    private static readonly (InputAction Action, InventorySlot Slot)[] SlotKeys =
+    {
+        (InputAction.SelectMelee, InventorySlot.GearMelee),
+        (InputAction.SelectStandard, InventorySlot.GearStandard),
+        (InputAction.SelectSpecial, InventorySlot.GearSpecial),
+        (InputAction.SelectTool, InventorySlot.GearClass),
+    };
 
     private sealed class SavedAmmo
     {
@@ -57,6 +68,8 @@ internal sealed class GearCycler : MonoBehaviour
             "Swaps it for the previous one.");
         restoreKey = config.Bind("Gear Cycling", "RestoreLoadoutKey", KeyCode.Home,
             "Puts every slot you've swapped this level - main, special, tool and melee at once - back to the gear you dropped in with, with that gear's own ammo.");
+        slotKeysCycle = config.Bind("Gear Cycling", "SlotKeysCycle", true,
+            "Pressing a slot's own select key (melee, main, special, tool - 1 to 4 by default) while that slot is already in hand cycles it to the next weapon, same as NextWeaponKey.");
     }
 
     private void Update()
@@ -79,6 +92,7 @@ internal sealed class GearCycler : MonoBehaviour
             if (Input.GetKeyDown(restoreKey.Value)) Restore();
             else if (Input.GetKeyDown(nextKey.Value)) Cycle(1);
             else if (Input.GetKeyDown(previousKey.Value)) Cycle(-1);
+            else if (slotKeysCycle.Value && SlotKeyPressedAgain()) Cycle(1);
         }
         catch (Exception e)
         {
@@ -127,6 +141,15 @@ internal sealed class GearCycler : MonoBehaviour
         Equip(slot, chosen, slot);
         var name = GameDataBlockBase<GearCategoryDataBlock>.GetBlock(chosenCategory)?.PublicName?.UntranslatedText;
         Show($"{name ?? "weapon"}  [{next + 1}/{cycle.Count}]");
+    }
+
+    // A slot's select key pressed while that slot is already the one in hand.
+    private static bool SlotKeyPressedAgain()
+    {
+        var wielded = PlayerManager.GetLocalPlayerAgent()?.Inventory?.WieldedSlot ?? InventorySlot.None;
+        foreach (var (action, slot) in SlotKeys)
+            if (slot == wielded && InputMapper.GetButtonDownKeyMouse(action, eFocusState.FPS)) return true;
+        return false;
     }
 
     private void Restore()
