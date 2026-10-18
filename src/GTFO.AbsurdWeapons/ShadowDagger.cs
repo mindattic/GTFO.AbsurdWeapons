@@ -302,7 +302,8 @@ internal sealed class StealthVisuals : MonoBehaviour
             {
                 if (player == null) continue;
                 Stealth.EndIfDaggerPutAway(player);
-                if (player.IsLocallyOwned) Stealth.ProcessKills(player);
+                // The host's bots are locally owned too, and would reset the player's kill bonuses.
+                if (player.IsLocallyOwned && player.Owner != null && !player.Owner.IsBot) Stealth.ProcessKills(player);
                 var remaining = Stealth.Remaining(player);
                 var tracked = hidden.TryGetValue(player.Pointer, out var state);
                 Wielding(player);
