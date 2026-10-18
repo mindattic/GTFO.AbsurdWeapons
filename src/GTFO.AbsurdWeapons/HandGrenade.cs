@@ -4,6 +4,7 @@ using Agents;
 using BepInEx.Configuration;
 using GameData;
 using HarmonyLib;
+using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Attributes;
 using LevelGeneration;
 using Localization;
@@ -402,11 +403,33 @@ internal sealed class HandGrenadeSupply : MonoBehaviour
         var node = player.CourseNode;
         if (GameDataBlockBase<ItemDataBlock>.GetBlock(HandGrenade.ItemId) == null || node == null) return false;
 
+        // Spawned through the replication manager first, so the item has a replicator: handing
+        // MasterAddItem bare pItemData (no replicatorRef) made every client log "Faulty replicator
+        // id incoming!". Once it exists it's added to the player's backpack like a picked-up item.
         var data = new pItemData { itemID_gearCRC = HandGrenade.ItemId, slot = InventorySlot.Consumable };
         data.custom.ammo = HandGrenade.StartingCount.Value;
         data.originCourseNode.Set(node);
-        PlayerBackpackManager.MasterAddItem(data, player.Owner);
-        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {HandGrenade.StartingCount.Value} Hand Grenades given to {player.Owner.NickName}.");
+        var count = HandGrenade.StartingCount.Value;
+        var name = player.Owner.NickName;
+        var callback = DelegateSupport.ConvertDelegate<ItemReplicationManager.delItemCallback>(new Action<ISyncedItem, PlayerAgent>((synced, _) =>
+        {
+            try
+            {
+                var item = synced?.GetItem();
+                if (item == null || player == null || !player.Alive)
+                {
+                    Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons: the Hand Grenades for {name} didn't spawn - none given.");
+                    return;
+                }
+                PlayerBackpackManager.MasterAddItem(item, player);
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {count} Hand Grenade(s) given to {name}.");
+            }
+            catch (Exception e)
+            {
+                Plugin.Logger.LogError($"GTFO.AbsurdWeapons couldn't give {name} their Hand Grenades: {e.Message}");
+            }
+        }));
+        ItemReplicationManager.SpawnItem(data, callback, ItemMode.Pickup, player.Position, Quaternion.identity, node, player);
         return true;
     }
 }
