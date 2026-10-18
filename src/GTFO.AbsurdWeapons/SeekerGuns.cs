@@ -328,6 +328,21 @@ internal static class SeekerGuns
                 return false;
             }
 
+            if (firingArchetype == GunInjector.RocketLauncherId || weaponRayData.gearCategoryId == GunInjector.RocketLauncherId)
+            {
+                ours = true;
+                weaponRayData.maxRayDist = 0f;
+                __result = false;
+                var shooter = weaponRayData.owner ?? firingWeapon?.Owner;
+                if (shooter != null && shooter.IsLocallyOwned)
+                {
+                    var aim = weaponRayData.fireDir.sqrMagnitude > 0.01f ? weaponRayData.fireDir.normalized : alignTransform.forward;
+                    var (from, toCrosshair) = Barrel.Shot(shooter, firingWeapon?.MuzzleAlign, originPos, aim);
+                    RocketLauncher.Launch(shooter, from, toCrosshair, weaponRayData.gearCategoryId);
+                }
+                return false;
+            }
+
             if (TentacleCannon.IsTentacleGun(firingArchetype) || TentacleCannon.IsTentacleGun(weaponRayData.gearCategoryId))
             {
                 ours = true;

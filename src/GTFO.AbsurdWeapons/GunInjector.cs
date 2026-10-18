@@ -23,7 +23,9 @@ namespace GTFO.AbsurdWeapons;
 /// <item>Tentacle Cannon (special) - Buckland XDist2 (iron sights); every round is a striker tentacle.</item>
 /// <item>Railgun (special) - Koning PR 11; a hitscan slug with infinite penetration (<see cref="Railgun"/>).</item>
 /// <item>Chain Lightning Gun (special) - Omneco exp1; lightning that jumps enemy to enemy (<see cref="ChainLightning"/>).</item>
-/// <item>Grenade Pistol (main) / Grenade Rifle (special) - Bataldo 3RB / TechMan Veruta XII; semi-auto lock-melter grenades (<see cref="GrenadeLauncher"/>).</item>/// </list>
+/// <item>Grenade Pistol (main) / Grenade Rifle (special) - Bataldo 3RB / TechMan Veruta XII; semi-auto lock-melter grenades (<see cref="GrenadeLauncher"/>).</item>
+/// <item>Rocket Launcher (special) - Buckland XDist2; Quake 1's rocket, straight and gravity-free (<see cref="RocketLauncher"/>).</item>
+/// </list>
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
 internal static class GunInjector
@@ -45,6 +47,8 @@ internal static class GunInjector
     // 1114 was the C-Foam Rifle (removed); left unused so old loadouts never pick up a different gun.
     internal const uint GrenadePistolId = 1115;
     internal const uint GrenadeRifleId = 1116;
+    // 1117 was the Gravity Gun (removed); left unused so old loadouts never pick up a different gun.
+    internal const uint RocketLauncherId = 1118;
     // 1201 was the Grenade Launcher tool (now the Grenade Pistol/Rifle); left unused.
     internal const uint VictoryBannerId = 1202;   // a tool: same reason
 
@@ -119,6 +123,7 @@ internal static class GunInjector
         const string grenade = "A heavy semi-auto launcher: every shot is a lock melter rigged to blow - it goes off on the first enemy it hits, or bounces around and blows after 3 seconds.";
         TryAdd("Grenade Pistol", GrenadePistolId, (name, id) => AddGrenadeGun(name, id, "RevolverHEL", grenade));    // Bataldo 3RB (heavy revolver), main slot
         TryAdd("Grenade Rifle", GrenadeRifleId, (name, id) => AddGrenadeGun(name, id, "MachinegunAuto", grenade)); // TechMan Veruta XII (heavy machine gun), special slot
+        TryAdd("Rocket Launcher", RocketLauncherId, AddRocketLauncher);
         TryAdd("Victory Banner", VictoryBannerId, AddVictoryBanner);
     }
 
@@ -309,6 +314,28 @@ internal static class GunInjector
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
             "A continuous stream of lightning while you hold the trigger, leaping from enemy to enemy, up to five jumps, weaker with each.");
+    }
+
+    // The Buckland XDist2 (the Tentacle Cannon's own model), semi-auto: every shot is a rocket
+    // (RocketLauncher) that flies dead straight - no drop, no bounce - to the first thing in its
+    // way and blows up there, Quake 1's rocket launcher. Kept this model's own punchy kick, unlike
+    // the kickless guns above - a rocket launcher should thump.
+    private static void AddRocketLauncher(string name, uint id)
+    {
+        var gear = Lookup<PlayerOfflineGearDataBlock>("ShotgunRanged");
+        var (category, archetype) = ModelSource(gear);
+        archetype.FireMode = eWeaponFireMode.Semi;
+        archetype.ShotgunBulletCount = 1;
+        archetype.ShotgunConeSize = 0;
+        archetype.ShotgunBulletSpread = 0;
+        archetype.Damage = RocketLauncher.BlastDamage.Value; // the blast's center damage, for the loadout screen
+        archetype.ShotDelay = RocketLauncher.GunShotDelay.Value;
+        archetype.DefaultClipSize = RocketLauncher.GunClipSize.Value;
+        archetype.HipFireSpread = 0f;
+        archetype.AimSpread = 0f;
+        archetype.ShellCasingSize = 0f; // a rocket, not a shell: no brass ejected
+        Register(name, id, archetype, category, gear,
+            "Quake 1's own rocket launcher: every shot is a rocket that flies dead straight out to the first thing in its way - no drop, no bounce - trailing smoke and sparks, and blows it up in a blast that reaches everyone nearby.");
     }
 
     // A tentacle gun on the given model, forced full-auto: a tentacle (TentacleCannon) for every

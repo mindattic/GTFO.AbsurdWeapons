@@ -40,6 +40,7 @@ public class Plugin : BasePlugin
         ChainLightning.Bind(Config);
         TentacleCannon.Bind(Config);
         GrenadeLauncher.Bind(Config);
+        RocketLauncher.Bind(Config);
         HandGrenade.Bind(Config);
         Sounds.Bind(Config);
         HiveLocks.Bind(Config);
@@ -49,6 +50,7 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<TentacleLash>();
         ClassInjector.RegisterTypeInIl2Cpp<LaserBeam>();
         ClassInjector.RegisterTypeInIl2Cpp<LauncherGrenade>();
+        ClassInjector.RegisterTypeInIl2Cpp<RocketProjectile>();
         ClassInjector.RegisterTypeInIl2Cpp<RailBeam>();
         ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
         ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
@@ -60,6 +62,7 @@ public class Plugin : BasePlugin
         TentacleCannon.Init();
         LaserGuns.Init();
         GrenadeLauncher.Init();
+        RocketLauncher.Init();
         Railgun.Init();
         ChainLightning.Init();
         VictoryBanner.Init();
