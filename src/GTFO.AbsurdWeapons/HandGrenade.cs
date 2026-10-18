@@ -38,11 +38,14 @@ internal static class HandGrenade
     internal static ConfigEntry<bool> OnlyLootConsumable = null!;
     internal static ConfigEntry<float> OutInTheOpenShare = null!;
     internal static ConfigEntry<float> ThrowForceMultiplier = null!;
+    internal static ConfigEntry<bool> Enabled = null!;
 
     private static bool added;
 
     internal static void Bind(ConfigFile config)
     {
+        Enabled = config.Bind("Hand Grenade", "Hand Grenade Enabled", true,
+            "Adds the Hand Grenade (replacing the glowstick consumable) at all. Turn off to leave glowsticks untouched. Takes effect on restart.");
         FuseSeconds = config.Bind("Hand Grenade", "FuseSeconds", 3f, "Seconds from the throw until it explodes.");
         BlastRadius = config.Bind("Hand Grenade", "BlastRadius", 6f, "Metres the blast reaches.");
         BlastDamage = config.Bind("Hand Grenade", "BlastDamage", 60f, "Damage at the blast's center.");
@@ -68,6 +71,11 @@ internal static class HandGrenade
     {
         try
         {
+            if (!Enabled.Value)
+            {
+                Plugin.Logger.LogInfo("GTFO.AbsurdWeapons: Hand Grenade disabled in the config - not adding it.");
+                return;
+            }
             if (GameDataBlockBase<ItemDataBlock>.HasBlock(ItemId))
             {
                 if (!added) Plugin.Logger.LogError($"GTFO.AbsurdWeapons: item id {ItemId} is already taken by another mod's datablock - not adding the Hand Grenade.");

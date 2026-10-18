@@ -49,6 +49,11 @@ internal static class MeleeInjector
     {
         try
         {
+            if (!settings.Enabled.Value)
+            {
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {name} disabled in the config - not adding it.");
+                return;
+            }
             // Already added by this mod (the game initialized its data again): nothing to do.
             if (AddedCategories.Contains(id) && GameDataBlockBase<GearCategoryDataBlock>.HasBlock(id)) return;
             if (GameDataBlockBase<MeleeArchetypeDataBlock>.HasBlock(id)

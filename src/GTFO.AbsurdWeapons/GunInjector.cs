@@ -69,26 +69,54 @@ internal static class GunInjector
     internal static ConfigEntry<float> TentacleDamage = null!, TentacleShotDelay = null!;
     internal static ConfigEntry<int> TentacleClipSize = null!;
 
+    // Whether each individual weapon is added to the loadout screen at all (0 keeps nothing; this is
+    // a straight on/off). Pistol/rifle pairs share one set of stats above but are toggled separately,
+    // since they sit in different loadout slots.
+    internal static ConfigEntry<bool> PlasmaPistolEnabled = null!, PlasmaRifleEnabled = null!;
+    internal static ConfigEntry<bool> HivePistolEnabled = null!, HiveRifleEnabled = null!;
+    internal static ConfigEntry<bool> LaserPistolEnabled = null!, LaserRifleEnabled = null!;
+    internal static ConfigEntry<bool> TentacleCannonEnabled = null!;
+    internal static ConfigEntry<bool> RailgunEnabled = null!;
+    internal static ConfigEntry<bool> ChainLightningGunEnabled = null!;
+    internal static ConfigEntry<bool> GrenadePistolEnabled = null!, GrenadeRifleEnabled = null!;
+    internal static ConfigEntry<bool> RocketLauncherEnabled = null!;
+    internal static ConfigEntry<bool> ShrinkBeamEnabled = null!;
+    internal static ConfigEntry<bool> VictoryBannerEnabled = null!;
+
     internal static void Bind(ConfigFile config)
     {
         PlasmaDamage = config.Bind("Plasma Guns", "Damage", 22.5f, "Average damage per ball (it's actually rolled, 5 x 1d8).");
         PlasmaShotDelay = config.Bind("Plasma Guns", "ShotDelay", 3f / 35f, "Seconds between balls (Doom: one every 3 tics, ~11.7 a second).");
         PlasmaClipSize = config.Bind("Plasma Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        PlasmaPistolEnabled = config.Bind("Plasma Guns", "Plasma Pistol Enabled", true, "Adds the Plasma Pistol (main slot) to the loadout screen. Takes effect on restart.");
+        PlasmaRifleEnabled = config.Bind("Plasma Guns", "Plasma Rifle Enabled", true, "Adds the Plasma Rifle (special slot) to the loadout screen. Takes effect on restart.");
         HiveDamage = config.Bind("Hive Guns", "Damage", 1f, "Damage per round.");
         HiveShotDelay = config.Bind("Hive Guns", "ShotDelay", 0.09f, "Seconds between rounds.");
         HiveClipSize = config.Bind("Hive Guns", "ClipSize", 30, "Clip size (infinite ammo refills it anyway).");
+        HivePistolEnabled = config.Bind("Hive Guns", "Hive Pistol Enabled", true, "Adds the Hive Pistol (main slot) to the loadout screen. Takes effect on restart.");
+        HiveRifleEnabled = config.Bind("Hive Guns", "Hive Rifle Enabled", true, "Adds the Hive Rifle (special slot) to the loadout screen. Takes effect on restart.");
         LaserDamage = config.Bind("Laser Guns", "Damage", 2f, "Damage per tick (20 ticks a second).");
         LaserShotDelay = config.Bind("Laser Guns", "ShotDelay", 0.05f, "Seconds between ticks.");
         LaserClipSize = config.Bind("Laser Guns", "ClipSize", 100, "Clip size (infinite ammo refills it anyway).");
+        LaserPistolEnabled = config.Bind("Laser Guns", "Laser Pistol Enabled", true, "Adds the Laser Pistol (main slot) to the loadout screen. Takes effect on restart.");
+        LaserRifleEnabled = config.Bind("Laser Guns", "Laser Rifle Enabled", true, "Adds the Laser Rifle (special slot) to the loadout screen. Takes effect on restart.");
         RailgunDamage = config.Bind("Railgun", "Damage", 150f, "Damage to every enemy on the line (Quake's rail kills outright).");
         RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
         RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Clip size (infinite ammo refills it anyway).");
+        RailgunEnabled = config.Bind("Railgun", "Railgun Enabled", true, "Adds the Railgun to the loadout screen. Takes effect on restart.");
         ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump is 75% of the last).");
         ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
         ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
+        ChainLightningGunEnabled = config.Bind("Chain Lightning Gun", "Chain Lightning Gun Enabled", true, "Adds the Chain Lightning Gun to the loadout screen. Takes effect on restart.");
         TentacleDamage = config.Bind("Tentacle Guns", "Damage", 25f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
         TentacleShotDelay = config.Bind("Tentacle Guns", "ShotDelay", 0.235f, "Seconds between tentacles.");
         TentacleClipSize = config.Bind("Tentacle Guns", "ClipSize", 60, "Clip size (infinite ammo refills it anyway).");
+        TentacleCannonEnabled = config.Bind("Tentacle Guns", "Tentacle Cannon Enabled", true, "Adds the Tentacle Cannon to the loadout screen. Takes effect on restart.");
+        GrenadePistolEnabled = config.Bind("Grenade Launcher", "Grenade Pistol Enabled", true, "Adds the Grenade Pistol (main slot) to the loadout screen. Takes effect on restart.");
+        GrenadeRifleEnabled = config.Bind("Grenade Launcher", "Grenade Rifle Enabled", true, "Adds the Grenade Rifle (special slot) to the loadout screen. Takes effect on restart.");
+        RocketLauncherEnabled = config.Bind("Rocket Launcher", "Rocket Launcher Enabled", true, "Adds the Rocket Launcher to the loadout screen. Takes effect on restart.");
+        ShrinkBeamEnabled = config.Bind("Shrink Beam", "Shrink Beam Enabled", true, "Adds the Shrink Beam to the loadout screen. Takes effect on restart.");
+        VictoryBannerEnabled = config.Bind("Victory Banner", "Victory Banner Enabled", true, "Adds the Victory Banner to the loadout screen. Takes effect on restart.");
     }
 
     // Every gun this mod adds (infinite ammo applies to all of them).
@@ -106,28 +134,28 @@ internal static class GunInjector
         // Each pistol/rifle pair shares one set of stats (built from the same source archetype), so
         // the pistol and the rifle behave identically; the model only decides the look and hold.
         const string plasma = "Rapid-fire blue plasma, straight out of Doom: no recoil, no homing, just a stream of energy that shocks whatever it hits.";
-        TryAdd("Plasma Pistol", PlasmaPistolId, (name, id) => AddPlasma(name, id, "Autopistol staggering", plasma)); // Raptus Steigro, main slot
-        TryAdd("Plasma Rifle", PlasmaRifleId, (name, id) => AddPlasma(name, id, "HELRifleSemi", plasma));           // Omneco LRG, special slot
+        TryAdd("Plasma Pistol", PlasmaPistolId, PlasmaPistolEnabled, (name, id) => AddPlasma(name, id, "Autopistol staggering", plasma)); // Raptus Steigro, main slot
+        TryAdd("Plasma Rifle", PlasmaRifleId, PlasmaRifleEnabled, (name, id) => AddPlasma(name, id, "HELRifleSemi", plasma));           // Omneco LRG, special slot
         const string hive = "A smart gun: locks onto the enemies around your crosshair and curves a fast stream of rounds onto them.";
-        TryAdd("Hive Pistol", HivePistolId, (name, id) => AddHive(name, id, "PistolSemi", hive));    // Shelling S49, main slot
-        TryAdd("Hive Rifle", HiveRifleId, (name, id) => AddHive(name, id, "RifleHeavyAuto", hive)); // Malatack HXC, special slot
+        TryAdd("Hive Pistol", HivePistolId, HivePistolEnabled, (name, id) => AddHive(name, id, "PistolSemi", hive));    // Shelling S49, main slot
+        TryAdd("Hive Rifle", HiveRifleId, HiveRifleEnabled, (name, id) => AddHive(name, id, "RifleHeavyAuto", hive)); // Malatack HXC, special slot
         const string tentacle = "Fires the strikers' own tentacles, full-auto: every round is a tentacle that lashes out at an enemy near your crosshair and bites hard.";
         // Buckland XDist2: the biggest special-slot gun with no optic, held out low (AddFarLowHold) so the tentacles have room.
-        TryAdd("Tentacle Cannon", TentacleCannonId, (name, id) => AddTentacle(name, id, "ShotgunRanged", AddFarLowHold(name, id), tentacle));
+        TryAdd("Tentacle Cannon", TentacleCannonId, TentacleCannonEnabled, (name, id) => AddTentacle(name, id, "ShotgunRanged", AddFarLowHold(name, id), tentacle));
         const string laser = "A continuous laser beam, like a trip mine's: it burns whatever it's held on, out to 70 metres, for as long as you hold it there.";
-        TryAdd("Laser Pistol", LaserPistolId, (name, id) => AddLaser(name, id,
+        TryAdd("Laser Pistol", LaserPistolId, LaserPistolEnabled, (name, id) => AddLaser(name, id,
             "Pistolauto", // Raptus Treffen 2: full-auto pistol, no sight, main slot
             48, // held low (ItemFPSSettings "Pistol_Chunky", 10 cm down) so the beam is visible
             laser));
-        TryAdd("Laser Rifle", LaserRifleId, (name, id) => AddLaser(name, id, "SMGHeavyAuto", null, laser, forceSpecialSlot: true));   // Accrat ND6, no animated parts, forced into the special slot (it's a main-slot SMG in vanilla)
-        TryAdd("Railgun", RailgunId, AddRailgun);
-        TryAdd("Chain Lightning Gun", ChainLightningId, AddChainLightning);
+        TryAdd("Laser Rifle", LaserRifleId, LaserRifleEnabled, (name, id) => AddLaser(name, id, "SMGHeavyAuto", null, laser, forceSpecialSlot: true));   // Accrat ND6, no animated parts, forced into the special slot (it's a main-slot SMG in vanilla)
+        TryAdd("Railgun", RailgunId, RailgunEnabled, AddRailgun);
+        TryAdd("Chain Lightning Gun", ChainLightningId, ChainLightningGunEnabled, AddChainLightning);
         const string grenade = "A heavy semi-auto launcher: every shot is a lock melter rigged to blow - it goes off on the first enemy it hits, or bounces around and blows after 3 seconds.";
-        TryAdd("Grenade Pistol", GrenadePistolId, (name, id) => AddGrenadeGun(name, id, "RevolverHEL", grenade));    // Bataldo 3RB (heavy revolver), main slot
-        TryAdd("Grenade Rifle", GrenadeRifleId, (name, id) => AddGrenadeGun(name, id, "MachinegunAuto", grenade)); // TechMan Veruta XII (heavy machine gun), special slot
-        TryAdd("Rocket Launcher", RocketLauncherId, AddRocketLauncher);
-        TryAdd("Shrink Beam", ShrinkBeamId, AddShrinkBeam);
-        TryAdd("Victory Banner", VictoryBannerId, AddVictoryBanner);
+        TryAdd("Grenade Pistol", GrenadePistolId, GrenadePistolEnabled, (name, id) => AddGrenadeGun(name, id, "RevolverHEL", grenade));    // Bataldo 3RB (heavy revolver), main slot
+        TryAdd("Grenade Rifle", GrenadeRifleId, GrenadeRifleEnabled, (name, id) => AddGrenadeGun(name, id, "MachinegunAuto", grenade)); // TechMan Veruta XII (heavy machine gun), special slot
+        TryAdd("Rocket Launcher", RocketLauncherId, RocketLauncherEnabled, AddRocketLauncher);
+        TryAdd("Shrink Beam", ShrinkBeamId, ShrinkBeamEnabled, AddShrinkBeam);
+        TryAdd("Victory Banner", VictoryBannerId, VictoryBannerEnabled, AddVictoryBanner);
     }
 
     // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id,
@@ -189,10 +217,15 @@ internal static class GunInjector
         Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
 
-    private static void TryAdd(string name, uint id, Action<string, uint> add)
+    private static void TryAdd(string name, uint id, ConfigEntry<bool> enabled, Action<string, uint> add)
     {
         try
         {
+            if (!enabled.Value)
+            {
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons: {name} disabled in the config - not adding it.");
+                return;
+            }
             // Already added by this mod (the game initialized its data again): nothing to do.
             if (AddedCategories.Contains(id) && GameDataBlockBase<GearCategoryDataBlock>.HasBlock(id)) return;
             if (GameDataBlockBase<ArchetypeDataBlock>.HasBlock(id)

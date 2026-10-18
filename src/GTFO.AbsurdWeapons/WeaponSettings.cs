@@ -26,6 +26,7 @@ internal sealed class WeaponSettings
     private static ConfigFile config = null!;
 
     internal string Weapon { get; }
+    internal ConfigEntry<bool> Enabled { get; }
     internal ConfigEntry<float> BladeLength { get; }
     internal ConfigEntry<BladeAxis> BladeLengthAxis { get; }
     internal ConfigEntry<float> Reach { get; }
@@ -44,6 +45,8 @@ internal sealed class WeaponSettings
     private WeaponSettings(ConfigFile file, string weapon, float bladeLength, string builtInReach, BladeAxis axis = BladeAxis.Y)
     {
         Weapon = weapon;
+        Enabled = file.Bind(weapon, $"{weapon} Enabled", true,
+            $"Adds the {weapon} to the loadout screen. Turn off to remove it without touching any of its other settings below. Takes effect on restart.");
         BladeLength = file.Bind(weapon, "BladeLength", bladeLength,
             new ConfigDescription("Stretches the blade along its length: 1 is the model's own size, 2 twice as long. Visual only - raise Reach to match.",
                 new AcceptableValueRange<float>(0.25f, 20f)));
