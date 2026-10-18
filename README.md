@@ -266,7 +266,10 @@ All of it is `[Hand Grenade]`.
 the Hand Grenade (1203), the Stim Pack (1204) and the health, tool and ammo resource packs (found by
 `InventorySlot.ResourcePack` and name, logged). Resource packs normally get their contents from the
 zone budget, so the pack items' `ConsumableAmmoMin/Max` are set to `KitSize` (20) for the loot path.
-`ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`.
+`ChanceToSpawnInResourceContainer` comes from `OutInTheOpenShare`. A prefix on
+`LG_PickupItem.SetupAsArtifact` sets every artifact spot up with
+`SetupAsConsumable(randomSeed, 1203)` instead (`ArtifactsBecomeHandGrenades`); level generation runs
+on every game from the same seed, so all players get the same grenades.
 
 The Stim Pack is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
 (`SyringeFirstPerson._ApplySyringe_d__18.MoveNext`) flags a Stim Pack's use - not the I2-LP's - so

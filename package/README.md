@@ -235,6 +235,9 @@ things: **Hand Grenades** (2 in 6), **Stim Packs**, **health kits**, **tool kits
 (1 in 6 each). Kits found this way always hold **20%** of a pack. The zone's own resource packs
 still spawn as normal, at their usual sizes, on top.
 
+And **there are no artifacts**: everywhere the level would have placed one - out in the open or in a
+box - there's a **Hand Grenade** instead.
+
 ## Swapping weapons in a level
 
 Hold a main, special, tool or melee weapon and press **Page Up** for the next weapon for that slot,
@@ -554,6 +557,7 @@ Shared by everything that flings enemies (the Warhammer).
 | `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
 | `KitSize` † | 20 | Contents of a kit found as consumable loot, in percent of a full pack. Zone resource packs are unaffected. |
 | `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
+| `ArtifactsBecomeHandGrenades` | true | Every artifact spot gets a Hand Grenade instead. Every player needs the same setting. |
 
 ### `[Ammo]`
 
