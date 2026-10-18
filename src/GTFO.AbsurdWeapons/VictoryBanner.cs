@@ -320,7 +320,10 @@ internal sealed class BannerPylon : MonoBehaviour
         if (retired) return;
         try
         {
-            if (Time.time - placedAt >= VictoryBanner.SafetyLifetimeSeconds.Value)
+            // The level ended (won, lost or left): the banner goes with it, or the next drop would
+            // see it as already down and it would keep healing at its old spot.
+            if (GameStateManager.CurrentStateName != eGameStateName.InLevel
+                || Time.time - placedAt >= VictoryBanner.SafetyLifetimeSeconds.Value)
             {
                 Retire();
                 return;
