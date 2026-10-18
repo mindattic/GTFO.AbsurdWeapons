@@ -93,27 +93,24 @@ internal static class Railgun
 }
 
 /// <summary>
-/// One railgun shot's look: a straight white-hot core and two strands spiralling around it in a
-/// double helix. The helix spins, widens and the whole thing fades out over a moment.
+/// One railgun shot's look: two strands spiralling around the shot's line in a double helix. The
+/// helix holds its shape where it was fired and just fades out to nothing over a moment.
 /// </summary>
 internal sealed class RailBeam : MonoBehaviour
 {
     private const float Seconds = 0.8f;
-    private const float HelixLength = 80f;     // the helix wraps the first stretch; the core runs the full range
-    private const float TurnLength = 2.4f;     // metres per full turn (half as many spirals again)
+    private const float HelixLength = 80f;     // the helix wraps the first stretch of the shot
+    private const float TurnLength = 2.4f;     // metres per full turn
     private const int PointsPerTurn = 12;
-    private const float StartRadius = 0.04f, EndRadius = 0.3f;
-    private const float SpinPerSecond = 720f;
-    // Green-tinted and semi-transparent: alpha below 1 here, not just the time fade, so the beam
-    // reads as translucent the instant it fires.
-    private static readonly Color CoreColor = new(0.8f, 1f, 0.85f, 0.65f);
+    private const float Radius = 0.06f;
+    private const float Width = 0.03f;
+    // Green-tinted and semi-transparent from the start (alpha below 1), then faded to nothing.
     private static readonly Color StrandA = new(0.2f, 1f, 0.35f, 0.6f);
     private static readonly Color StrandB = new(0.1f, 0.65f, 0.2f, 0.6f);
     private static Material? material;
 
-    private LineRenderer core = null!, strandA = null!, strandB = null!;
+    private LineRenderer strandA = null!, strandB = null!;
     private EffectLight glow = null!;
-    private Vector3 start, end;
     private float age;
 
     public RailBeam(IntPtr ptr) : base(ptr) { }
@@ -123,15 +120,10 @@ internal sealed class RailBeam : MonoBehaviour
     {
         var go = new GameObject("GTFO.AbsurdWeapons Rail Beam");
         var beam = go.AddComponent<RailBeam>();
-        beam.start = start;
-        beam.end = end;
-        beam.core = NewLine(go, 2);
-        beam.core.SetPosition(0, start);
-        beam.core.SetPosition(1, end);
-
         var helixPoints = Mathf.Max(2, Mathf.CeilToInt(Mathf.Min(HelixLength, Vector3.Distance(start, end)) / TurnLength * PointsPerTurn) + 1);
         beam.strandA = NewLine(new GameObject("Strand A") { transform = { parent = go.transform } }, helixPoints);
         beam.strandB = NewLine(new GameObject("Strand B") { transform = { parent = go.transform } }, helixPoints);
+        beam.Shape(start, end);
 
         var lightObject = new GameObject("Glow");
         lightObject.transform.SetParent(go.transform, false);
@@ -142,7 +134,7 @@ internal sealed class RailBeam : MonoBehaviour
         beam.glow.Intensity = 6f;
         beam.glow.enabled = true;
 
-        beam.Draw();
+        beam.Fade(1f);
     }
 
     [HideFromIl2Cpp]
@@ -152,6 +144,7 @@ internal sealed class RailBeam : MonoBehaviour
         line.positionCount = points;
         line.useWorldSpace = true;
         line.numCapVertices = 2;
+        line.startWidth = line.endWidth = Width;
         line.material = material ??= new Material(Shader.Find("Sprites/Default"));
         return line;
     }
@@ -166,7 +159,8 @@ internal sealed class RailBeam : MonoBehaviour
         }
         try
         {
-            Draw();
+            var t = age / Seconds;
+            Fade(1f - t);
         }
         catch (Exception e)
         {
@@ -175,44 +169,38 @@ internal sealed class RailBeam : MonoBehaviour
         }
     }
 
+    // The helix, laid out once along the shot.
     [HideFromIl2Cpp]
-    private void Draw()
+    private void Shape(Vector3 start, Vector3 end)
     {
-        var t = age / Seconds;
-        var fade = 1f - t * t;
-
-        core.startWidth = core.endWidth = Mathf.Lerp(0.05f, 0.01f, t);
-        core.startColor = core.endColor = Fade(CoreColor, fade);
-        glow.Intensity = 6f * fade;
-
-        var line = end - start;
-        var forward = line.normalized;
+        var forward = (end - start).normalized;
         var side = Vector3.Cross(Vector3.up, forward);
         if (side.sqrMagnitude < 0.001f) side = Vector3.right;
         side.Normalize();
         var up = Vector3.Cross(forward, side);
 
-        var radius = Mathf.Lerp(StartRadius, EndRadius, Mathf.Sqrt(t));
-        var spin = age * SpinPerSecond * Mathf.Deg2Rad;
         var count = strandA.positionCount;
         for (var i = 0; i < count; i++)
         {
             var along = i * (TurnLength / PointsPerTurn);
-            var angle = along / TurnLength * Mathf.PI * 2f + spin;
+            var angle = along / TurnLength * Mathf.PI * 2f;
             var center = start + forward * along;
             var offset = side * Mathf.Cos(angle) + up * Mathf.Sin(angle);
-            strandA.SetPosition(i, center + offset * radius);
-            strandB.SetPosition(i, center - offset * radius);
+            strandA.SetPosition(i, center + offset * Radius);
+            strandB.SetPosition(i, center - offset * Radius);
         }
-
-        var width = Mathf.Lerp(0.03f, 0.012f, t);
-        strandA.startWidth = strandA.endWidth = width;
-        strandB.startWidth = strandB.endWidth = width;
-        strandA.startColor = Fade(StrandA, fade);
-        strandA.endColor = Fade(StrandA, 0f);
-        strandB.startColor = Fade(StrandB, fade);
-        strandB.endColor = Fade(StrandB, 0f);
     }
 
-    private static Color Fade(Color color, float alpha) => new(color.r, color.g, color.b, color.a * alpha);
+    // Everything at `alpha` of its own opacity (each strand also fades out along its length).
+    [HideFromIl2Cpp]
+    private void Fade(float alpha)
+    {
+        strandA.startColor = WithAlpha(StrandA, alpha);
+        strandA.endColor = WithAlpha(StrandA, 0f);
+        strandB.startColor = WithAlpha(StrandB, alpha);
+        strandB.endColor = WithAlpha(StrandB, 0f);
+        glow.Intensity = 6f * alpha;
+    }
+
+    private static Color WithAlpha(Color color, float alpha) => new(color.r, color.g, color.b, color.a * alpha);
 }

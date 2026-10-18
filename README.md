@@ -205,8 +205,8 @@ lands right there. If the release won't take, a `BulletDamage` cut stands in.
 The `CastWeaponRay` prefix swallows the Railgun's ray. For the local shooter `Railgun.Fire` runs
 `RaycastAll` on `MASK_ENEMY_DAMAGABLE` along the aim out to 200 m - walls don't stop it - sorts the
 hits by distance and calls `BulletDamage` once per enemy on the first limb met (so a head is a
-head). `RailBeam` draws a core `LineRenderer` the full length and two helix strands around the
-first 80 m (2.4 m a turn, 12 points a turn) that spin, widen and fade over 0.8 s, with an
+head). `RailBeam` draws two helix strands (`LineRenderer`s) around the first 80 m (2.4 m a turn, 12
+points a turn, 6 cm radius), laid out once and then just faded to transparent over 0.8 s, with an
 `EffectLight`. `Impact_Metal` sparks play at every wall the line crosses. Teammates get
 `MindAttic.GTFO.AbsurdWeapons.RailShot`.
 

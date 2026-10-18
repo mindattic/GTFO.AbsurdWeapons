@@ -171,8 +171,8 @@ shot is a **lock melter rigged to blow**.
 
 The Köning PR 11, semi-auto, one shot every 1.5 seconds. Each shot is an instant slug with **infinite
 penetration**: it goes through every enemy and every wall out to 200 m, doing **150 damage** to every
-enemy on the line (headshots still count). It's drawn as a white-hot beam wrapped in a spinning
-double helix that widens and fades over 0.8 s, with sparks wherever it punches through a wall. Keeps
+enemy on the line (headshots still count). It's drawn as a green double helix along the shot
+that fades away to nothing over 0.8 s, with sparks wherever it punches through a wall. Keeps
 the sniper's scope, with no kickback.
 
 ### Chain Lightning Gun (special)
