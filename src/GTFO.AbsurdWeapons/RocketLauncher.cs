@@ -15,8 +15,9 @@ namespace GTFO.AbsurdWeapons;
 /// <c>MF_NOGRAVITY</c>) - neither game's rocket drops or bounces. Every shot (SeekerGuns' ray hook
 /// calls <see cref="Launch"/>) leaves the barrel and flies dead straight, kicking off falling sparks
 /// and a trail of dust (the game's own concrete-impact puff) as it goes, to the first enemy or wall
-/// in its way, then explodes there - same blast
-/// code as the Grenade Launcher (<see cref="AreaDamage"/>, <see cref="Explosion"/>). Quake's own
+/// in its way, then explodes there - same blast code as the Grenade Launcher (<see cref="AreaDamage"/>,
+/// <see cref="Explosion"/>), plus the game's own <c>DamageUtil.DoExplosionDamage</c> so the blast
+/// catches nearby players too - shooter, bots and teammates alike, Quake/Doom style. Quake's own
 /// numbers: 120-damage splash with a half-distance falloff (<c>T_RadiusDamage</c>),
 /// searched out to 160 units - zero past that, a third of the center damage left at the edge (the
 /// same 160 u / a-third the Grenade Launcher's blast already uses) - and a 0.8 s refire. The gun's
@@ -240,6 +241,20 @@ internal sealed class RocketProjectile : MonoBehaviour
         if (owner == null) return; // a teammate's copy: visual only, no damage
         AreaDamage.Apply(position, RocketLauncher.BlastRadius.Value, RocketLauncher.BlastDamage.Value, RocketLauncher.BlastEdgeFraction.Value,
             RocketLauncher.BlastStagger.Value, owner.Cast<Agents.Agent>(), null, gearCategoryId);
+
+        // Quake/Doom rockets hurt whoever's standing in the blast - shooter, bots and teammates
+        // alike - not just enemies: the game's own explosion-damage sweep (MASK_EXPLOSION_TARGETS is
+        // players and destructibles, not enemies - those are the AreaDamage.Apply above, with their
+        // own falloff), blocked by world geometry.
+        try
+        {
+            DamageUtil.DoExplosionDamage(position, RocketLauncher.BlastRadius.Value, RocketLauncher.BlastDamage.Value,
+                LayerManager.MASK_EXPLOSION_TARGETS, LayerManager.MASK_EXPLOSION_BLOCKERS, false, 0f);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons rocket couldn't damage nearby players: {e.Message}");
+        }
     }
 
     [HideFromIl2Cpp]

@@ -368,7 +368,7 @@ internal static class GunInjector
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f; // a rocket, not a shell: no brass ejected
         Register(name, id, archetype, category, gear,
-            "Quake 1's own rocket launcher: every shot is a rocket that flies dead straight out to the first thing in its way - no drop, no bounce - trailing smoke and sparks, and blows it up in a blast that reaches everyone nearby.");
+            "Quake 1's own rocket launcher: every shot is a rocket that flies dead straight out to the first thing in its way - no drop, no bounce - trailing sparks and dust, and blows it up in a blast that reaches everyone nearby.");
     }
 
     // A tentacle gun on the given model, forced full-auto: a tentacle (TentacleCannon) for every
