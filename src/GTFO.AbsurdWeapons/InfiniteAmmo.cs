@@ -59,6 +59,28 @@ internal sealed class InfiniteAmmo : MonoBehaviour
         return fired;
     }
 
+    // Sets the local player's wielded gun's magazine and syncs it to the HUD and teammates.
+    internal static void SetClip(BulletWeapon gun, int clip)
+    {
+        gun.SetCurrentClip(Mathf.Clamp(clip, 0, gun.ClipSize));
+        var player = gun.Owner;
+        var storage = PlayerBackpackManager.LocalBackpack?.AmmoStorage;
+        if (player == null || storage == null) return;
+        storage.SetClipAmmoInSlot(player.Inventory.WieldedSlot);
+        storage.UpdateAllAmmoUI();
+        storage.NeedsSync = true;
+    }
+
+    // One round for a Tentacle Cannon tentacle that bit an enemy (its shots themselves are free),
+    // off the gun the shooter is holding - free if they've since put it away.
+    internal static void SpendTentacleBite(PlayerAgent owner)
+    {
+        if (Enabled.Value || !owner.IsLocallyOwned) return;
+        var gun = owner.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
+        if (gun == null || !TentacleCannon.IsTentacleGun(gun.ArchetypeData?.persistentID ?? 0)) return;
+        SetClip(gun, gun.GetCurrentClip() - 1);
+    }
+
     private void Update()
     {
         if (!Enabled.Value) return;

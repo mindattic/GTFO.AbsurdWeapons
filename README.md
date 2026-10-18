@@ -106,7 +106,10 @@ homes onto and damages players only, so it can't be used as-is.
   and have no magazine: their drivers call `InfiniteAmmo.TrySpend(player, tickSeconds)`, which takes
   `StreamPercentPerSecond` (2%) of the slot's `AmmoMaxCap` per second straight off the reserve
   (`SetAmmo`), shows the magazine full while any reserve is left and empty after, and stops the
-  beam once it's gone. They never reload. With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
+  beam once it's gone. They never reload.
+  The Tentacle Cannon fires normally but its shots are refunded (the magazine before the outermost
+  `Fire` is put back in `EndFire`); each lash that `BulletDamage`s an enemy costs one round instead
+  (`InfiniteAmmo.SpendTentacleBite`). With `[Ammo] InfiniteAmmo` on, the `Fire` postfixes top the clip back up after
   every shot and the `InfiniteAmmo` component keeps the wielded gun's clip and reserve full.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.

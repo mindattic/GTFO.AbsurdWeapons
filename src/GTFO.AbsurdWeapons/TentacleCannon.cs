@@ -444,6 +444,7 @@ internal sealed class TentacleLash : MonoBehaviour
         var direction = (end - start).normalized;
         nearest.BulletDamage(damage, owner.Cast<Agent>(), end, direction, -direction,
             allowDirectionalBonus: false, staggerMulti, 1f, gearCategoryId);
+        if (damage > 0f) InfiniteAmmo.SpendTentacleBite(owner); // only a bite that lands costs a round
 
         // Proof it landed, not just that it was sent: the limb's own health before and after,
         // throttled so continuous fire doesn't flood the log.

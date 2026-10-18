@@ -151,7 +151,8 @@ your eyeline around the view and thrashing in from off-screen. **While an enemy 
 crosshair and in reach**, every tentacle in the burst reaches for it, each landing its own bite;
 with none in reach they reach out along their own random lines for the nearest wall, floor or crate
 (and melt a lock they grab). It's carried very low at the waist, like a minigun. Each bite does 25
-and staggers hard (x12); ~4.3 bursts a second.
+and staggers hard (x12); ~4.3 bursts a second. **Only a tentacle that bites an enemy costs a round**
+- firing itself is free, so misses and tentacles that grab a wall cost nothing.
 
 ### Grenade Pistol (main) and Grenade Rifle (special)
 
