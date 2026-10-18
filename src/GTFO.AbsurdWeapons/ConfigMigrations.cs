@@ -28,6 +28,7 @@ internal static class ConfigMigrations
         (4, "Sounds", "ShrinkLoopStart", "BIOTRACKER_TOOL_LOOP"),
         (4, "Sounds", "ShrinkLoopStop", "BIOTRACKER_TOOL_LOOP_STOP"),
         (5, "Shadow Dagger", "StealthKillTimeBonus", 0.25f),
+        (6, "Shadow Dagger", "StealthSeconds", 2f),
     };
 
     // After every setting is bound.

@@ -16,8 +16,10 @@ namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// The Shadow Dagger: lightning-fast stabs (its light attacks play 2.5x as fast; WeaponSettings),
-/// and a fully charged hit that lands on an enemy hides its wielder for <see cref="Seconds"/> (a
-/// further one restarts the count). While hidden, enemies can't detect
+/// and a fully charged hit that lands on an enemy hides its wielder for <see cref="Seconds"/>. While
+/// hidden, every kill adds <see cref="KillTimeBonus"/> and every enemy hit drains the cap on how
+/// high the time can grow (<see cref="CapDrainPerHit"/>), so it always ends; the cap resets to
+/// <see cref="MaxSeconds"/> once it does. While hidden, enemies can't detect
 /// them by sight or noise, can't lock on or be alerted to them, and drop them as a target if they
 /// already had them. Enemy AI runs on the host, so the hit is sent to everyone over GTFO-API and
 /// every game keeps the same list of who is hidden. Hidden players fade to 90% transparent, coming
@@ -30,7 +32,7 @@ internal static class Stealth
     internal static ConfigEntry<float> Seconds = null!;
     internal static ConfigEntry<float> KillTimeBonus = null!;
     internal static ConfigEntry<float> MaxSeconds = null!;
-    internal static ConfigEntry<float> CapDecaySeconds = null!;
+    internal static ConfigEntry<float> CapDrainPerHit = null!;
     internal static ConfigEntry<float> BonusPerKill = null!;
     internal static ConfigEntry<float> MaxBonus = null!;
     internal static ConfigEntry<float> Transparency = null!;
@@ -45,11 +47,12 @@ internal static class Stealth
 
     internal static void Bind(ConfigFile config)
     {
-        Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 2f, "Seconds a fully charged hit hides you for; a further one restarts the count.");
-        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.33f, "Seconds added to the stealth for a full-windup kill made while hidden, up to StealthMaxSeconds.");
-        MaxSeconds = config.Bind("Shadow Dagger", "StealthMaxSeconds", 3f, "The most stealth you can have at once, however many kills stretch it.");
-        CapDecaySeconds = config.Bind("Shadow Dagger", "StealthCapDecaySeconds", 0.1f,
-            "Every time a kill bumps into the cap, the cap drops by this much (never below StealthSeconds) until the stealth ends, when it goes back to StealthMaxSeconds.");
+        Seconds = config.Bind("Shadow Dagger", "StealthSeconds", 3f, "Seconds a fully charged hit hides you for (up to the current cap while already hidden).");
+        KillTimeBonus = config.Bind("Shadow Dagger", "StealthKillTimeBonus", 0.33f, "Seconds added to the stealth for every kill made while hidden, up to the current cap.");
+        MaxSeconds = config.Bind("Shadow Dagger", "StealthMaxSeconds", 3f, "The cap on stealth time when a stealth starts. It drains with every enemy hit while hidden, and resets when the stealth ends.");
+        CapDrainPerHit = config.Bind("Shadow Dagger", "StealthCapDrainPerHit", 0.05f,
+            new ConfigDescription("Share of the current cap lost with every enemy hit while hidden, kill or not (0.05 = 5%), so a stealth always ends eventually.",
+                new AcceptableValueRange<float>(0f, 1f)));
         BonusPerKill = config.Bind("Shadow Dagger", "StealthBonusPerKill", 0.25f, "Damage bonus (0.25 = +25%) added per kill made while hidden.");
         MaxBonus = config.Bind("Shadow Dagger", "StealthMaxBonus", 1f, "Cap on the stacked kill bonus (1 = +100%).");
         Transparency = config.Bind("Shadow Dagger", "StealthTransparency", 0.95f,
@@ -100,43 +103,33 @@ internal static class Stealth
 
     // (Fast stabs: the dagger's light attacks are 2.5x as fast - MeleeInjector / SwordTempo.)
 
-    // ---- Kills while hidden: each adds 25% dagger damage (up to +100%) for the rest of the
-    // stealth; a full-windup kill also adds the windup's time to the stealth ----
+    // ---- While hidden: every enemy hit drains the cap; every kill adds damage and time ----
 
     private const float KillCheckDelay = 0.4f; // the kill is confirmed by the host; look a moment later
 
     private static float damageBonus;      // the local player's, while hidden
-    private static float cap = -1f;        // the local player's current stealth cap, while hidden (-1: StealthMaxSeconds)
-    private static float chargeStarted = -1f, lastWindup;
-    private static readonly List<(EnemyAgent Enemy, float CheckAt, float Windup)> pendingKills = new();
+    private static float cap = -1f;        // the local player's current stealth cap, while hidden (-1: not started)
+    private static readonly List<(EnemyAgent Enemy, float CheckAt)> pendingKills = new();
 
-    [HarmonyPatch(typeof(MeleeWeaponFirstPerson), nameof(MeleeWeaponFirstPerson.ChangeState))]
-    [HarmonyPostfix]
-    private static void AfterChangeState(MeleeWeaponFirstPerson __instance, eMeleeWeaponState newState)
+    private static float Cap => cap >= 0f ? cap : MaxSeconds.Value;
+
+    private static void SetLocal(PlayerAgent local, float seconds)
     {
-        if (__instance.MeleeArchetypeData?.persistentID != MeleeInjector.ShadowDaggerId) return;
-        if (__instance.Owner == null || !__instance.Owner.IsLocallyOwned) return;
-        if (newState is eMeleeWeaponState.AttackChargeUpLeft or eMeleeWeaponState.AttackChargeUpRight)
-            chargeStarted = Time.time;
-        else if (newState is eMeleeWeaponState.AttackChargeReleaseLeft or eMeleeWeaponState.AttackChargeReleaseRight)
-            lastWindup = chargeStarted >= 0f ? Time.time - chargeStarted : 0f;
+        if (local.Owner == null) return;
+        Hide(local.Owner.Lookup, seconds);
+        NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(seconds));
     }
 
-    // One check per enemy, however many times it was hit: a kill counts once (keeping a full
-    // windup if any of the hits had one).
-    private static void QueueKillCheck(EnemyAgent enemy, float windup)
+    // One check per enemy, however many times it was hit: a kill counts once.
+    private static void QueueKillCheck(EnemyAgent enemy)
     {
-        var index = pendingKills.FindIndex(p => p.Enemy != null && p.Enemy.Pointer == enemy.Pointer);
-        if (index >= 0)
-        {
-            windup = Mathf.Max(windup, pendingKills[index].Windup);
-            pendingKills.RemoveAt(index);
-        }
-        pendingKills.Add((enemy, Time.time + KillCheckDelay, windup));
+        pendingKills.RemoveAll(p => p.Enemy != null && p.Enemy.Pointer == enemy.Pointer);
+        pendingKills.Add((enemy, Time.time + KillCheckDelay));
     }
 
-    // Kills confirmed since they were struck: the damage bonus grows, and a full-windup kill
-    // stretches the stealth by KillTimeBonus. Called every frame (StealthVisuals).
+    // Kills confirmed since they were struck: the damage bonus grows and the stealth stretches by
+    // KillTimeBonus, up to the cap. Called every frame (StealthVisuals); a stealth that's ended
+    // resets everything, the cap included.
     internal static void ProcessKills(PlayerAgent local)
     {
         if (Remaining(local) <= 0f)
@@ -148,22 +141,16 @@ internal static class Stealth
         }
         for (var i = pendingKills.Count - 1; i >= 0; i--)
         {
-            var (enemy, checkAt, windup) = pendingKills[i];
+            var (enemy, checkAt) = pendingKills[i];
             if (Time.time < checkAt) continue;
             pendingKills.RemoveAt(i);
             if (enemy != null && enemy.Alive) continue;
 
             damageBonus = Formulas.StealthBonusAfterKill(damageBonus, BonusPerKill.Value, MaxBonus.Value);
-            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: kill while hidden - damage +{damageBonus * 100f:0}%.");
-            if (windup > 0f && local.Owner != null)
-            {
-                var limit = cap >= 0f ? cap : Mathf.Max(Seconds.Value, MaxSeconds.Value);
-                var wanted = Remaining(local) + KillTimeBonus.Value;
-                var stretched = Mathf.Min(wanted, limit);
-                cap = wanted >= limit ? Mathf.Max(Seconds.Value, limit - CapDecaySeconds.Value) : limit;
-                Hide(local.Owner.Lookup, stretched);
-                NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(stretched));
-            }
+            var left = Remaining(local);
+            var stretched = Mathf.Max(left, Mathf.Min(left + KillTimeBonus.Value, Cap));
+            Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: kill while hidden - damage +{damageBonus * 100f:0}%, {stretched:0.##} s left (cap {Cap:0.##} s).");
+            SetLocal(local, stretched);
         }
     }
 
@@ -189,34 +176,31 @@ internal static class Stealth
         {
             if (isPush || data == null || __instance.MeleeArchetypeData?.persistentID != MeleeInjector.ShadowDaggerId) return;
             var struck = data.damageGO != null ? data.damageGO.GetComponentInParent<EnemyAgent>() : null;
-            if (struck == null) return;
-            var attacker = __instance.Owner;
-            var charged = ImpactBursts.IsChargedAttack(__instance.CurrentStateName);
+            var owner = __instance.Owner;
+            if (struck == null || owner == null || !owner.IsLocallyOwned || owner.Owner == null) return;
+
+            // A hit while hidden drains the cap (the time already left is kept - it just can't grow
+            // past the new cap) and is checked for a kill.
+            var hidden = IsHidden(owner);
+            if (hidden)
+            {
+                cap = Cap * (1f - Mathf.Clamp01(CapDrainPerHit.Value));
+                QueueKillCheck(struck);
+            }
 
             // Full charge: the damage about to be dealt (before any bonus) is (nearly) the
             // archetype's full charged damage.
+            if (!ImpactBursts.IsChargedAttack(__instance.CurrentStateName)) return;
             var full = __instance.MeleeArchetypeData.ChargedAttackDamage;
-            var isFull = charged && __state >= full * FullChargeShare;
-
-            // A hit while hidden: if it kills, the bonus grows (and a full windup stretches the stealth).
-            if (attacker != null && attacker.IsLocallyOwned && IsHidden(attacker))
-                QueueKillCheck(struck, isFull ? lastWindup : 0f);
-
-            if (!charged) return;
-            var dealt = __state;
-            if (dealt < full * FullChargeShare)
+            if (__state < full * FullChargeShare)
             {
-                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: charged hit at {dealt:0.##} of {full:0.##} - not a full charge, no stealth.");
+                Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Shadow Dagger: charged hit at {__state:0.##} of {full:0.##} - not a full charge, no stealth.");
                 return;
             }
 
-            var owner = __instance.Owner;
-            if (owner == null || !owner.IsLocallyOwned || owner.Owner == null) return;
-
-            // Starts (or tops back up to) the full stealth - never cutting a stretched one short.
-            var seconds = Mathf.Max(Seconds.Value, Remaining(owner));
-            Hide(owner.Owner.Lookup, seconds);
-            NetworkAPI.InvokeEvent(StealthEvent, new StealthMessage(seconds));
+            // Starts the stealth, or tops it back up - never past the drained cap, never cutting it short.
+            var left = Remaining(owner);
+            SetLocal(owner, Mathf.Max(left, Mathf.Min(Seconds.Value, Cap)));
         }
         catch (Exception e)
         {

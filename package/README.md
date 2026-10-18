@@ -23,7 +23,7 @@ in the config file BepInEx creates on first launch — see [Config](#config).
 | **Katana** | Mastaba Fixed Blade, real katana size | Bat | Wide cuts through everything in the arc; a full charge dashes you up to 10 m with the swing held - it cuts the moment you reach an enemy or a wall |
 | **Mjolnir** | Santonian Mallet | Bat | Every hit releases a thunderclap; a full charge throws it, crackling chain lightning |
 | **Warhammer** | Kovac Sledgehammer, 3x head | Sledgehammer | 500-damage blow; every hit flings enemies, and walls hurt them |
-| **Shadow Dagger** | Mastaba Fixed Blade | Knife, faster | A fully charged hit makes you unseen for 2 seconds |
+| **Shadow Dagger** | Mastaba Fixed Blade | Knife, faster | A fully charged hit makes you unseen for 3 seconds; kills stretch it, every hit shortens how far |
 
 ### Guns
 
@@ -104,18 +104,19 @@ x10 to doors and locks on a charged hit, 2.4 m reach, hits several enemies.
 ### Shadow Dagger
 
 Quick stabs play **2.5x as fast** as the knife's, and **a fully charged hit on an enemy makes you
-unseen for 2 seconds**: enemies can't see or hear you, won't lock on, and lose you if they were
+unseen for 3 seconds**: enemies can't see or hear you, won't lock on, and lose you if they were
 chasing. You fade to a faint purple tint while hidden - the dagger's own glow - filling back in as
 the time runs out, and flickering faster and faster over the last second as a warning before it
-reverts. Another full-charge hit tops the stealth back up to the full 2 seconds (never cut short).
+reverts. Another full-charge hit tops the stealth back up (never cut short).
 **Put the dagger away and it ends at once:** wielding any other item makes you visible again.
 
 - **Kills while hidden** sharpen the dagger: each adds **+25% damage**, up to **+100%**, for the
   rest of that stealth.
-- **A kill made with a full charge while hidden** also adds **+0.33 seconds** to your stealth, so a
-  chain of charged kills keeps you hidden - up to **3 seconds** at most. Every time a kill hits that
-  cap, the cap drops by 0.1 s (2.9 s, then 2.8 s, ... never below 2 s) until the stealth ends; the
-  next stealth starts back at 3 s.
+- **Every kill while hidden** adds **+0.33 seconds** to your stealth.
+- **But it can't last forever:** your stealth can only grow up to a cap, which starts at **3 seconds**
+  and **drains 5% with every enemy you hit** while hidden, kill or not. Draining the cap never takes
+  away time you already have - you just can't stretch it back above the lowered cap. Once the
+  stealth ends the cap resets to 3 seconds.
 
 ## Guns
 
@@ -339,10 +340,10 @@ Each of `[Katana]`, `[Mjolnir]`, `[Warhammer]` and `[Shadow Dagger]` has these:
 
 | Setting | Default | What it does |
 |---|---|---|
-| `StealthSeconds` | 2 | Seconds a fully charged hit hides you for; a further one restarts the count. |
-| `StealthKillTimeBonus` | 0.33 | Seconds added for a full-windup kill made while hidden. |
-| `StealthMaxSeconds` | 3 | The most stealth you can have at once, however many kills stretch it. |
-| `StealthCapDecaySeconds` | 0.1 | Each time a kill hits the cap, the cap drops by this much (not below `StealthSeconds`) until the stealth ends. |
+| `StealthSeconds` | 3 | Seconds a fully charged hit hides you for (up to the current cap while already hidden). |
+| `StealthKillTimeBonus` | 0.33 | Seconds added for every kill made while hidden, up to the current cap. |
+| `StealthMaxSeconds` | 3 | The cap on stealth time when a stealth starts; resets to this when it ends. |
+| `StealthCapDrainPerHit` | 0.05 | Share of the current cap lost with every enemy hit while hidden, kill or not (0-1). Time already left is kept. |
 | `StealthBonusPerKill` | 0.25 | Damage bonus added per kill while hidden (0.25 = +25%). |
 | `StealthMaxBonus` | 1 | Cap on the stacked kill bonus (1 = +100%). |
 | `StealthTransparency` | 0.95 | How see-through you are at full stealth (0-1). Visual only. |
