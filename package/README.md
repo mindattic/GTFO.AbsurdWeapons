@@ -232,8 +232,8 @@ A consumable of its own (the I2-LP syringe is left as it is): an **overheal like
 
 Consumables in boxes and lockers - and lying around, like artifacts (60% of them) - are only five
 things: **Hand Grenades** (2 in 6), **Stim Packs**, **health kits**, **tool kits** and **ammo kits**
-(1 in 6 each). Kits found this way are full packs. The zone's own resource packs still spawn as
-normal on top.
+(1 in 6 each). Kits found this way always hold **20%** of a pack. The zone's own resource packs
+still spawn as normal, at their usual sizes, on top.
 
 ## Swapping weapons in a level
 
@@ -552,7 +552,7 @@ Shared by everything that flings enemies (the Warhammer).
 | `HealthKitWeight` † | 1 | Relative odds it's a health kit. |
 | `ToolKitWeight` † | 1 | Relative odds it's a tool kit. |
 | `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
-| `KitSize` † | 100 | Contents of a kit found as loot, in the game's pack units (100 = a full pack). |
+| `KitSize` † | 20 | Contents of a kit found as consumable loot, in percent of a full pack. Zone resource packs are unaffected. |
 | `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
 
 ### `[Ammo]`

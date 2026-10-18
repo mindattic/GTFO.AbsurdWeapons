@@ -12,8 +12,8 @@ namespace GTFO.AbsurdWeapons;
 /// Every consumable loot table (what boxes and lockers hold, and what lies around a zone) becomes a
 /// weighted lottery of just five things: Hand Grenades, Stim Packs, health kits, tool kits and ammo
 /// kits. The kits are the game's own resource packs; those normally get their contents from the
-/// zone's resource budget, so the ones handed out here are given <see cref="KitSize"/> as their
-/// consumable contents (only when their item has none of its own). The table's in-a-box chance is
+/// zone's resource budget (those spawn as normal), so the ones found as consumable loot are given
+/// <see cref="KitSize"/> as their consumable contents - 20% of a pack by default. The table's in-a-box chance is
 /// set so <see cref="OutInTheOpenShare"/> of them lie around the zone instead, like artifacts.
 /// After GTFO.EZ's own loot tweaks; the host's settings decide what spawns.
 /// </summary>
@@ -39,7 +39,7 @@ internal static class LootMix
         HealthKitWeight = config.Bind(s, "HealthKitWeight", 1f, "Relative odds it's a health kit. Takes effect on restart.");
         ToolKitWeight = config.Bind(s, "ToolKitWeight", 1f, "Relative odds it's a tool kit. Takes effect on restart.");
         AmmoKitWeight = config.Bind(s, "AmmoKitWeight", 1f, "Relative odds it's an ammo kit. Takes effect on restart.");
-        KitSize = config.Bind(s, "KitSize", 100, "Contents of a kit found as loot, in the game's pack units (100 = a full pack). Takes effect on restart.");
+        KitSize = config.Bind(s, "KitSize", 20, "Contents of a kit found as consumable loot, in percent of a full pack (20 = one use). Kits from the zone's resource budget are unaffected. Takes effect on restart.");
         OutInTheOpenShare = config.Bind(s, "OutInTheOpenShare", 0.6f,
             new ConfigDescription("Share (0-1) of loot consumables left lying out in the open instead of in boxes and lockers. Takes effect on restart.",
                 new AcceptableValueRange<float>(0f, 1f)));
@@ -102,11 +102,10 @@ internal static class LootMix
             if (!match) continue;
 
             Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons loot: {what} kit is '{block.name}' (item {block.persistentID}, contents {block.ConsumableAmmoMin}-{block.ConsumableAmmoMax}).");
-            if (block.ConsumableAmmoMax <= 0)
-            {
-                block.ConsumableAmmoMin = KitSize.Value;
-                block.ConsumableAmmoMax = KitSize.Value;
-            }
+            if (block.ConsumableAmmoMax > 0)
+                Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons loot: '{block.name}' already had consumable contents - if zone resource packs read them too, they now start at {KitSize.Value}% as well.");
+            block.ConsumableAmmoMin = KitSize.Value;
+            block.ConsumableAmmoMax = KitSize.Value;
             return block.persistentID;
         }
         return null;
