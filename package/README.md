@@ -3,7 +3,7 @@
 *(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-A BepInEx plugin for GTFO that adds **seventeen new weapons**: four melee weapons, eleven guns,
+A BepInEx plugin for GTFO that adds **nineteen new weapons**: four melee weapons, thirteen guns,
 a tool and a consumable. No game files are shipped or edited. Every weapon is built at load time from the game's own
 data, so they pick up vanilla balance changes, and nothing vanilla is modified.
 
@@ -20,7 +20,7 @@ can swap between them without going back to the lobby (see [Swapping weapons in 
 | **Katana** | Mastaba Fixed Blade, real katana size | Bat | Wide cuts through everything in the arc; a full charge dashes you up to 10 m with the swing held - it cuts the moment you reach an enemy or a wall |
 | **Mjolnir** | Santonian Mallet | Bat | Every hit releases a thunderclap; a full charge throws it, crackling chain lightning |
 | **Warhammer** | Kovac Sledgehammer, 3x head | Sledgehammer | 500-damage blow; every hit flings enemies, and walls hurt them |
-| **Shadow Dagger** | Mastaba Fixed Blade | Knife, faster | A fully charged hit makes you unseen for 6 seconds |
+| **Shadow Dagger** | Mastaba Fixed Blade | Knife, faster | A fully charged hit makes you unseen for 2 seconds |
 
 ### Guns
 
@@ -41,6 +41,8 @@ first; balance comes later.
 | **Grenade Rifle** | Special | TechMan Veruta XII | The same grenades, from its own barrel with its own kick |
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | A continuous stream of lightning that leaps from enemy to enemy, up to five jumps |
+| **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: flies dead straight with no drop, trailing falling sparks and dust, and blows up the first thing it touches |
+| **Shrink Beam** | Special | Omneco exp1 | A continuous ray that shrinks whatever it's held on until it pops; get close enough to a small one and you'll step on it |
 
 ### Tools
 
@@ -87,8 +89,8 @@ A short-hafted war hammer on the bat's moveset.
 A sledgehammer with a head the size of a crate. Charged 500 / light 6 damage, x55 / x11 stagger,
 x10 to doors and locks on a charged hit, 2.4 m reach, hits several enemies. **Shockwave:** every hit that lands
 staggers everything within 6 m (1 damage, x100 stagger). **Slam:** a fully charged swing always comes
-down on the ground in front of you with the shockwave, dust and a flash - and flings everything
-around away - even if it hits nothing. **Knockback:** enemies are flung across
+down on the ground in front of you with the shockwave and a crater's worth of scattered debris and
+scorch marks, not one small mark - and flings everything around away - even if it hits nothing. **Knockback:** enemies are flung across
 the floor: the one you hit 4 m (**12 m** on a charged hit), the rest 6 m out from the impact. Walls
 and ledges stop the slide. **Wall slam:** an enemy that hits a wall with fling still to go takes
 "sideways fall damage": 5 per metre it didn't get to travel (the first metre is free), with a
@@ -97,15 +99,17 @@ stagger and a puff of dust. A charged hit into a nearby wall does about 50.
 ### Shadow Dagger
 
 Quick stabs play **2.5x as fast** as the knife's, and **a fully charged hit on an enemy makes you
-unseen for 6 seconds**: enemies can't see or hear you, won't lock on, and lose you if they were
-chasing. You shimmer while hidden, filling back in over the last second as a warning. Another
-full-charge hit restarts the count. **Put the dagger away and it ends at once:** wielding any other item makes you
+unseen for 2 seconds**: enemies can't see or hear you, won't lock on, and lose you if they were
+chasing. You fade to a faint purple tint while hidden - the dagger's own glow - filling back in as
+the time runs out, and flickering faster and faster over the last second as a warning before it
+reverts. Another full-charge hit tops the stealth back up to the full 2 seconds (never cut short).
+**Put the dagger away and it ends at once:** wielding any other item makes you
 visible again.
 
 - **Kills while hidden** sharpen the dagger: each adds **+25% damage**, up to **+100%**, for the
   rest of that stealth.
-- **A fully wound-up kill while hidden** adds the wind-up's time to your stealth, so a chain of
-  charged kills keeps you hidden.
+- **A kill made with a full charge while hidden** also adds **+0.25 seconds** to your stealth, so a
+  chain of charged kills keeps you hidden.
 
 ## Guns
 
@@ -131,10 +135,13 @@ second out to 70 m. No bullets, no muzzle flash, no kickback.
 
 ### Tentacle Cannon (special)
 
-Every round is a striker's own tentacle, mouth and all. They spew out in a **tight cone straight ahead** (within 8° of
-your aim), thrashing as they go. **While any enemy is in front of you**
-(within 15° of your aim, out to a striker's own tentacle length) every tentacle reaches out and curves onto one; with no enemy in reach they just wriggle tightly a few
-metres out in a narrow cone. It's carried very low at the waist, like a minigun. Each bite does 22 and staggers hard (x5); ~4.3 a second.
+Every round is a burst of three striker tentacles, mouths and all, spewing out from spots just below
+your eyeline around the view - never where you can see them start - and thrashing in from off-screen.
+**While an enemy is near your crosshair and in reach**, every tentacle in the burst reaches for it,
+each landing its own bite on its body; with none in reach they instead reach out along their own
+random lines for the nearest wall, floor or crate (and melt a lock they grab). It's carried very low
+at the waist, like a minigun. Each bite does 25 and staggers hard (x12); ~4.3 bursts a second, three
+tentacles each.
 
 ### Grenade Pistol (main) and Grenade Rifle (special)
 
@@ -150,17 +157,35 @@ exactly the same from either; each just looks like its own gun firing - its own 
 
 ### Railgun (special)
 
-The Köning PR 11, semi-auto, one shot a second. Each shot is an instant slug with **infinite
-penetration**: it goes through every enemy and every wall out to 200 m, doing **60 to each enemy**
-on the line (headshots still count). It's drawn as a white-hot beam wrapped in a spinning double
-helix, with sparks wherever it punches through a wall. Slow but devastating, like Quake's rail: **150 damage** to everything on the line, one shot every 1.5 s. Keeps the sniper's scope, with no kickback; the beam starts well out ahead of you.
+The Köning PR 11, semi-auto, one shot every 1.5 seconds. Each shot is an instant slug with **infinite
+penetration**: it goes through every enemy and every wall out to 200 m, doing **150 damage** to every
+enemy on the line (headshots still count). It's drawn as a white-hot beam wrapped in a spinning
+double helix that spins, widens and fades over 0.8 s, with sparks wherever it punches through a wall.
+Slow but devastating, like Quake's rail. Keeps the sniper's scope, with no kickback; the beam starts
+well out ahead of you.
 
 ### Chain Lightning Gun (special)
 
 The Omneco exp1, full-auto at ~6.7 bolts a second. Each bolt strikes the enemy under your crosshair
 (or the nearest within 6° if you just miss), then **jumps** to the nearest enemy within 8 m it
-hasn't hit, up to 5 jumps. Damage is 10 to the first, then 75% of the last on each jump. Jumps need
+hasn't hit, up to 5 jumps. Damage is 5 to the first, then 75% of the last on each jump. Jumps need
 a clear line. No recoil, no brass.
+
+### Rocket Launcher (special)
+
+Quake 1's own rocket launcher. Every shot is a rocket that flies dead straight out of the barrel -
+no drop, no bounce - to the first enemy or wall in its way, trailing falling sparks and a dust trail,
+then explodes: **110 damage** at the center, falling to a third at **5.2 m**, with a heavy stagger
+(x5). The blast reaches nearby players too (shooter, bots and teammates alike), Quake/Doom style.
+Semi-auto, one shot every **0.8 seconds**.
+
+### Shrink Beam (special)
+
+A continuous green ray. Hold it on an enemy and it shrinks - smaller and slower by the same share -
+the longer you keep the beam on it; let go and, after a second off the beam, it starts growing back,
+so a shrink has to finish in one sustained hold. Shrink it below **25%** of its size and it pops
+outright. Once it's under **40%** size, just getting within **0.6 m** of it pops it too - small
+enough that walking near it counts as stepping on it.
 
 ### Victory Banner
 
@@ -170,10 +195,9 @@ prompt shows) - planting switches you to your main weapon meanwhile. Switching y
 pressing Home to restore your starting loadout - **retires it on its own**, no need to pick it up
 first.
 
-While it's up, a **glowing green aura** lies on the ground around it out to **8 m**. Every couple of
-seconds it pulses, **healing** everyone standing inside it 8% of their max health, and giving **you** a damage bonus (any weapon, this mod's or vanilla)
-while you're in it: **+15%**, climbing toward **+25%** the more enemies you kill without leaving the
-ring, reset the moment you step out.
+While it's up, a **glowing green aura** lies on the ground around it out to **8 m**. Every quarter
+second it pulses, **healing** everyone standing inside it 1% of their max health - stay in it and
+you're back to full well within a minute. That's all it does.
 
 ## Swapping weapons in a level
 
@@ -230,9 +254,9 @@ sound, and each can be swapped for any other game sound by name in the config (`
 
 - **GTFO.EZ:** compatible, in either load order. Weapons are built after EZ's tuning, so each
   starts from EZ's version of the weapon it's copied from. Stats this mod sets itself stay fixed.
-- **Other mods that add weapons** at the same ids (1001-1010 melee, 1101-1116 guns, 1202 tool, 1203 consumable): if
+- **Other mods that add weapons** at the same ids (1001-1010 melee, 1101-1119 guns, 1202 tool, 1203 consumable): if
   one already uses an id, that weapon isn't added and `LogOutput.log` says so. The rest still load.
-  The mod also adds melee animation sets 1006-1010, recoil profiles 1101-1110 and first-person hold
+  The mod also adds melee animation sets 1006-1010, recoil profiles 1101-1109 and 1119, and first-person hold
   1103; a clash there drops that weapon (animation sets) or leaves it its model's recoil.
 
 ## Requirements

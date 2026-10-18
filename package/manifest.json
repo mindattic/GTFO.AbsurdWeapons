@@ -2,7 +2,7 @@
   "name": "GtfoAbsurdWeapons",
   "version_number": "1.0.0",
   "website_url": "https://github.com/mindattic/GTFO.AbsurdWeapons",
-  "description": "Twenty new weapons marked (!): Tanto to Odachi swords, a Gravity Hammer, plasma, smart, laser and tentacle guns, a Railgun, Chain Lightning and a lock-melter Grenade Launcher. Swap them mid-level with Page Up/Down.",
+  "description": "Nineteen new weapons marked (!): a katana, Mjolnir, a giant sledgehammer and a stealth dagger; plasma, smart, laser, tentacle, Railgun, Chain Lightning, lock-melter grenade, rocket and shrink-ray guns; a healing banner and a thrown lock melter. Swap them mid-level with Page Up/Down.",
   "dependencies": [
     "BepInEx-BepInExPack_GTFO-3.2.3"
   ]
