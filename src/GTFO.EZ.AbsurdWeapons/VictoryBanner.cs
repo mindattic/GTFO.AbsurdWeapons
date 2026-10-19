@@ -16,8 +16,9 @@ using UnityEngine;
 namespace GTFO.EZ.AbsurdWeapons;
 
 /// <summary>
-/// The Victory Banner: a plantable tool. Firing it sets it down right in front of you - no throw -
-/// and firing again while yours is still up picks it back up instead of planting a second one.
+/// The Victory Banner: a plantable tool, put down and picked up like a sentry. Firing it sets it
+/// down right in front of you - no throw - and you pick it back up by walking up to it, looking at
+/// it and pressing Use; firing again while yours is still up does nothing.
 /// Switching your tool slot away from the Victory Banner retires it on every client (checked
 /// against whichever gear is currently wielded, every half second).
 /// While it's down it heals everyone standing within its radius 1% of max health every 250 ms
@@ -102,7 +103,7 @@ internal static class VictoryBanner
     }
 
     // No charge-up: while the Victory Banner is in hand the launcher's own update (pressure, bursts)
-    // doesn't run at all - a press of fire plants it, or picks it back up, right away.
+    // doesn't run at all - a press of fire plants it right away (picking it up is Use, at the banner).
     [HarmonyPatch(typeof(GlueGun), nameof(GlueGun.Update))]
     [HarmonyPrefix]
     private static bool InsteadOfCharging(GlueGun __instance)

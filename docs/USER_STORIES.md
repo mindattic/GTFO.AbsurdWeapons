@@ -197,3 +197,4 @@ _Nothing recorded yet._
 | G.AWPN-T170 | 2026-10-18 | feature | closed | Rocket Launcher: dust trail much sparser and 1.5 m behind the rocket, plus a steady glow, so you can see the rocket to time a right-click detonation (user request) | — |
 | G.AWPN-T171 | 2026-10-19 | chore | closed | Remove the removed Flamethrower's leftover afterburn formula (Formulas.AfterburnStacks) and its test | — |
 | G.AWPN-T172 | 2026-10-19 | fix | closed | Shadow Dagger glow stayed lit where a teammate stood after they left: StealthVisuals now drops glows of players no longer in the level (fixed in working tree, uncommitted) | StealthVisuals held-glow pruning; build 0 warnings |
+| G.AWPN-T173 | 2026-10-19 | docs | closed | VictoryBanner.cs comments said firing again picks the banner up; it's put down by firing and picked up with Use at the banner, like a sentry (fixed in working tree, uncommitted; user-requested) | VictoryBanner.cs comments |
