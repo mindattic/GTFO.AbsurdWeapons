@@ -277,7 +277,7 @@ budget; the extras come on top at their odds against the kits. `ChanceToSpawnInR
 comes from `OutInTheOpenShare`. GTFO.EZ, if installed, sees this mod's Loot Mix on and leaves
 consumable loot to it. Artifacts are left alone.
 
-The Stim Pack (off by default for now - `Stim Pack Enabled`; while off it isn't added and
+The Stim Pack (on by default - `Stim Pack Enabled`; while off it isn't added and
 `LootMix` leaves it out) is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
 (`SyringeFirstPerson._ApplySyringe_d__18.MoveNext`) flags a Stim Pack's use - not the I2-LP's - so
 the `Dam_SyncedDamageBase.AddHealth` call inside it is rewritten to `HealPercent` of max. `Overheal` then pushes health past the native cap

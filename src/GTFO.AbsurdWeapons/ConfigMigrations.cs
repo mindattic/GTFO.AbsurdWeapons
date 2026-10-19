@@ -39,6 +39,8 @@ internal static class ConfigMigrations
         (12, "Shrink Beam", "MinScale", 0.33f),
         (12, "Shrink Beam", "StepOnScale", 0.5f),
         (12, "Shrink Beam", "StepOnRadius", 1f),
+        (13, "Stim Pack", "Stim Pack Enabled", false),
+        (14, "Stim Pack", "HealPercent", 50f),
     };
 
     // After every setting is bound.

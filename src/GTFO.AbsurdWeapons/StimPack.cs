@@ -1,8 +1,10 @@
 using System;
 using BepInEx.Configuration;
 using GameData;
+using Agents;
 using HarmonyLib;
 using Localization;
+using Player;
 using UnityEngine;
 
 namespace GTFO.AbsurdWeapons;
@@ -13,7 +15,8 @@ namespace GTFO.AbsurdWeapons;
 /// overheal like Doom's: it heals <see cref="HealPercent"/> of max health and can take you past
 /// max, up to <see cref="MaxHealthPercent"/>; whatever is above max then drains back down to it at
 /// <see cref="DrainPercentPerSecond"/>. Damage eats into the overheal first; once health is back at
-/// or below max the buff is over.
+/// or below max the overheal is over. Separately, for <see cref="DamageBoostSeconds"/> after a Stim
+/// Pack, everything the user hits takes <see cref="DamageBoostPercent"/> more damage.
 /// The syringe's heal is hardcoded in native code (vanilla rolls 5-15% of max health). It reaches
 /// the player through Dam_SyncedDamageBase.AddHealth, which med kits use too, so the syringe's own
 /// apply coroutine flags the call window - for a Stim Pack only - and only AddHealth calls made
@@ -30,16 +33,44 @@ internal static class StimPack
     internal static ConfigEntry<float> HealPercent = null!;
     internal static ConfigEntry<float> MaxHealthPercent = null!;
     internal static ConfigEntry<float> DrainPercentPerSecond = null!;
+    internal static ConfigEntry<float> DamageBoostPercent = null!;
+    internal static ConfigEntry<float> DamageBoostSeconds = null!;
 
     [ThreadStatic] private static bool applying;
+    private static float boostUntil = -1f;
 
     internal static void Bind(ConfigFile config)
     {
-        Enabled = config.Bind("Stim Pack", "Stim Pack Enabled", false,
+        Enabled = config.Bind("Stim Pack", "Stim Pack Enabled", true,
             "Adds the Stim Pack, a consumable of its own (the I2-LP is left as it is). Takes effect on restart.");
-        HealPercent = config.Bind("Stim Pack", "HealPercent", 50f, "Health a Stim Pack gives, as a percent of max health.");
+        HealPercent = config.Bind("Stim Pack", "HealPercent", 33f, "Health a Stim Pack gives, as a percent of max health.");
         MaxHealthPercent = config.Bind("Stim Pack", "MaxHealthPercent", 200f, "How high a Stim Pack can take your health, as a percent of max health.");
         DrainPercentPerSecond = config.Bind("Stim Pack", "DrainPercentPerSecond", 1f, "How fast health above max drains back down to max, in percent of max health per second.");
+        DamageBoostPercent = config.Bind("Stim Pack", "DamageBoostPercent", 33f, "Extra damage dealt (guns and melee) while the Stim Pack's boost runs, in percent.");
+        DamageBoostSeconds = config.Bind("Stim Pack", "DamageBoostSeconds", 15f, "How long the damage boost lasts after a Stim Pack.");
+    }
+
+    private static bool Boosting(Agent? source)
+    {
+        if (Time.time >= boostUntil || source == null) return false;
+        var local = PlayerManager.GetLocalPlayerAgent();
+        return local != null && source.Pointer == local.Pointer;
+    }
+
+    private static float Boost => 1f + DamageBoostPercent.Value / 100f;
+
+    [HarmonyPatch(typeof(Dam_EnemyDamageLimb), nameof(Dam_EnemyDamageLimb.BulletDamage))]
+    [HarmonyPrefix]
+    private static void BoostBullet(ref float dam, Agent sourceAgent)
+    {
+        if (Boosting(sourceAgent)) dam *= Boost;
+    }
+
+    [HarmonyPatch(typeof(Dam_EnemyDamageLimb), nameof(Dam_EnemyDamageLimb.MeleeDamage))]
+    [HarmonyPrefix]
+    private static void BoostMelee(ref float dam, Agent sourceAgent)
+    {
+        if (Boosting(sourceAgent)) dam *= Boost;
     }
 
     internal static bool IsOurs(ItemDataBlock? block) => block != null && block.persistentID == ItemId;
@@ -99,6 +130,7 @@ internal static class StimPack
         var max = Overheal.BaseMax(__instance);
         addHealth = max * HealPercent.Value / 100f;
         Overheal.Grant(__instance, addHealth);
+        boostUntil = Time.time + DamageBoostSeconds.Value;
     }
 
     [HarmonyPatch(typeof(Dam_PlayerDamageLocal), nameof(Dam_PlayerDamageLocal.Update))]
@@ -115,6 +147,7 @@ internal static class StimPack
         // overheal (and strand their raised max health).
         if (__instance.Owner?.Owner is { IsBot: true }) return;
         Overheal.Clear(__instance);
+        boostUntil = -1f;
     }
 }
 

@@ -228,13 +228,14 @@ falling to a quarter at 6 m, x6 stagger. It never hurts players.
 
 Nobody starts with any: **each one you find** as loot **is 1 more**, up to **6** carried. Thrown ones are gone.
 
-### Stim Pack (off for now)
+### Stim Pack
 
-**Switched off by default for now** (`[Stim Pack] Stim Pack Enabled`): while it's off it isn't added
-to the game or the loot. When on, it's a consumable of its own (the I2-LP syringe is left as it is):
+**On by default** (`[Stim Pack] Stim Pack Enabled`; while it's off it isn't added to the game or
+the loot). It's a consumable of its own (the I2-LP syringe is left as it is):
 an **overheal like Doom's**. It gives
-**50%** of your max health and can take you **past max, up to 200%**; anything above max then
-**drains back down to 100%** at 1% of max a second. Damage eats into the overheal first.
+**33%** of your max health and can take you **past max, up to 200%**; anything above max then
+**drains back down to 100%** at 1% of max a second. Damage eats into the overheal first. For
+**15 seconds** after a Stim Pack, everything you hit (guns and melee) takes **33% more damage**.
 
 ### Loot
 
@@ -311,7 +312,7 @@ and nothing else about the game changes. Pistol and rifle versions of a gun are 
 | `[Shrink Beam]` | `Shrink Beam Enabled` |
 | `[Victory Banner]` | `Victory Banner Enabled` |
 | `[Hand Grenade]` | `Hand Grenade Enabled` |
-| `[Stim Pack]` | `Stim Pack Enabled` (off by default for now) |
+| `[Stim Pack]` | `Stim Pack Enabled` |
 | `[Loot]` | `Loot Mix Enabled` (off: vanilla consumable loot) |
 
 ### Melee weapons (shared settings)
@@ -557,9 +558,11 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `HealPercent` | 50 | Health a Stim Pack gives, in percent of max health. |
+| `HealPercent` | 33 | Health a Stim Pack gives, in percent of max health. |
 | `MaxHealthPercent` | 200 | How high it can take your health, in percent of max health. |
 | `DrainPercentPerSecond` | 1 | How fast health above max drains back to max, in percent of max a second. |
+| `DamageBoostPercent` | 33 | Extra damage dealt (guns and melee) while the boost runs, in percent. |
+| `DamageBoostSeconds` | 15 | How long the damage boost lasts after a Stim Pack. |
 
 ### `[Loot]`
 
