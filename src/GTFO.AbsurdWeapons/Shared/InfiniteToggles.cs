@@ -1,4 +1,4 @@
-// Generated from GTFO.EZ src/GTFO.EZ/Shared/InfiniteToggles.cs (a2ed1c2) - don't edit here.
+// Generated from GTFO.EZ src/GTFO.EZ/Shared/InfiniteToggles.cs (dc46943) - don't edit here.
 // Change GTFO.EZ's copy and run GTFO.EZ/tools/publish-shared.ps1.
 using System;
 using Gear;
@@ -96,11 +96,19 @@ internal static class InfiniteToggles
 
     // Damage to your own player is dropped while infinite health is on. Bots and other players
     // still take damage.
+    // Runs inside every damage call, so it never throws: anything unexpected lets the damage through.
     internal static bool AllowDamage(Dam_PlayerDamageLocal damage)
     {
         if (!InfiniteHealthOn) return true;
-        var agent = damage.Owner;
-        return agent == null || agent.Owner == null || agent.Owner.IsBot;
+        try
+        {
+            var agent = damage.Owner;
+            return agent == null || agent.Owner == null || agent.Owner.IsBot;
+        }
+        catch (Exception)
+        {
+            return true;
+        }
     }
 }
 
