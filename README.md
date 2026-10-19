@@ -430,7 +430,8 @@ src/GTFO.EZ.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the 
   LockDamage.cs         lets this mod's weapons (which only look for enemy limbs) also melt door locks
   InfiniteAmmo.cs       ammo settings, stream-gun drain (infinite ammo is the shared Insert toggle)
   Shared/               generated from GTFO.EZ's src/GTFO.EZ/Shared - never edit here: the
-                        Insert/Delete infinite ammo/health toggles
+                        Insert/Delete toggles, MessageHelper and RemoteEvents (throw-safe network events)
+  ProjectileHits.cs     what a hand-flown rocket or grenade can hit besides enemies (other players and bots)
   ConfigMigrations.cs   one-time moves of a changed default onto configs still sitting on the old one
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
   ImpactBursts.cs       hammer impact bursts (Mjolnir thunderclap, Warhammer shockwave) and their flash
@@ -578,6 +579,10 @@ v1, v2, v3... — major-only bumps, matching the convention across other MindAtt
 Thunderstore requires `manifest.json`'s `version_number` to be strict `x.y.z`, so "v1" is `1.0.0`,
 "v2" is `2.0.0`, and so on (minor/patch stay 0). `package/CHANGELOG.md` headers use the short `vN`
 form.
+
+The GTFO.EZ family - GTFO.EZ, GTFO.EZ.AbsurdWeapons, GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems -
+shares one version number, so a matching set is easy to spot: the companions' first release is
+**v13**, in step with GTFO.EZ (not v1), and a release of the family bumps all four together.
 
 ## Sharing with friends
 

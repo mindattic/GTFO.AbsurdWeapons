@@ -198,3 +198,4 @@ _Nothing recorded yet._
 | G.AWPN-T171 | 2026-10-19 | chore | closed | Remove the removed Flamethrower's leftover afterburn formula (Formulas.AfterburnStacks) and its test | — |
 | G.AWPN-T172 | 2026-10-19 | fix | closed | Shadow Dagger glow stayed lit where a teammate stood after they left: StealthVisuals now drops glows of players no longer in the level (fixed in working tree, uncommitted) | StealthVisuals held-glow pruning; build 0 warnings |
 | G.AWPN-T173 | 2026-10-19 | docs | closed | VictoryBanner.cs comments said firing again picks the banner up; it's put down by firing and picked up with Use at the banner, like a sentry (fixed in working tree, uncommitted; user-requested) | VictoryBanner.cs comments |
+| G.AWPN-T174 | 2026-10-19 | chore | closed | Align the GTFO.EZ family on one version, v13 (user request), documented in the READMEs and changelog; README review corrections | manifest + Plugin.VERSION 13.0.0 |

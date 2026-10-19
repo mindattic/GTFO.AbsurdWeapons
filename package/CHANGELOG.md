@@ -1,7 +1,10 @@
 # Changelog
 
-## v1
+## v13
 
+- **Versioning:** the GTFO.EZ family - GTFO.EZ, GTFO.EZ.AbsurdWeapons, GTFO.EZ.AbsurdMoves and
+  GTFO.EZ.AbsurdItems - now shares one version number, so this first release is **v13**, in step
+  with GTFO.EZ, rather than v1.
 - Renamed from GTFO.AbsurdWeapons to **GTFO.EZ.AbsurdWeapons** before release, as a GTFO.EZ companion mod built
   on GTFO.EZ's core (plugin GUID `MindAttic.GTFO.EZ.AbsurdWeapons`, config file
   `MindAttic.GTFO.EZ.AbsurdWeapons.cfg`, Thunderstore package `GtfoEZAbsurdWeapons`).
