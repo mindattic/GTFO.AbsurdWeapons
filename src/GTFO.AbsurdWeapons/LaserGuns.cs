@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using Agents;
 using AssetShards;
 using BepInEx.Configuration;
-using BepInEx.Unity.IL2CPP;
 using Feedback;
 using FX_EffectSystem;
 using Gear;
 using GTFO.API;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
+using MindAttic.GTFO.Shared;
 using Player;
 using UnityEngine;
 
@@ -416,16 +416,8 @@ internal static class StreamReadiness
     {
         if (lookedUp) return fireWhileRunning;
         lookedUp = true;
-        try
-        {
-            if (IL2CPPChainloader.Instance.Plugins.TryGetValue("MindAttic.GTFO.AbsurdMoves", out var info)
-                && info.Instance is BasePlugin moves)
-                moves.Config.TryGetEntry("Fire On The Move", "Fire While Running Enabled", out fireWhileRunning);
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't read GTFO.AbsurdMoves' Fire While Running setting: {e.Message}");
-        }
+        // Not installed, or switched off in its config ([0. Mod] Enabled): no setting, so no firing while running.
+        SharedOwner.TryGetSetting("MindAttic.GTFO.AbsurdMoves", "Fire On The Move", "Fire While Running Enabled", out fireWhileRunning);
         return fireWhileRunning;
     }
 }
