@@ -1,8 +1,8 @@
 # GTFO.AbsurdWeapons
 
-Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds nineteen new weapons, each shown with "(!)"
+Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds eighteen new weapons, each shown with "(!)"
 after its name: four melee weapons that put one weapon's model on another's moves (Katana, Mjolnir, Warhammer, Shadow Dagger), thirteen guns (Plasma,
-Hive, Laser and Grenade Pistol/Rifle, Tentacle Cannon, Railgun, Chain Lightning Gun, Rocket Launcher, Shrink Beam), a tool (Victory Banner) and a consumable (Hand Grenade).
+Hive, Laser and Grenade Pistol/Rifle, Tentacle Cannon, Railgun, Chain Lightning Gun, Rocket Launcher, Shrink Beam), and a tool (Victory Banner). Its consumables (Hand Grenade, Stim Pack) and loot mix moved to GTFO.AbsurdItems.
 Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. Every weapon
 can be switched off in the config, and 200+ settings retune them. See `package/README.md` for the
 player-facing breakdown and the full config reference.
@@ -43,8 +43,6 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Rocket Launcher | 1118 | the XDist2's archetype for its fire mode | the XDist2's (`ShotgunRanged`) | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `AddRocketLauncher`: Semi, 1 pellet, no cone or spread, damage shown 110 (the blast's own center, for the loadout screen), shot delay 0.8 s, clip 5, no brass, keeps the model's own kick (not kickless - a rocket launcher should thump); each shot is a rocket (`RocketLauncher`); no aiming down sights (an `ItemEquippable.AimingAllowed` getter postfix returns false for it) - right-click (`InputAction.Aim`) instead detonates the shooter's oldest rocket in flight where it is, one per click |
 | Shrink Beam | 1119 | the exp1's archetype for its fire mode | the exp1's (`HELGun`) | `HELGun` (Omneco exp1, special) | `AddShrinkBeam`: Auto, 1 pellet, no cone or spread, damage shown 0 (the loadout screen - it shrinks, it doesn't deal a plain number), shot delay 0.08 s, clip 100, no brass, kickless recoil 1119; the ray is runtime (`ShrinkBeam`) |
 | Victory Banner | 1202 | (tools have none) | `GlueGun` | `Glue_distance` (Stalwart Flow G2, tool) | `AddVictoryBanner`: category and gear only; placing, picking up and healing are runtime (`VictoryBanner`) |
-| Hand Grenade | 1203 (an `ItemDataBlock`, not gear) | - | - | the glowstick's item, found by name/prefab | `HandGrenade.AddItem`: the glowstick's `ItemDataBlock` cloned and renamed; the look, fuse, blast and handing it out are runtime (`HandGrenade`); a pickup holds `PickupCount` (1) |
-| Stim Pack | 1204 (an `ItemDataBlock`) | - | - | the I2-LP (item 140) | `StimPack.AddItem`: the I2-LP's `ItemDataBlock` cloned and renamed; the overheal is runtime (`StimPack`, `Overheal`) |
 
 Ids are fixed (not "next free") so every player in a lobby agrees on them. If another mod already
 uses an id, that weapon isn't added and an error is logged. The rest still load. Vanilla names,
@@ -242,47 +240,11 @@ teammates as `MindAttic.GTFO.AbsurdWeapons.ChainLightning`.
   `FRAGGRENADEEXPLODE`. Teammates get launch and detonate messages; their copies only bounce and
   explode when told (or 0.75 s after the fuse).
 
-### Hand Grenade (`HandGrenade`, `HandGrenadeFuse`, `HandGrenadeSupply`)
+### Moved out: Hand Grenade, Stim Pack, loot mix
 
-A consumable, thrown like a glowstick. `HandGrenade.AddItem` (a `GameDataInit.Initialize` postfix)
-clones the glowstick's `ItemDataBlock` (the consumable whose name or instance prefab says
-"glowstick", preferring the uncolored one) as item 1203, so `ThrowingWeapon`'s wind-up throw, the
-thrown item's rigidbody bounce and its replication all stay vanilla.
-- **Look:** a `ThrowingWeapon.OnWield` postfix, a `GlowstickInstance.Setup` postfix and an
-  `ItemInLevel.Setup` postfix each hide that object's renderers and lights and add the lock melter's
-  meshes (`LauncherGrenade.BuildModel`) - held, thrown and sitting as loot are three separate
-  instances, so each needs its own reskin. The thrown copy's `GlowstickInstance` is disabled, so it
-  never glows.
-- **Throw:** a `ThrowingWeapon.Throw` prefix multiplies the wind-up's strength by
-  `ThrowForceMultiplier` (2x by default), so it lobs much farther than a glowstick's own toss.
-- **Fuse:** `HandGrenadeFuse`, added to every client's thrown copy, blinks red faster and faster
-  and at 3 s shows `Explosion` everywhere; the item's `Owner` (or the host, if it has none) deals
-  `AreaDamage` (6 m, 60 falling to 25%, x6 stagger). The host then despawns the item
-  (`ItemReplicationManager.DeSpawn`); other games hide it until that arrives.
-- **Supply:** nobody starts with any; a pickup holds `PickupCount` (1, the item's
-  `ConsumableAmmoMin/Max`). While the
-  local consumable slot holds item 1203, its `InventorySlotAmmo` cap is set to `MaxCarried` (6; every frame,
-  and after each `PlayerAmmoStorage.SetupAmmoType` for `CurrentConsumable`), since the item's own cap is the pickup size (1).
-All of it is `[Hand Grenade]`.
-
-### Loot mix (`LootMix`) and Stim Pack (`StimPack`, `Overheal`)
-
-`LootMix` (after the item registrations, at low priority) runs `KitLoot.Fill` from
-`Shared/KitLoot.cs` - GTFO.EZ's kit loot, published here by GTFO.EZ's `tools/publish-shared.ps1`,
-never edited in this repo - with `[Loot]` settings and the Hand Grenade (1203) and Stim Pack (1204)
-as extras. It fills every `ConsumableDistributionDataBlock` with the health, tool and ammo resource
-packs (`KitChargesMin`-`KitChargesMax` charges, rounded to whole charges as each spawns) and the
-extras, and sets each table's `SpawnsPerZone` so the kits add `KitLootPercent` of the zone's resource
-budget; the extras come on top at their odds against the kits. `ChanceToSpawnInResourceContainer`
-comes from `OutInTheOpenShare`. GTFO.EZ, if installed, sees this mod's Loot Mix on and leaves
-consumable loot to it. Artifacts are left alone.
-
-The Stim Pack (on by default - `Stim Pack Enabled`; while off it isn't added and
-`LootMix` leaves it out) is the I2-LP (140) cloned as item 1204. A prefix on its apply coroutine
-(`SyringeFirstPerson._ApplySyringe_d__18.MoveNext`) flags a Stim Pack's use - not the I2-LP's - so
-the `Dam_SyncedDamageBase.AddHealth` call inside it is rewritten to `HealPercent` of max. `Overheal` then pushes health past the native cap
-with `SendSetHealth` (raising `HealthMax` if that alone doesn't stick), capped at
-`MaxHealthPercent`, and steps it back down to max once a second at `DrainPercentPerSecond`.
+The Hand Grenade (item 1203), the Stim Pack (item 1204) and the loot mix (`LootMix`, running the
+shared `KitLoot`) live in GTFO.AbsurdItems now, with the same config keys; this mod no longer
+touches consumables or loot, and `tools/publish-shared.ps1` in GTFO.EZ no longer sends it `KitLoot.cs`.
 
 ### Sounds (`Sounds`, `LoopSounds`)
 
@@ -297,8 +259,7 @@ ray hook, on every client; "2D" events play for the shooter only. Defaults: Plas
 so they have no gunshot: the laser runs a `FREEZERLOOP` (the freeze thrower's beam loop) at the gun while the trigger is held and
 Chain Lightning a `TERMINAL_CREEPY_STATIC_LOOP` with `FLUORESCENT_LIGHT_CRACKLE` at the strikes
 (`LoopSounds` stops a loop 0.25 s after its last tick). Mjolnir's thunderclap adds
-`ELEVATOR_THUNDER`; the Hand Grenade throws with `FRAGGRENADETHROW` (its `m_throwSoundEvent`) and
-bounces with `FRAGGRENADEBOUNCE`; the Victory Banner plants with `SENTRYGUN_DEPLOY`.
+`ELEVATOR_THUNDER`; the Victory Banner plants with `SENTRYGUN_DEPLOY`.
 
 ### Warhammer slam (`WarhammerSlam`)
 
@@ -454,7 +415,6 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   HiveLocks.cs          Hive guns' Titanfall-style lock-on: pips, markers, locked-target cycling
   VictoryBanner.cs      Victory Banner placement/pickup and healing
   GrenadeLauncher.cs    Grenade Pistol/Rifle launch, grenade flight, fuse, blast
-  HandGrenade.cs        Hand Grenade consumable: item clone, lock-melter look, throw force, fuse, hand-out
   SwordTempo.cs         the swords' light-attack speeds
   GearCycler.cs         PageUp/PageDown in-level weapon swapping, Home restores the starting loadout
   LaserGuns.cs          trigger-driven laser beam (no shots), its ticks and burn
@@ -466,7 +426,7 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   LockDamage.cs         lets this mod's weapons (which only look for enemy limbs) also melt door locks
   InfiniteAmmo.cs       ammo settings, stream-gun drain (infinite ammo is the shared Insert toggle)
   Shared/               generated from GTFO.EZ's src/GTFO.EZ/Shared - never edit here: the
-                        Insert/Delete infinite ammo/health toggles and the kit loot
+                        Insert/Delete infinite ammo/health toggles
   ConfigMigrations.cs   one-time moves of a changed default onto configs still sitting on the old one
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
   ImpactBursts.cs       hammer impact bursts (Mjolnir thunderclap, Warhammer shockwave) and their flash
@@ -584,7 +544,7 @@ one section per weapon (a pistol/rifle pair shares one, since they share stats),
 
 | Setting | Default | What it does |
 |---|---|---|
-| `[0. Mod] Enabled` | `true` | Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys, no loot changes. |
+| `[0. Mod] Enabled` | `true` | Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys. |
 
 Conventions:
 
@@ -594,7 +554,7 @@ Conventions:
   `AddComponent`. The unbound settings stay in the file as orphaned entries, and migrations still
   due run the next time the mod is on.
 - **`<Weapon> Enabled`** (default `true`), in each weapon's own section, is checked first thing in
-  `MeleeInjector.TryAdd` / `GunInjector.TryAdd` / `HandGrenade.AddItem`: off, the weapon's
+  `MeleeInjector.TryAdd` / `GunInjector.TryAdd`: off, the weapon's
   datablocks are never registered, so it's absent from the loadout and the Page Up/Down cycle
   (`GearCycler` cycles `DataBlocks.AddedCategories`). Same key style as GTFO.EZ's own toggles.
 - **Restart vs live:** anything that goes into a datablock - every `Enabled`, gun

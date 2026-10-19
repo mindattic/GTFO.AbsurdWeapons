@@ -3,7 +3,15 @@
 ## v1
 
 - Master switch: `[0. Mod] Enabled` (default `true`) is the config file's first entry; set it to
-  `false` and the whole mod is off - nothing is patched, no weapon is added, no hotkey or loot change.
+  `false` and the whole mod is off - nothing is patched, no weapon is added, no hotkey.
+- **Moved out:** the Hand Grenade, the Stim Pack and the loot mix now live in
+  [GTFO.AbsurdItems](https://github.com/mindattic/GTFO.AbsurdItems), with the same `[Hand Grenade]`
+  and `[Stim Pack]` settings and `HandGrenadeThrow`/`HandGrenadeBounce` sounds; its kit loot
+  (*Consumables Are Kits*) runs them as one loot run, under GTFO.EZ's kit setting names
+  (`Kit Loot (%)`, `Health Kit Weight`, ...) in place of `KitLootPercent`, `HealthKitWeight` and the
+  rest. Install it to keep them. This mod no longer changes consumables or loot; its `[Loot]`,
+  `[Hand Grenade]` and `[Stim Pack]` sections stay in an existing `.cfg` as leftover lines that do
+  nothing. Eighteen weapons now.
 - Loot uses GTFO.EZ's kit loot, shared between the two mods: a few small kits of 1-2 charges
   adding about 20% to the zone's resource packs (`KitLootPercent`, `KitChargesMin/Max`), with Hand
   Grenades at 4 to the kits' 3 and Stim Packs alongside. `KitSize` and `SpawnsPerZoneMultiplier`

@@ -312,7 +312,7 @@ internal sealed class LauncherGrenade : MonoBehaviour
     // The lock melter's meshes, copied onto the grenade - just the look, none of the prefab's
     // pickup or interaction scripts. Falls back to a plain capsule if the prefab isn't loaded.
     [HideFromIl2Cpp]
-    internal static void BuildModel(Transform parent) // also the Hand Grenade's look (HandGrenade)
+    internal static void BuildModel(Transform parent)
     {
         string source = "fallback capsule";
         try

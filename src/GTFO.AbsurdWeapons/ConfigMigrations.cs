@@ -13,6 +13,10 @@ namespace GTFO.AbsurdWeapons;
 /// </summary>
 internal static class ConfigMigrations
 {
+    // Versions 7-10, 13 and 14 were for the Loot, Hand Grenade and Stim Pack settings, which moved to
+    // GTFO.AbsurdItems (with a config file of its own); this mod no longer binds them, so those lines
+    // find nothing and do nothing. They stay so the next migration takes version 15, never one an
+    // install has already reached.
     private static readonly (int Version, string Section, string Key, object OldDefault)[] DefaultMigrations =
     {
         (1, "Tentacle Guns", "Damage", 22f),

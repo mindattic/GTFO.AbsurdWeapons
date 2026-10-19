@@ -33,8 +33,6 @@ internal static class Sounds
     internal static ConfigEntry<string> ShrinkPop = null!;
     internal static ConfigEntry<string> LightningCrackle = null!;
     internal static ConfigEntry<string> Thunderclap = null!;
-    internal static ConfigEntry<string> HandGrenadeThrow = null!;
-    internal static ConfigEntry<string> HandGrenadeBounce = null!;
     internal static ConfigEntry<string> BannerPlant = null!;
 
     internal static void Bind(ConfigFile config)
@@ -54,8 +52,6 @@ internal static class Sounds
         ShrinkPop = config.Bind(s, "ShrinkPop", "ENEMYWEAKSPOTEXPLODE", "Shrink Beam: a shrunk enemy gibbing (shrunk away, or stepped on).");
         LightningCrackle = config.Bind(s, "LightningCrackle", "FLUORESCENT_LIGHT_CRACKLE", "An electric crackle where lightning strikes (chain lightning and Mjolnir's pulses), a few times a second.");
         Thunderclap = config.Bind(s, "Thunderclap", "ELEVATOR_THUNDER", "Mjolnir's thunderclap on a landed hit.");
-        HandGrenadeThrow = config.Bind(s, "HandGrenadeThrow", "FRAGGRENADETHROW", "Throwing a Hand Grenade (instead of the glowstick's toss).");
-        HandGrenadeBounce = config.Bind(s, "HandGrenadeBounce", "FRAGGRENADEBOUNCE", "A Hand Grenade bouncing (instead of the glowstick's clatter).");
         BannerPlant = config.Bind(s, "BannerPlant", "SENTRYGUN_DEPLOY", "Planting the Victory Banner.");
     }
 

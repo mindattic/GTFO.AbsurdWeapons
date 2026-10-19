@@ -30,7 +30,7 @@ public class Plugin : BasePlugin
         // off nothing else is bound, migrated, registered or patched: the other settings stay in the
         // file untouched, and the migrations still due run the next time the mod is switched on.
         var enabled = Config.Bind("0. Mod", "Enabled", true,
-            "Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys, no loot changes.");
+            "Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys.");
         if (!enabled.Value)
         {
             Logger.LogInfo($"{NAME} is switched off in its config ([0. Mod] Enabled) - not loading.");
@@ -41,7 +41,6 @@ public class Plugin : BasePlugin
         TentaclePool.Bind(Config);
         GearCycler.Bind(Config);
         InfiniteAmmo.Bind(Config);
-        StimPack.Bind(Config);
         Stealth.Bind(Config);
         KatanaDash.Bind(Config);
         WarhammerSlam.Bind(Config);
@@ -57,8 +56,6 @@ public class Plugin : BasePlugin
         GrenadeLauncher.Bind(Config);
         RocketLauncher.Bind(Config);
         ShrinkBeam.Bind(Config);
-        HandGrenade.Bind(Config);
-        LootMix.Bind(Config);
         Sounds.Bind(Config);
         HiveLocks.Bind(Config);
         VictoryBanner.Bind(Config);
@@ -75,7 +72,6 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
         ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
         ClassInjector.RegisterTypeInIl2Cpp<BannerPylon>();
-        ClassInjector.RegisterTypeInIl2Cpp<HandGrenadeFuse>();
         SeekerGuns.Init();
         ImpactBursts.Init();
         Stealth.Init();
@@ -94,7 +90,6 @@ public class Plugin : BasePlugin
         AddComponent<DashRunner>();
         AddComponent<WarhammerSlam>();
         AddComponent<GearCycler>();
-        AddComponent<HandGrenadeSupply>();
         AddComponent<LaserDriver>();
         AddComponent<LoopSounds>();
         AddComponent<HiveLocks>();

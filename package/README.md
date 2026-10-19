@@ -3,8 +3,8 @@
 *(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-A BepInEx plugin for GTFO that adds **nineteen new weapons**: four melee weapons, thirteen guns,
-a tool and a consumable. No game files are shipped or edited. Every weapon is built at load time from the game's own
+A BepInEx plugin for GTFO that adds **eighteen new weapons**: four melee weapons, thirteen guns
+and a tool. No game files are shipped or edited. Every weapon is built at load time from the game's own
 data, so they pick up vanilla balance changes, and nothing vanilla is modified.
 
 They show up in the loadout screen next to the vanilla weapons, in their normal slots. Every one of
@@ -56,12 +56,6 @@ to be fun first; balance comes later.
 | Weapon | Model | In one line |
 |---|---|---|
 | **Victory Banner** | Stalwart Flow G2 (C-Foam launcher) | Put a flag down in front of you, like a sentry, with a glowing healing aura that heals everyone inside; walk up and press Use to pick it up |
-
-### Consumable
-
-| Item | Model | In one line |
-|---|---|---|
-| **Hand Grenade** | Lock melter, thrown like a glowstick | Hold to wind up, release to throw; bounces, then blows after 3 s. Nobody starts with any; each one you find is 1 more, up to 6 |
 
 ## Melee weapons
 
@@ -217,39 +211,9 @@ While it's up, a **glowing green aura** lies on the ground around it out to **8 
 second it pulses, **healing** everyone standing inside it 1% of their max health - stay in it and
 you're back to full well within a minute.
 
-## Consumable
+## Hand Grenade, Stim Pack and loot
 
-### Hand Grenade
-
-The glowstick's own item, cloned - so the throw, bounce and sync are all vanilla - wearing a lock
-melter's look. Hold to wind up and release to throw (twice as hard as a glowstick); it bounces
-around, flashing red faster and faster, and blows after **3 seconds**: 60 damage at the center,
-falling to a quarter at 6 m, x6 stagger. It never hurts players.
-
-Nobody starts with any: **each one you find** as loot **is 1 more**, up to **6** carried. Thrown ones are gone.
-
-### Stim Pack
-
-**On by default** (`[Stim Pack] Stim Pack Enabled`; while it's off it isn't added to the game or
-the loot). It's a consumable of its own (the I2-LP syringe is left as it is):
-an **overheal like Doom's**. It gives
-**33%** of your max health and can take you **past max, up to 200%**; anything above max then
-**drains back down to 100%** at 1% of max a second. Damage eats into the overheal first. For
-**15 seconds** after a Stim Pack, everything you hit (guns and melee) takes **33% more damage**.
-
-### Loot
-
-Consumables in lockers and boxes - and lying around, like artifacts (60% of them) - are GTFO.EZ's
-kit loot plus this mod's grenades: a few small **health**, **tool** and **ammo kits** of **1-2
-charges** each, adding about **20%** to the zone's own resource packs (which still spawn as
-normal, at their usual sizes), and **Hand Grenades** at 4 to the kits' 3, so grenades are common -
-plus **Stim Packs** when they're switched on. It's the same kit code GTFO.EZ runs, shared between
-the two mods.
-
-With **GTFO.EZ** installed, this mod's loot settings take precedence and GTFO.EZ's *Consumables
-Are Kits* steps aside.
-
-**Artifacts stay** as rare as in vanilla, with Hand Grenades common alongside them.
+The Hand Grenade, the Stim Pack and the loot mix (kits, grenades and stims as consumable loot) moved to [GTFO.AbsurdItems](https://github.com/mindattic/GTFO.AbsurdItems), with the same settings. This mod no longer changes consumables or loot.
 
 ## Swapping weapons in a level
 
@@ -296,7 +260,7 @@ the mod:
 
 | Setting | Default | What it does |
 |---|---|---|
-| `[0. Mod] Enabled` † | true | Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys, no loot changes. Your other settings stay in the file as they are. |
+| `[0. Mod] Enabled` † | true | Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys. Your other settings stay in the file as they are. |
 
 ### Turning weapons off
 
@@ -320,9 +284,6 @@ and nothing else about the game changes. Pistol and rifle versions of a gun are 
 | `[Rocket Launcher]` | `Rocket Launcher Enabled` |
 | `[Shrink Beam]` | `Shrink Beam Enabled` |
 | `[Victory Banner]` | `Victory Banner Enabled` |
-| `[Hand Grenade]` | `Hand Grenade Enabled` |
-| `[Stim Pack]` | `Stim Pack Enabled` |
-| `[Loot]` | `Loot Mix Enabled` (off: vanilla consumable loot) |
 
 ### Melee weapons (shared settings)
 
@@ -550,43 +511,6 @@ Shared by everything that flings enemies (the Warhammer).
 | `PickupRange` | 2.5 | Metres from the banner within which Use picks it back up. |
 | `SafetyLifetimeSeconds` | 600 | A safety-net despawn in case it's never picked back up. |
 
-### `[Hand Grenade]`
-
-| Setting | Default | What it does |
-|---|---|---|
-| `FuseSeconds` | 3 | Seconds from the throw until it explodes. |
-| `ThrowForceMultiplier` | 2 | Multiplies the glowstick's own throw strength. |
-| `BlastRadius` | 6 | Metres the blast reaches. |
-| `BlastDamage` | 60 | Damage at the blast's center. |
-| `BlastEdgeFraction` | 0.25 | Share of damage left at the blast's edge. |
-| `BlastStagger` | 6 | Blast stagger multiplier. |
-| `PickupCount` † | 1 | How many one pickup holds. |
-| `MaxCarried` | 6 | The most you can carry. |
-
-### `[Stim Pack]`
-
-| Setting | Default | What it does |
-|---|---|---|
-| `HealPercent` | 33 | Health a Stim Pack gives, in percent of max health. |
-| `MaxHealthPercent` | 200 | How high it can take your health, in percent of max health. |
-| `DrainPercentPerSecond` | 1 | How fast health above max drains back to max, in percent of max a second. |
-| `DamageBoostPercent` | 33 | Extra damage dealt (guns and melee) while the boost runs, in percent. |
-| `DamageBoostSeconds` | 15 | How long the damage boost lasts after a Stim Pack. |
-
-### `[Loot]`
-
-| Setting | Default | What it does |
-|---|---|---|
-| `HandGrenadeWeight` † | 4 | Odds a loot consumable is a Hand Grenade, against the kits' weights. |
-| `StimPackWeight` † | 1 | Relative odds it's a Stim Pack (only while the Stim Pack is switched on). |
-| `HealthKitWeight` † | 1 | Relative odds it's a health kit. |
-| `ToolKitWeight` † | 1 | Relative odds it's a tool kit. |
-| `AmmoKitWeight` † | 1 | Relative odds it's an ammo kit. |
-| `KitLootPercent` † | 20 | How much the kits found as loot add, in percent of a zone's normal health, ammo and tool pack budget. |
-| `KitChargesMin` † | 1 | Fewest charges a loot kit holds (one charge is one use, 20% of a pack). |
-| `KitChargesMax` † | 2 | Most charges a loot kit holds. |
-| `OutInTheOpenShare` † | 0.6 | Share (0-1) left lying out in the open instead of in boxes and lockers. |
-
 ### `[Ammo]`
 
 | Setting | Default | What it does |
@@ -627,8 +551,6 @@ another game sound by name; an empty value is silent (or, for a gun's shot, the 
 | `ShrinkPop` | ENEMYWEAKSPOTEXPLODE | A shrunk enemy gibbing |
 | `LightningCrackle` | FLUORESCENT_LIGHT_CRACKLE | Where lightning strikes |
 | `Thunderclap` | ELEVATOR_THUNDER | Mjolnir's thunderclap |
-| `HandGrenadeThrow` | FRAGGRENADETHROW | Throwing a Hand Grenade |
-| `HandGrenadeBounce` | FRAGGRENADEBOUNCE | A Hand Grenade bouncing |
 | `BannerPlant` | SENTRYGUN_DEPLOY | Planting the Victory Banner |
 
 ## Multiplayer
@@ -644,11 +566,14 @@ the host, who owns enemy positions.
 - **GTFO.EZ:** compatible, in either load order; where the two clash, this mod wins. Everything it
   changes in the game's data is applied after GTFO.EZ's. Weapons are built after EZ's tuning, so
   each starts from EZ's version of the weapon it's copied from; stats this mod sets itself stay
-  fixed. Loot follows this mod's `[Loot]` settings, not GTFO.EZ's kit settings. Keys don't
+  fixed. Keys don't
   overlap (this mod uses Home/PgUp/PgDn; GTFO.EZ uses E, X and Z), and Insert/Delete are the shared
   toggles both mods carry - only one answers.
-- **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202 tool, 1203-1204
-  consumable): if one already uses an id, that weapon isn't added and `LogOutput.log` says so. The
+- **GTFO.AbsurdItems:** compatible - the Hand Grenade, Stim Pack and loot mix that used to be in
+  this mod live there now. A GTFO.* mod switched off in its config (`[0. Mod] Enabled`) counts as
+  not installed for the others.
+- **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202
+  tool): if one already uses an id, that weapon isn't added and `LogOutput.log` says so. The
   rest still load. A melee weapon whose attack speed isn't 1 also adds a melee animation set at its
   own id, and the guns add recoil profiles at 1101-1109 and 1119 and a first-person hold at 1103; a
   clash there leaves that weapon its model's animation timing or recoil.
