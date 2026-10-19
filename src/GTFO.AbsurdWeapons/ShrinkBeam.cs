@@ -99,6 +99,7 @@ internal static class ShrinkBeam
         public Vector3 BaseScale;
         public float Scale = 1f;
         public float LastHit;
+        public float PoppedAt = -1f; // waiting on the break to land (a client waits on the host)
     }
 
     private static readonly Dictionary<IntPtr, ShrunkLock> shrunkLocks = new();
@@ -241,17 +242,21 @@ internal static class ShrinkBeam
             shrunkLocks[padlock.Pointer] = state;
         }
         state.LastHit = Time.time;
+        if (state.PoppedAt >= 0f) return state;
         state.Scale = Mathf.Max(LockBreakScale.Value, state.Scale - ShrinkPerSecond.Value * dt);
         state.Body.localScale = state.BaseScale * state.Scale;
         return state;
     }
 
     // Shrunk to LockBreakScale: back to its own size, a green pop, and the shooter's game breaks it
-    // through the lock's own damage path, so it syncs.
+    // through the lock's own damage path, so it syncs. It stays tracked until it's actually broken -
+    // on a client the break only lands once the host confirms it, and dropping it sooner let the beam
+    // shrink it and pop it a second time.
     [HideFromIl2Cpp]
     private static void PopLock(PlayerAgent owner, ShrunkLock state, Vector3 point, Vector3 direction)
     {
-        shrunkLocks.Remove(state.Lock.Pointer);
+        if (state.PoppedAt >= 0f) return;
+        state.PoppedAt = Time.time;
         try
         {
             state.Body.localScale = state.BaseScale;
@@ -303,6 +308,14 @@ internal static class ShrinkBeam
             if (state.Lock == null || state.Body == null)
             {
                 (done ??= new List<IntPtr>()).Add(pointer);
+                continue;
+            }
+            // Popped here: done once the break lands, or after the grace if it never does (it's
+            // already back at its own size).
+            if (state.PoppedAt >= 0f)
+            {
+                if (state.Lock.Health <= 0f || Time.time - state.PoppedAt >= PopGraceSeconds)
+                    (done ??= new List<IntPtr>()).Add(pointer);
                 continue;
             }
             // A teammate's copy: the shooter broke it (the break syncs, the shrink doesn't), so it
