@@ -79,7 +79,11 @@ internal static class ShrinkBeam
         public float BaseRunSpeed;
         public bool CapturedBase;
         public float LastHit;
+        public float PoppedAt = -1f; // waiting on the kill to land (a client waits on the host)
     }
+
+    // A pop whose kill never landed (it missed, or was refused) lets the enemy grow back after this.
+    private const float PopGraceSeconds = 2f;
 
     private static readonly Dictionary<IntPtr, Shrunk> shrunk = new();
 
@@ -107,7 +111,7 @@ internal static class ShrinkBeam
         if (hitEnemy != null && hitEnemy.Alive)
         {
             var state = Shrink(hitEnemy, dt);
-            if (state.Scale <= MinScale.Value) Pop(owner, hitEnemy, gearCategoryId);
+            if (state.Scale <= MinScale.Value) Pop(owner, state, gearCategoryId);
         }
 
         ShrinkStream.Spawn(start, end, owner.Owner != null ? owner.Owner.Lookup : 0UL);
@@ -126,6 +130,7 @@ internal static class ShrinkBeam
             shrunk[enemy.Pointer] = state;
         }
         state.LastHit = Time.time;
+        if (state.PoppedAt >= 0f) return state;
         if (!state.CapturedBase)
         {
             try
@@ -163,11 +168,15 @@ internal static class ShrinkBeam
     }
 
     // Shrunk past MinScale: the shooter's own game finishes it off (through the bullet path, so it
-    // syncs) and a green pop marks it; the shrink itself was already cosmetic and clears here.
+    // syncs) and a green pop marks it. It stays tracked, small, until it's actually dead - on a client
+    // the kill only lands once the host confirms it, and dropping it sooner let the next beam tick
+    // pick it back up at full size.
     [HideFromIl2Cpp]
-    private static void Pop(PlayerAgent owner, EnemyAgent enemy, uint gearCategoryId)
+    private static void Pop(PlayerAgent owner, Shrunk state, uint gearCategoryId)
     {
-        shrunk.Remove(enemy.Pointer);
+        if (state.PoppedAt >= 0f) return;
+        state.PoppedAt = Time.time;
+        var enemy = state.Enemy;
         try
         {
             var point = enemy.AimTarget.position;
@@ -196,6 +205,11 @@ internal static class ShrinkBeam
                 (done ??= new List<IntPtr>()).Add(pointer);
                 continue;
             }
+            if (state.PoppedAt >= 0f)
+            {
+                if (Time.time - state.PoppedAt < PopGraceSeconds) continue;
+                state.PoppedAt = -1f;
+            }
             if (Time.time - state.LastHit < RegrowDelaySeconds.Value) continue;
 
             state.Scale = Mathf.Min(1f, state.Scale + RegrowPerSecond.Value * dt);
@@ -217,17 +231,17 @@ internal static class ShrinkBeam
         var camera = local.FPSCamera;
         if (camera == null) return;
 
-        List<EnemyAgent>? stepped = null;
+        List<Shrunk>? stepped = null;
         foreach (var state in shrunk.Values)
         {
-            if (state.Scale > StepOnScale.Value || state.Enemy == null || !state.Enemy.Alive) continue;
+            if (state.PoppedAt >= 0f || state.Scale > StepOnScale.Value || state.Enemy == null || !state.Enemy.Alive) continue;
             var feet = state.Enemy.transform.position;
             if (Vector3.Distance(local.Position, feet) > StepOnRadius.Value) continue;
             if (Vector3.Angle(camera.Forward, feet - camera.Position) > StepOnLookConeDegrees.Value) continue;
-            (stepped ??= new List<EnemyAgent>()).Add(state.Enemy);
+            (stepped ??= new List<Shrunk>()).Add(state);
         }
         if (stepped == null) return;
-        foreach (var enemy in stepped) Pop(local, enemy, GunInjector.ShrinkBeamId);
+        foreach (var state in stepped) Pop(local, state, GunInjector.ShrinkBeamId);
     }
 
     // The living enemy nearest `point` within `radius` - how a receiving client finds the same
