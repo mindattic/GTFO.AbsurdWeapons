@@ -51,7 +51,7 @@ internal static class LockDamage
         }
     }
 
-    private static void Hit(LG_WeakLockDamage target, float damage, Agent source, Vector3 point, Vector3 direction, Vector3 normal)
+    internal static void Hit(LG_WeakLockDamage target, float damage, Agent source, Vector3 point, Vector3 direction, Vector3 normal)
     {
         try
         {

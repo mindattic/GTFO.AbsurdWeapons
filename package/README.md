@@ -200,7 +200,7 @@ A continuous green ray. Hold it on an enemy and it shrinks - smaller and slower 
 the longer you keep the beam on it; let go and, after a second off the beam, it starts growing back,
 so a shrink has to finish in one sustained hold. Shrink it to **45%** of its size and it gibs
 outright. Once it's at **70%** size or smaller, get within **2 m** of it and look down at it and you
-step on it - it gibs too.
+step on it - it gibs too. **Door padlocks shrink the same way** and break at 50%.
 
 ## Tool
 
@@ -523,6 +523,7 @@ Shared by everything that flings enemies (the Warhammer).
 | `RegrowDelaySeconds` | 1 | Seconds off the beam before a shrunk enemy starts growing back. |
 | `RegrowPerSecond` | 0.15 | Share of full size regained per second while growing back. |
 | `MinScale` | 0.45 | Share of full size at which it gibs. |
+| `LockBreakScale` | 0.5 | Share of full size at which a shrunk door padlock breaks. |
 | `PopDamage` | 99999 | Damage dealt when it gibs. |
 | `StepOnScale` | 0.7 | At or below this share of full size you can step on it. |
 | `StepOnRadius` | 2 | Metres within which looking down at a small-enough enemy steps on it. |

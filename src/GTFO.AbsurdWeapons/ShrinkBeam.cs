@@ -6,6 +6,7 @@ using Enemies;
 using FX_EffectSystem;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
+using LevelGeneration;
 using Player;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ internal static class ShrinkBeam
     internal static ConfigEntry<float> MinScale = null!;
     internal static ConfigEntry<float> PopDamage = null!;
     internal static ConfigEntry<float> StepOnScale = null!;
+    internal static ConfigEntry<float> LockBreakScale = null!;
     internal static ConfigEntry<float> StepOnRadius = null!;
     internal static ConfigEntry<float> StepOnLookConeDegrees = null!;
     internal static ConfigEntry<float> GunShotDelay = null!;
@@ -52,6 +54,7 @@ internal static class ShrinkBeam
         MinScale = config.Bind("Shrink Beam", "MinScale", 0.45f, "Share of full size at which it gibs.");
         PopDamage = config.Bind("Shrink Beam", "PopDamage", 99999f, "Damage dealt on the pop (enough to kill anything outright).");
         StepOnScale = config.Bind("Shrink Beam", "StepOnScale", 0.7f, "At or below this share of full size you can step on it: get within StepOnRadius and look down at it and it gibs.");
+        LockBreakScale = config.Bind("Shrink Beam", "LockBreakScale", 0.5f, "Share of full size at which a shrunk door padlock breaks.");
         StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 2f, "Metres from a small-enough enemy within which looking down at it steps on it.");
         StepOnLookConeDegrees = config.Bind("Shrink Beam", "StepOnLookConeDegrees", 35f, "How close to your crosshair a small-enough enemy has to be for you to count as looking down at it.");
         GunShotDelay = config.Bind("Shrink Beam", "GunShotDelay", 0.08f, "Seconds between beam ticks (it never actually fires - the stream is trigger-driven).");
@@ -67,6 +70,7 @@ internal static class ShrinkBeam
             ShrinkStream.Spawn(start, end, sender);
             var enemy = NearestEnemy(end, RemoteFindRadius);
             if (enemy != null && enemy.Alive) Shrink(enemy, GunShotDelay.Value);
+            else if (NearestLock(end) is { } padlock) ShrinkLock(padlock, GunShotDelay.Value);
         });
     }
 
@@ -87,6 +91,18 @@ internal static class ShrinkBeam
 
     private static readonly Dictionary<IntPtr, Shrunk> shrunk = new();
 
+    // Door padlocks shrink the same way and break at LockBreakScale.
+    private sealed class ShrunkLock
+    {
+        public LG_WeakLockDamage Lock = null!;
+        public Transform Body = null!;
+        public Vector3 BaseScale;
+        public float Scale = 1f;
+        public float LastHit;
+    }
+
+    private static readonly Dictionary<IntPtr, ShrunkLock> shrunkLocks = new();
+
     // One beam update from the local shooter, called every frame so the beam's start always sits
     // right at the gun's own barrel on screen, not just wherever it was at the last shrink tick.
     // `applyShrink` false: just the beam kept lit and following the gun (every frame between
@@ -96,10 +112,12 @@ internal static class ShrinkBeam
         var start = muzzle != null ? Barrel.Start(owner, muzzle, eye, aim) : eye + aim * 0.5f;
         var end = eye + aim * Range.Value;
         EnemyAgent? hitEnemy = null;
+        LG_WeakLockDamage? hitLock = null;
         if (Physics.Raycast(eye, aim, out var hit, Range.Value, LayerManager.MASK_BULLETWEAPON_RAY))
         {
             end = hit.point;
             hitEnemy = hit.collider.GetComponent<Dam_EnemyDamageLimb>()?.m_base?.Owner;
+            if (hitEnemy == null) hitLock = IntactLock(hit.collider);
         }
 
         if (!applyShrink)
@@ -112,6 +130,11 @@ internal static class ShrinkBeam
         {
             var state = Shrink(hitEnemy, dt);
             if (state.Scale <= MinScale.Value) Pop(owner, state, gearCategoryId);
+        }
+        else if (hitLock != null)
+        {
+            var state = ShrinkLock(hitLock, dt);
+            if (state.Scale <= LockBreakScale.Value) PopLock(owner, state, hit.point, aim);
         }
 
         ShrinkStream.Spawn(start, end, owner.Owner != null ? owner.Owner.Lookup : 0UL);
@@ -192,10 +215,61 @@ internal static class ShrinkBeam
         }
     }
 
-    // Every tracked enemy not touched in a while grows back toward full size on its own - each
-    // client runs this independently off its own shrunk list, so there's nothing to sync.
+    [HideFromIl2Cpp]
+    private static LG_WeakLockDamage? IntactLock(Collider collider)
+    {
+        var padlock = collider.GetComponentInParent<LG_WeakLockDamage>();
+        return padlock != null && padlock.Health > 0f ? padlock : null;
+    }
+
+    // The intact padlock at the received beam's end point, if that's what it's on.
+    [HideFromIl2Cpp]
+    private static LG_WeakLockDamage? NearestLock(Vector3 point)
+    {
+        foreach (var collider in Physics.OverlapSphere(point, 0.3f, ~0, QueryTriggerInteraction.Collide))
+            if (IntactLock(collider) is { } padlock) return padlock;
+        return null;
+    }
+
+    [HideFromIl2Cpp]
+    private static ShrunkLock ShrinkLock(LG_WeakLockDamage padlock, float dt)
+    {
+        if (!shrunkLocks.TryGetValue(padlock.Pointer, out var state))
+        {
+            var body = padlock.m_lock != null ? padlock.m_lock.transform : padlock.transform;
+            state = new ShrunkLock { Lock = padlock, Body = body, BaseScale = body.localScale };
+            shrunkLocks[padlock.Pointer] = state;
+        }
+        state.LastHit = Time.time;
+        state.Scale = Mathf.Max(LockBreakScale.Value, state.Scale - ShrinkPerSecond.Value * dt);
+        state.Body.localScale = state.BaseScale * state.Scale;
+        return state;
+    }
+
+    // Shrunk to LockBreakScale: back to its own size, a green pop, and the shooter's game breaks it
+    // through the lock's own damage path, so it syncs.
+    [HideFromIl2Cpp]
+    private static void PopLock(PlayerAgent owner, ShrunkLock state, Vector3 point, Vector3 direction)
+    {
+        shrunkLocks.Remove(state.Lock.Pointer);
+        try
+        {
+            state.Body.localScale = state.BaseScale;
+            BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
+            Sounds.Play(Sounds.ShrinkPop.Value, point);
+            LockDamage.Hit(state.Lock, PopDamage.Value, owner.Cast<Agent>(), point, direction, -direction);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogError($"GTFO.AbsurdWeapons shrink beam lock pop failed: {e.Message}");
+        }
+    }
+
+    // Every tracked enemy and padlock not touched in a while grows back toward full size on its
+    // own - each client runs this independently off its own shrunk lists, so there's nothing to sync.
     internal static void Regrow(float dt)
     {
+        RegrowLocks(dt);
         if (shrunk.Count == 0) return;
         List<IntPtr>? done = null;
         foreach (var (pointer, state) in shrunk)
@@ -218,6 +292,26 @@ internal static class ShrinkBeam
         }
         if (done == null) return;
         foreach (var pointer in done) shrunk.Remove(pointer);
+    }
+
+    private static void RegrowLocks(float dt)
+    {
+        if (shrunkLocks.Count == 0) return;
+        List<IntPtr>? done = null;
+        foreach (var (pointer, state) in shrunkLocks)
+        {
+            if (state.Lock == null || state.Body == null)
+            {
+                (done ??= new List<IntPtr>()).Add(pointer);
+                continue;
+            }
+            if (Time.time - state.LastHit < RegrowDelaySeconds.Value) continue;
+            state.Scale = Mathf.Min(1f, state.Scale + RegrowPerSecond.Value * dt);
+            state.Body.localScale = state.BaseScale * state.Scale;
+            if (state.Scale >= 1f) (done ??= new List<IntPtr>()).Add(pointer);
+        }
+        if (done == null) return;
+        foreach (var pointer in done) shrunkLocks.Remove(pointer);
     }
 
     // Once an enemy's shrunk to StepOnScale, getting within StepOnRadius and looking down at it gibs
