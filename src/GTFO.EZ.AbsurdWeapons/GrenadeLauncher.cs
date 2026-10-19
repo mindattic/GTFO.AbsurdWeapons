@@ -16,7 +16,7 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// stats - the pair handles identically) whose every shot launches a lock melter rigged to blow
 /// instead of a bullet (SeekerGuns' ray hook calls <see cref="Launch"/>). The gun's own firing -
 /// sound, recoil, ammo (infinite, like every gun here) - stays vanilla. A grenade that hits an
-/// enemy explodes at once. One that misses
+/// enemy, a teammate or a bot (never the shooter) explodes at once. One that misses
 /// bounces off whatever it hits, flashing red faster and faster, and explodes 3 seconds after it
 /// was fired. The blast damages and staggers enemies only, through the bullet path, on the
 /// shooter's game; teammates are sent each launch and detonation and see the same grenades.
@@ -107,8 +107,8 @@ internal static class GrenadeLauncher
 
 /// <summary>
 /// One grenade in flight: a lock melter's meshes, flown by hand (gravity, sphere casts) so it
-/// bounces off the level and never touches players. It blinks a red light (and beeps) faster and
-/// faster until its fuse runs out, or until it hits an enemy (on the shooter's game). Teammates'
+/// bounces off the level. It blinks a red light (and beeps) faster and faster until its fuse runs
+/// out, or until it hits an enemy, a teammate or a bot (on the shooter's game). Teammates'
 /// copies only bounce; they explode when the shooter's game says so.
 /// </summary>
 internal sealed class LauncherGrenade : MonoBehaviour
@@ -227,10 +227,17 @@ internal sealed class LauncherGrenade : MonoBehaviour
         if (distance < 0.0001f) return;
         var direction = step / distance;
 
-        // An enemy in the way: it goes off on contact (the shooter's game decides).
+        // An enemy, a teammate or a bot in the way: it goes off on contact (the shooter's game
+        // decides; the shooter themselves never sets it off).
         if (owner != null && Physics.SphereCast(position, Radius, direction, out var enemyHit, distance, LayerManager.MASK_ENEMY_DAMAGABLE))
         {
             transform.position = enemyHit.point;
+            Explode();
+            return;
+        }
+        if (owner != null && ProjectileHits.OtherPlayer(position, Radius, direction, distance, owner, out var playerHit))
+        {
+            transform.position = playerHit.point;
             Explode();
             return;
         }

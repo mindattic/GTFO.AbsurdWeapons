@@ -233,11 +233,12 @@ teammates as `MindAttic.GTFO.EZ.AbsurdWeapons.ChainLightning`.
   from that model's barrel as drawn on screen (`Barrel.Shot`), aimed at the crosshair point, at 30 m/s.
   No brass.
 - **Flight:** `LauncherGrenade` flies by hand - gravity, `SphereCast` against
-  `MASK_ENEMY_DAMAGABLE` (shooter's game only: explode) and `MASK_WORLD` (reflect, x0.5, settle on
-  floors) - so it never touches players. The look is the lock melter's meshes copied from its loaded
+  `MASK_ENEMY_DAMAGABLE` and any player or bot but the shooter (`ProjectileHits`, the
+  `LAYER_PLAYER_MOVER`/`LAYER_PLAYER_SYNCED` layers; shooter's game only: explode) and `MASK_WORLD`
+  (reflect, x0.5, settle on floors). The look is the lock melter's meshes copied from its loaded
   prefab (no scripts), else a capsule. A red `EffectLight` and `LineRenderer` dot blink from ~2 to
   ~16 a second with `DEPLOYER_BEEP_TARGET_ACQUIRED`; bounces play `FRAGGRENADEBOUNCE`.
-- **Blast:** at 2.5 s (or on an enemy) `AreaDamage.Apply` (5.2 m, 75 falling to 33%, x5 stagger) on the
+- **Blast:** at 2.5 s (or on an enemy, teammate or bot) `AreaDamage.Apply` (5.2 m, 75 falling to 33%, x5 stagger) on the
   shooter's game, the trip mine's explosion effect (`FX_Tripmine` pool), a `BurstFlash` and
   `FRAGGRENADEEXPLODE`. Teammates get launch and detonate messages; their copies only bounce and
   explode when told (or 0.75 s after the fuse).
@@ -413,7 +414,7 @@ src/GTFO.EZ.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the 
   TentacleCannon.cs     Tentacle Cannon cone, targeting, surface grab and the GPU tentacle lash
   Railgun.cs            Railgun slug and its double-helix beam
   ChainLightning.cs     Chain Lightning Gun's trigger-driven stream (no shots), strikes, jumps and bolt
-  RocketLauncher.cs     Rocket Launcher: straight gravity-free flight, falling sparks/dust trail, right-click detonation, blast
+  RocketLauncher.cs     Rocket Launcher: straight gravity-free flight, falling sparks, sparse dust, glow, right-click detonation, blast
   ShrinkBeam.cs         Shrink Beam: continuous shrink ray, regrowth, step-on pop, its beam visual
   HiveLocks.cs          Hive guns' Titanfall-style lock-on: pips, markers, locked-target cycling
   VictoryBanner.cs      Victory Banner placement/pickup and healing

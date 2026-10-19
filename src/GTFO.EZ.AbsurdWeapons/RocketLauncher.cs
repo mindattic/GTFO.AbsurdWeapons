@@ -15,7 +15,8 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// <c>T_RadiusDamage</c>), with Doom's rocket's straight, gravity-free flight (<c>MT_ROCKET</c>'s
 /// <c>MF_NOGRAVITY</c>) - neither game's rocket drops or bounces. Every shot (SeekerGuns' ray hook
 /// calls <see cref="Launch"/>) leaves the barrel and flies dead straight, kicking off falling sparks
-/// and a trail of dust (the game's own concrete-impact puff) as it goes, to the first enemy or wall
+/// and a sparse trail of dust well behind it (the game's own concrete-impact puff) and glowing so it
+/// stays easy to track, to the first enemy, wall, teammate or bot (never the shooter)
 /// in its way, then explodes there - same blast code as the Grenade Launcher (<see cref="AreaDamage"/>,
 /// <see cref="Explosion"/>), plus the game's own <c>DamageUtil.DoExplosionDamage</c> so the blast
 /// catches nearby players too - shooter, bots and teammates alike, Quake/Doom style. Quake's own
@@ -160,7 +161,11 @@ internal sealed class RocketProjectile : MonoBehaviour
 {
     private const float Radius = 0.15f;
     private const float SparkInterval = 0.05f;
-    private const float DustInterval = 0.08f;
+    // Sparse and well behind it: thick dust hid the rocket, and you need to see it to time a
+    // right-click detonation.
+    private const float DustInterval = 0.4f;
+    private const float DustBehind = 1.5f;
+    private static readonly Color GlowColor = new(1f, 0.45f, 0.15f);
     private static int HitMask => LayerManager.MASK_ENEMY_DAMAGABLE | LayerManager.MASK_WORLD;
 
     private static readonly Dictionary<uint, RocketProjectile> live = new();
@@ -180,6 +185,13 @@ internal sealed class RocketProjectile : MonoBehaviour
         var go = new GameObject("GTFO.EZ.AbsurdWeapons Rocket");
         go.transform.SetPositionAndRotation(position, Quaternion.LookRotation(direction));
         BuildModel(go.transform);
+
+        // A steady glow on the rocket itself, so it can be tracked in flight (and in the dark).
+        var glow = go.AddComponent<EffectLight>();
+        glow.Color = GlowColor;
+        glow.Range = 3f;
+        glow.Intensity = 2.5f;
+        glow.enabled = true;
 
         var rocket = go.AddComponent<RocketProjectile>();
         rocket.id = id;
@@ -238,12 +250,23 @@ internal sealed class RocketProjectile : MonoBehaviour
 
             // Only the shooter's own copy ever decides it hit something; a teammate's copy has
             // nothing to simulate (no bounce, no gravity) and just waits for Detonate above.
-            if (owner != null && Physics.SphereCast(position, Radius, direction, out var hit, step, HitMask))
+            // An enemy, the world, or a teammate or bot (never the shooter) - whichever is nearest.
+            if (owner != null)
             {
-                transform.position = hit.point;
-                RocketLauncher.SendDetonate(id, hit.point);
-                Explode();
-                return;
+                var hitSomething = Physics.SphereCast(position, Radius, direction, out var hit, step, HitMask);
+                if (ProjectileHits.OtherPlayer(position, Radius, direction, step, owner, out var playerHit)
+                    && (!hitSomething || playerHit.distance < hit.distance))
+                {
+                    hit = playerHit;
+                    hitSomething = true;
+                }
+                if (hitSomething)
+                {
+                    transform.position = hit.point;
+                    RocketLauncher.SendDetonate(id, hit.point);
+                    Explode();
+                    return;
+                }
             }
 
             transform.position = position + direction * step;
@@ -294,7 +317,7 @@ internal sealed class RocketProjectile : MonoBehaviour
         nextDust = age + DustInterval;
         try
         {
-            FX_Manager.PlayEffect(false, FX_GroupName.Impact_Concrete, transform.position - direction * 0.25f,
+            FX_Manager.PlayEffect(false, FX_GroupName.Impact_Concrete, transform.position - direction * DustBehind,
                 Quaternion.LookRotation(-direction), false);
         }
         catch (Exception)

@@ -50,7 +50,7 @@ to be fun first; balance comes later.
 | **Grenade Rifle** | Special | TechMan Veruta XII | The same grenades, from its own barrel with its own kick |
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | A continuous stream of lightning that leaps from enemy to enemy, up to five jumps |
-| **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: flies dead straight with no drop, trailing falling sparks and dust, and blows up the first thing it touches |
+| **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: flies dead straight with no drop, trailing falling sparks and a light dust trail and glowing so you can track it, and blows up the first thing it touches - an enemy, a wall, a teammate or a bot, never you |
 | **Shrink Beam** | Special | Omneco exp1 | A continuous ray that shrinks whatever it's held on until it gibs; look down at a small one up close and you'll step on it |
 
 ### Tool
@@ -156,7 +156,7 @@ Semi-auto launchers on heavy guns - the Bataldo 3RB revolver (main) and the Tech
 (special). A shot does exactly the same from either; each just looks like its own gun firing. Every
 shot is a **lock melter rigged to blow**.
 
-- **Hits an enemy:** explodes instantly.
+- **Hits an enemy, a teammate or a bot:** explodes instantly (never on you, the shooter).
 - **Misses:** bounces off walls and floors, losing half its speed each time, and explodes **2.5 seconds** after firing.
 - While it's out it **flashes red faster and faster** (with a beep each flash) as the fuse burns.
 - It's lobbed: launched fast with a little upward lift, so it arcs out a long way.
@@ -181,7 +181,8 @@ a clear line. No recoil, no brass.
 ### Rocket Launcher (special)
 
 Quake 1's own rocket launcher. Every shot is a rocket that flies dead straight out of the barrel -
-no drop, no bounce - to the first enemy or wall in its way, trailing falling sparks and a dust trail,
+no drop, no bounce - to the first enemy, wall, teammate or bot in its way (never you), trailing falling
+sparks and a light dust trail well behind it, and glowing orange so you can see where it is,
 then explodes: **110 damage** at the center, falling to a third at **5.2 m**, with a heavy stagger
 (x5). **The blast reaches nearby players too** (shooter, bots and teammates alike), Quake style.
 Semi-auto, one shot every **0.8 seconds**.
