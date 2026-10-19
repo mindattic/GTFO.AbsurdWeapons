@@ -77,19 +77,35 @@ internal static class RocketLauncher
         NetworkAPI.InvokeEvent(LaunchEvent, new LaunchMessage(id, position, direction));
     }
 
-    // No aiming down sights: right-click is the remote detonator instead.
+    // No aiming down sights: right-click is the remote detonator instead. The game asks this of
+    // every equippable, including ones still being built (seen at startup) or already destroyed,
+    // so it must never throw: an exception here escapes into the il2cpp trampoline.
     [HarmonyPatch(typeof(ItemEquippable), nameof(ItemEquippable.AimingAllowed), MethodType.Getter)]
     [HarmonyPostfix]
     private static void NoAiming(ItemEquippable __instance, ref bool __result)
     {
-        if (__result && __instance.GearCategoryData?.persistentID == GunInjector.RocketLauncherId) __result = false;
+        if (__result && IsRocketLauncher(__instance)) __result = false;
     }
 
     // Right-click this frame while the local player holds the Rocket Launcher.
     internal static bool DetonatePressed(PlayerAgent owner) =>
         owner.IsLocallyOwned && FocusStateManager.CurrentState == eFocusState.FPS
-        && owner.Inventory?.WieldedItem?.GearCategoryData?.persistentID == GunInjector.RocketLauncherId
+        && IsRocketLauncher(owner.Inventory?.WieldedItem)
         && InputMapper.GetButtonDownKeyMouse(InputAction.Aim, eFocusState.FPS);
+
+    // False for anything missing, half-built or destroyed rather than throwing.
+    private static bool IsRocketLauncher(ItemEquippable? item)
+    {
+        if (item == null || item.Pointer == IntPtr.Zero) return false;
+        try
+        {
+            return item.GearCategoryData?.persistentID == GunInjector.RocketLauncherId;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
 
     internal static void SendDetonate(uint id, Vector3 position) =>
         NetworkAPI.InvokeEvent(DetonateEvent, new DetonateMessage(id, position));
