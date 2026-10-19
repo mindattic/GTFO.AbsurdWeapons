@@ -186,4 +186,4 @@ _Nothing recorded yet._
 | G.AWPN-T159 | 2026-10-18 | fix | closed | Shrink Beam: with GunShotDelay 0 or less, teammates never see the target shrink (or see it grow) - the shooter clamps the tick, the receivers don't | — |
 | G.AWPN-T160 | 2026-10-18 | fix | closed | Mjolnir: ThrowPulseJumps above 5 strikes more enemies than teammates are shown (the bolt message holds 5 jumps); the setting is unbounded | — |
 | G.AWPN-T161 | 2026-10-18 | fix | closed | Shared code from GTFO.EZ (G.EZ-T72/T75): warden message never cuts the game's own short; infinite-health check can't throw | — |
-| G.AWPN-T162 | 2026-10-18 | chore | open | Renamed to GTFO.EZ.AbsurdWeapons (project, namespace, plugin GUID, network events, package name, docs) as a GTFO.EZ companion mod built on its core | — |
+| G.AWPN-T162 | 2026-10-18 | chore | closed | Renamed to GTFO.EZ.AbsurdWeapons (project, namespace, plugin GUID, network events, package name, docs) as a GTFO.EZ companion mod built on its core | 8a47a23 |
