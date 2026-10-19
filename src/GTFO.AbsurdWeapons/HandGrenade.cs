@@ -43,7 +43,7 @@ internal static class HandGrenade
     internal static void Bind(ConfigFile config)
     {
         Enabled = config.Bind("Hand Grenade", "Hand Grenade Enabled", true,
-            "Adds the Hand Grenade (replacing the glowstick consumable) at all. Turn off to leave glowsticks untouched. Takes effect on restart.");
+            "Adds the Hand Grenade (the glowstick's item, cloned) at all. It only spawns through [Loot] Loot Mix, which replaces all consumable loot, glowsticks included, whether this is on or off. Takes effect on restart.");
         FuseSeconds = config.Bind("Hand Grenade", "FuseSeconds", 3f, "Seconds from the throw until it explodes.");
         BlastRadius = config.Bind("Hand Grenade", "BlastRadius", 6f, "Metres the blast reaches.");
         BlastDamage = config.Bind("Hand Grenade", "BlastDamage", 60f, "Damage at the blast's center.");
