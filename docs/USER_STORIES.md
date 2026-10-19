@@ -178,3 +178,4 @@ _Nothing recorded yet._
 | G.AWPN-T151 | 2026-10-18 | fix | closed | Stim Pack: a level that ends mid-overheal starts the next one at reduced max health - the Setup postfix takes the raise off after the game's own Setup has already reset HealthMax | — |
 | G.AWPN-T152 | 2026-10-18 | fix | closed | Shrink Beam: on a client a popped padlock is untracked and back at full size before the host confirms the break, so the beam shrinks it and pops it a second time | — |
 | G.AWPN-T153 | 2026-10-18 | fix | closed | Railgun breaks every padlock on its line through walls, out to its full 1000 m reach, for 9999 damage | — |
+| G.AWPN-T154 | 2026-10-18 | feature | closed | Master switch: [0. Mod] Enabled as the cfg's first entry; off means the mod loads nothing (user request) | — |
