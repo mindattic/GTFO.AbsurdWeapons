@@ -15,7 +15,8 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// cycle, mid-level. The cycle is the gear you dropped in with (added the first time you swap that
 /// slot) followed by this mod's weapons for the slot, so what you brought comes round again. It
 /// equips through the game's own loadout path (PlayerBackpackManager.EquipLocalGear, which syncs to
-/// teammates), then re-wields the slot, and a five-second warden message names what you switched to.
+/// teammates), then re-wields the slot, and a three-second line under the crosshair names what you
+/// switched to.
 /// Every weapon keeps its own ammo for the rest of the level: what's in its magazine and the
 /// slot's reserve are saved when you swap away from it and put back when you swap to it again. One
 /// of this mod's weapons starts full the first time it's equipped in a level.
@@ -213,17 +214,11 @@ internal sealed class GearCycler : MonoBehaviour
 
     private static bool IsOurs(uint categoryId) => DataBlocks.AddedCategories.Contains(categoryId);
 
-    // A new message replaces one of ours (or another GTFO.* mod's) still up, instead of queueing
-    // behind it; the game's own messages are never cut short (MindAttic.GTFO.Shared.MessageHelper).
+    // On the line under the crosshair, where your eyes already are when you swap
+    // (MindAttic.GTFO.Shared.MessageHelper; the game's own interaction messages still take priority).
     internal static void Show(string message)
     {
-        try
-        {
-            MessageHelper.Show(message, MessageType.Warden);
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdWeapons: {message} (no warden message: {e.Message})");
-        }
+        if (!MessageHelper.Show(message, MessageType.Center, 3f))
+            Plugin.Logger.LogInfo($"GTFO.EZ.AbsurdWeapons: {message}");
     }
 }

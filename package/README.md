@@ -221,7 +221,7 @@ The Hand Grenade, the Stim Pack and the loot mix (kits, grenades and stims as co
 
 Hold a main, special, tool or melee weapon and **press that slot's own key again** - 1 to 4 by
 default (melee, main, special, tool), or whatever you've rebound them to: with the slot already in
-hand, each press moves on to its next weapon. A five-second message names what you switched to.
+hand, each press moves on to its next weapon. A short line under the crosshair names what you switched to.
 Teammates get the swap too.
 
 The first time you swap a slot, **the gear you dropped in with joins that slot's cycle**, ahead of

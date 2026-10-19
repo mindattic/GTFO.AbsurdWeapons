@@ -301,7 +301,8 @@ the cycle is the slot's starting gear (its `BackpackItem.GearIDRange`, recorded 
 swap of the level) followed by the `GearManager.GetAllGearForSlot` entries whose category is in
 `DataBlocks.AddedCategories`. It equips the next with
 `PlayerBackpackManager.EquipLocalGear` - the lobby's own path, which syncs - and shows a
-five-second `PUI_WardenIntel` sub-objective message.
+three-second line under the crosshair (`MessageHelper`, `MessageType.Center`: the
+`InteractionGuiLayer` timed message).
 
 **Per-weapon ammo:** before swapping a slot away, `SaveAmmo` stores the gun's `GetCurrentClip()`
 and the slot's `GetAmmoInPack` reserve under the outgoing gear's category. `FinishPending` waits

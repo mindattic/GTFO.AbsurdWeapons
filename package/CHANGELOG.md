@@ -56,7 +56,8 @@
   Artifacts stay as rare as vanilla.
 - Swap weapons in a level by pressing a slot's own key again (1 to 4 by default, following rebinds): the
   gear you dropped in with joins the cycle the first time you swap. No keys of its own - the Page Up /
-  Page Down / Home keys and the `[Gear Cycling]` settings are gone.
+  Page Down / Home keys and the `[Gear Cycling]` settings are gone. The weapon's name shows for three
+  seconds on the line under the crosshair.
 - Config: every weapon has its own on/off switch (`<Weapon> Enabled`, pistol and rifle versions
   separately), and 200+ settings retune them - damage, rate of fire, ranges, blasts, the Katana's
   dash, Mjolnir's throw, the Warhammer's shockwave and slam, the Shadow Dagger's stealth, Chain
