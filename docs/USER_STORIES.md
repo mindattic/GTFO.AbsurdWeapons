@@ -172,10 +172,11 @@ _Nothing recorded yet._
 | G.AWPN-T145 | 2026-10-18 | fix | closed | GunInjector comment claims 0 keeps a gun's built-in stat, but the value is written straight in | — |
 | G.AWPN-T146 | 2026-10-18 | fix | closed | package README: stray duplicate StreamPercentPerSecond row outside any table | — |
 | G.AWPN-T147 | 2026-10-18 | fix | closed | Beam guns: the stream settle delay doesn't restart after a sprint, only on an item switch | — |
-| G.AWPN-T148 | 2026-10-18 | feature | open | Moved out to GTFO.AbsurdItems: Hand Grenade, Stim Pack and Loot Mix; AbsurdWeapons is guns and melee only | — |
+| G.AWPN-T148 | 2026-10-18 | feature | closed | Moved out to GTFO.AbsurdItems: Hand Grenade, Stim Pack and Loot Mix; AbsurdWeapons is guns and melee only | 6f07c24 |
 | G.AWPN-T149 | 2026-10-18 | feature | closed | Railgun kills outright (9999 damage, 1000 m reach, teal helix) and the Shrink Beam gibs sooner (45%, step-on at 70% within 2 m), with config migrations for the old defaults - user request 2026-10-18 | — |
 | G.AWPN-T150 | 2026-10-18 | feature | closed | Shrink Beam shrinks door padlocks too: held on one it shrinks, and at LockBreakScale (50%) it pops and breaks through the lock's own damage path; teammates see the shrink from beam messages | — |
 | G.AWPN-T151 | 2026-10-18 | fix | closed | Stim Pack: a level that ends mid-overheal starts the next one at reduced max health - the Setup postfix takes the raise off after the game's own Setup has already reset HealthMax | — |
 | G.AWPN-T152 | 2026-10-18 | fix | closed | Shrink Beam: on a client a popped padlock is untracked and back at full size before the host confirms the break, so the beam shrinks it and pops it a second time | — |
 | G.AWPN-T153 | 2026-10-18 | fix | closed | Railgun breaks every padlock on its line through walls, out to its full 1000 m reach, for 9999 damage | — |
 | G.AWPN-T154 | 2026-10-18 | feature | closed | Master switch: [0. Mod] Enabled as the cfg's first entry; off means the mod loads nothing (user request) | — |
+| G.AWPN-T155 | 2026-10-18 | feature | closed | Shared code republished from GTFO.EZ: SharedOwner treats a switched-off GTFO.* mod as not installed; the laser guns read GTFO.AbsurdMoves' Fire While Running through SharedOwner.TryGetSetting | f18efc9 |
