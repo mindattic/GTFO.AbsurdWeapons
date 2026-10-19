@@ -28,17 +28,20 @@ internal static class InfiniteAmmo
             "The lasers, Chain Lightning and Shrink Beam have no magazine and never reload: every second of sustained fire uses this percent of a full ammo reserve (2 = 1% every half second).");
     }
 
-    // The stream guns (lasers, Chain Lightning, Shrink Beam) have no magazine and never reload:
-    // sustained fire drains the slot's reserve directly, StreamPercentPerSecond of a full reserve
-    // per second. Their magazine just shows full while there's reserve left and empty when not.
+    // The stream guns (lasers, Chain Lightning, Shrink Beam) never fire through the game or reload:
+    // sustained fire drains their ammo directly, StreamPercentPerSecond of a full reserve per second.
+    // Their ammo is one pool - the reserve plus whatever the game loaded into the magazine (it fills
+    // a 60-100 round magazine from the reserve on spawn, which can leave the reserve itself near
+    // empty) - and the magazine just shows as much of that pool as fits.
     internal static bool HasStreamAmmo(PlayerAgent player)
     {
         if (On) return true;
-        var reserve = PlayerBackpackManager.LocalBackpack?.AmmoStorage?.GetInventorySlotAmmo(player.Inventory.WieldedSlot);
-        return reserve != null && reserve.AmmoInPack > 0f;
+        var gun = player.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
+        var reserve = PlayerBackpackManager.LocalBackpack?.AmmoStorage?.GetInventorySlotAmmo(player.Inventory!.WieldedSlot);
+        return gun != null && reserve != null && StreamPool(gun, reserve) > 0f;
     }
 
-    // One tick of a stream gun's fire, `seconds` long. False (no tick) once the reserve is empty.
+    // One tick of a stream gun's fire, `seconds` long. False (no tick) once its ammo is gone.
     internal static bool TrySpend(PlayerAgent player, float seconds)
     {
         if (On) return true;
@@ -47,16 +50,25 @@ internal static class InfiniteAmmo
         var storage = PlayerBackpackManager.LocalBackpack?.AmmoStorage;
         var reserve = storage?.GetInventorySlotAmmo(slot);
         if (gun == null || storage == null || reserve == null) return false;
-        var left = reserve.AmmoInPack;
-        if (left > 0f) left = Mathf.Max(0f, left - reserve.AmmoMaxCap * StreamPercentPerSecond.Value / 100f * seconds);
-        var fired = reserve.AmmoInPack > 0f;
-        storage.SetAmmo(reserve.AmmoType, left);
-        gun.SetCurrentClip(left > 0f ? gun.ClipSize : 0);
+
+        var pool = StreamPool(gun, reserve);
+        if (pool <= 0f) return false;
+        pool = Mathf.Max(0f, pool - reserve.AmmoMaxCap * StreamPercentPerSecond.Value / 100f * seconds);
+
+        // Show as much of what's left in the magazine as fits; the rest stays in the reserve.
+        var cost = Mathf.Max(0.0001f, reserve.CostOfBullet);
+        var clip = Mathf.Min(gun.ClipSize, Mathf.FloorToInt(pool / cost));
+        storage.SetAmmo(reserve.AmmoType, pool - clip * cost);
+        gun.SetCurrentClip(clip);
         storage.SetClipAmmoInSlot(slot);
         storage.UpdateAllAmmoUI();
         storage.NeedsSync = true;
-        return fired;
+        return true;
     }
+
+    // A stream gun's whole ammo: its reserve plus the rounds sitting in its magazine.
+    private static float StreamPool(BulletWeapon gun, InventorySlotAmmo reserve) =>
+        reserve.AmmoInPack + gun.GetCurrentClip() * reserve.CostOfBullet;
 
     // Sets the local player's wielded gun's magazine and syncs it to the HUD and teammates.
     internal static void SetClip(BulletWeapon gun, int clip)
