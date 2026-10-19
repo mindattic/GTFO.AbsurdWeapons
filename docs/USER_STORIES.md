@@ -193,3 +193,5 @@ _Nothing recorded yet._
 | G.AWPN-T166 | 2026-10-18 | fix | closed | Shared code from GTFO.EZ (G.EZ-T78/T79): WardenMessage became MessageHelper; Insert/Delete announce in the event log | — |
 | G.AWPN-T167 | 2026-10-18 | feature | closed | Weapon cycling shows the weapon's name on the line under the crosshair for three seconds instead of a warden message (user request) | — |
 | G.AWPN-T168 | 2026-10-18 | fix | closed | Chain Lightning, Tentacle Cannon and Laser Rifle spent their whole reserve on one magazine: copied guns kept the source gun's per-round CostOfBullet but got a 60-100 round magazine. Cost of a round now scales with the magazine size | — |
+| G.AWPN-T169 | 2026-10-18 | feature | closed | Launcher grenades and rockets explode on hitting a teammate or bot too (never the shooter), not just enemies and walls (user request) | — |
+| G.AWPN-T170 | 2026-10-18 | feature | closed | Rocket Launcher: dust trail much sparser and 1.5 m behind the rocket, plus a steady glow, so you can see the rocket to time a right-click detonation (user request) | — |
