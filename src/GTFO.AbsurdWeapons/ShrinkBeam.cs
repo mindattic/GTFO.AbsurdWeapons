@@ -305,6 +305,24 @@ internal static class ShrinkBeam
                 (done ??= new List<IntPtr>()).Add(pointer);
                 continue;
             }
+            // A teammate's copy: the shooter broke it (the break syncs, the shrink doesn't), so it
+            // pops here too, back at its own size, instead of the broken lock regrowing.
+            if (state.Lock.Health <= 0f)
+            {
+                try
+                {
+                    state.Body.localScale = state.BaseScale;
+                    var point = state.Body.position;
+                    BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
+                    Sounds.Play(Sounds.ShrinkPop.Value, point);
+                }
+                catch (Exception e)
+                {
+                    Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons shrink beam couldn't pop a teammate's lock: {e.Message}");
+                }
+                (done ??= new List<IntPtr>()).Add(pointer);
+                continue;
+            }
             if (Time.time - state.LastHit < RegrowDelaySeconds.Value) continue;
             state.Scale = Mathf.Min(1f, state.Scale + RegrowPerSecond.Value * dt);
             state.Body.localScale = state.BaseScale * state.Scale;
