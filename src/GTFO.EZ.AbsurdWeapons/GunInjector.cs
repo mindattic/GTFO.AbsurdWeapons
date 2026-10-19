@@ -211,7 +211,7 @@ internal static class GunInjector
         archetype.AimSpread = 0f;
         archetype.Damage = GrenadeLauncher.BlastDamage.Value; // the blast's center damage, for the loadout screen
         archetype.ShotDelay = GrenadeLauncher.GunShotDelay.Value;
-        archetype.DefaultClipSize = GrenadeLauncher.GunClipSize.Value;
+        SetClipSize(archetype, GrenadeLauncher.GunClipSize.Value);
         archetype.ShellCasingSize = 0f; // grenades, not cartridges: no brass
         archetype.RecoilDataID = ModelSource(gear).Archetype.RecoilDataID; // the look of the shot: this model's own kick
         Register(name, id, archetype, CategoryOf(gear), gear, description);
@@ -256,7 +256,7 @@ internal static class GunInjector
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = PlasmaDamage.Value;
         archetype.ShotDelay = PlasmaShotDelay.Value;
-        archetype.DefaultClipSize = PlasmaClipSize.Value;
+        SetClipSize(archetype, PlasmaClipSize.Value);
         archetype.ShellCasingSize = 0f; // plasma, not bullets: no brass ejected
         archetype.HipFireSpread = 0f;   // extremely tight grouping: every ball goes exactly where the crosshair is
         archetype.AimSpread = 0f;
@@ -276,7 +276,7 @@ internal static class GunInjector
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = HiveDamage.Value;
         archetype.ShotDelay = HiveShotDelay.Value;
-        archetype.DefaultClipSize = HiveClipSize.Value;
+        SetClipSize(archetype, HiveClipSize.Value);
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
@@ -296,7 +296,7 @@ internal static class GunInjector
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = LaserDamage.Value;
         archetype.ShotDelay = LaserShotDelay.Value;
-        archetype.DefaultClipSize = LaserClipSize.Value;
+        SetClipSize(archetype, LaserClipSize.Value);
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f; // a beam, not bullets: no brass ejected
@@ -329,7 +329,7 @@ internal static class GunInjector
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = RailgunDamage.Value;     // to every enemy on the line (sniper 40): slow but devastating, like Quake's rail
         archetype.ShotDelay = RailgunShotDelay.Value; // sniper 0.8
-        archetype.DefaultClipSize = RailgunClipSize.Value;
+        SetClipSize(archetype, RailgunClipSize.Value);
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;  // a slug thrown by magnets: no brass
@@ -349,7 +349,7 @@ internal static class GunInjector
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = ChainLightningDamage.Value;
         archetype.ShotDelay = ChainLightningShotDelay.Value;
-        archetype.DefaultClipSize = ChainLightningClipSize.Value;
+        SetClipSize(archetype, ChainLightningClipSize.Value);
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;
@@ -371,7 +371,7 @@ internal static class GunInjector
         archetype.ShotgunBulletCount = 1;
         archetype.Damage = 0f; // the loadout screen: the beam shrinks, it doesn't deal a number
         archetype.ShotDelay = ShrinkBeam.GunShotDelay.Value;
-        archetype.DefaultClipSize = ShrinkBeam.GunClipSize.Value;
+        SetClipSize(archetype, ShrinkBeam.GunClipSize.Value);
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;
@@ -396,7 +396,7 @@ internal static class GunInjector
         archetype.ShotgunBulletSpread = 0;
         archetype.Damage = RocketLauncher.BlastDamage.Value; // the blast's center damage, for the loadout screen
         archetype.ShotDelay = RocketLauncher.GunShotDelay.Value;
-        archetype.DefaultClipSize = RocketLauncher.GunClipSize.Value;
+        SetClipSize(archetype, RocketLauncher.GunClipSize.Value);
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f; // a rocket, not a shell: no brass ejected
@@ -421,7 +421,7 @@ internal static class GunInjector
         archetype.Damage = TentacleDamage.Value;       // per tentacle
         archetype.ShotDelay = TentacleShotDelay.Value; // ~4.3 tentacles a second by default, so each has time to live
         archetype.ShellCasingSize = 0f; // tentacles, not bullets: no brass ejected
-        archetype.DefaultClipSize = TentacleClipSize.Value;
+        SetClipSize(archetype, TentacleClipSize.Value);
         archetype.SpecialChargetupTime = 0f;
         archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
@@ -555,6 +555,17 @@ internal static class GunInjector
 
     // A clone of the archetype the named gear fires with: a pair's shared stat source.
     private static ArchetypeDataBlock StatsFrom(string gearName) => ModelSource(Lookup<PlayerOfflineGearDataBlock>(gearName)).Archetype;
+
+    // A new magazine size, with the cost of a round scaled to match: a full magazine takes the same
+    // share of the slot's reserve as the source gun's did. Left at the source's cost, a gun copied
+    // from a 5-round heavy weapon with a 60-100 round magazine spent its whole reserve on one fill.
+    private static void SetClipSize(ArchetypeDataBlock archetype, int clipSize)
+    {
+        clipSize = Math.Max(1, clipSize);
+        if (archetype.DefaultClipSize > 0)
+            archetype.CostOfBullet *= (float)archetype.DefaultClipSize / clipSize;
+        archetype.DefaultClipSize = clipSize;
+    }
 
     private static GearCategoryDataBlock CategoryOf(PlayerOfflineGearDataBlock gear)
     {
