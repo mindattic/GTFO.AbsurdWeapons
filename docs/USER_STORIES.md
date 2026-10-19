@@ -1,6 +1,6 @@
 ---
 codex: 1
-project: GTFO.AbsurdWeapons
+project: GTFO.EZ.AbsurdWeapons
 code: G.AWPN
 layer: stories
 status: living
@@ -8,7 +8,7 @@ updated: 2026-10-15
 ---
 <!-- GENERATED from MindAttic.Workflow/data/workflow.db by `workflow db render`. Do not edit: this file is rewritten from the database; change stories and tickets with the workflow CLI. -->
 
-# GTFO.AbsurdWeapons — User Stories
+# GTFO.EZ.AbsurdWeapons — User Stories
 > ✅ done (shipped & tested) · 🟡 partial · ⬜ planned. Every ✅ cites the test.
 
 ## Priority backlog
@@ -187,3 +187,4 @@ _Nothing recorded yet._
 | G.AWPN-T160 | 2026-10-18 | fix | closed | Mjolnir: ThrowPulseJumps above 5 strikes more enemies than teammates are shown (the bolt message holds 5 jumps); the setting is unbounded | — |
 | G.AWPN-T161 | 2026-10-18 | fix | closed | Shared code from GTFO.EZ (G.EZ-T72/T75): warden message never cuts the game's own short; infinite-health check can't throw | — |
 | G.AWPN-T162 | 2026-10-18 | chore | closed | Renamed to GTFO.EZ.AbsurdWeapons (project, namespace, plugin GUID, network events, package name, docs) as a GTFO.EZ companion mod built on its core | 8a47a23 |
+| G.AWPN-T163 | 2026-10-18 | fix | closed | Startup NullReferenceException in the get_AimingAllowed trampoline persists with the T140 guard: il2cpp folds that one-line getter with other identical getters, so the Harmony detour catches unrelated calls. Stop patching ItemEquippable.AimingAllowed; block Rocket Launcher aiming in a FirstPersonItemHolder.UpdateAimInput prefix instead (ItemAimTrigger=false, skip) | — |
