@@ -69,10 +69,15 @@ internal static class ShrinkBeam
             var end = new Vector3(message.X1, message.Y1, message.Z1);
             ShrinkStream.Spawn(start, end, sender);
             var enemy = NearestEnemy(end, RemoteFindRadius);
-            if (enemy != null && enemy.Alive) Shrink(enemy, GunShotDelay.Value);
-            else if (NearestLock(end) is { } padlock) ShrinkLock(padlock, GunShotDelay.Value);
+            if (enemy != null && enemy.Alive) Shrink(enemy, TickSeconds);
+            else if (NearestLock(end) is { } padlock) ShrinkLock(padlock, TickSeconds);
         });
     }
+
+    // Seconds of shrink in one beam tick - the shooter's tick interval and what each received beam
+    // message stands for, so both sides shrink by the same amount (a GunShotDelay of 0 or less would
+    // otherwise shrink teammates' copies by nothing, or grow them).
+    internal static float TickSeconds => Mathf.Max(0.02f, GunShotDelay.Value);
 
     // Keyed by the enemy's own Il2Cpp pointer (its GameObject never changes while it's alive).
     private sealed class Shrunk
@@ -540,7 +545,7 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
 
             // Lit (and locked to the barrel) every frame the trigger is held; the shrink itself
             // only lands on the throttled ticks.
-            var tick = Mathf.Max(0.02f, ShrinkBeam.GunShotDelay.Value);
+            var tick = ShrinkBeam.TickSeconds;
             var applyShrink = Time.time >= nextTick;
             if (applyShrink)
             {
