@@ -378,16 +378,21 @@ internal static class StreamReadiness
     private const float SettleSeconds = 0.3f;
     private static IntPtr wieldedItem;
     private static float wieldedSince;
+    private static int lastAskedFrame = -1;
 
+    // The drivers ask every frame the gun could fire; a frame they skipped (a sprint) means it was
+    // lowered, so coming back up restarts the settle just like a swap does.
     internal static bool IsSettled(PlayerAgent player)
     {
         var item = player.Inventory?.WieldedItem;
         var pointer = item != null ? item.Pointer : IntPtr.Zero;
-        if (pointer != wieldedItem)
+        var frame = Time.frameCount;
+        if (pointer != wieldedItem || frame - lastAskedFrame > 1)
         {
             wieldedItem = pointer;
             wieldedSince = Time.time;
         }
+        lastAskedFrame = frame;
         return Time.time - wieldedSince >= SettleSeconds;
     }
 }
