@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Agents;
 using AssetShards;
 using BepInEx.Configuration;
+using BepInEx.Unity.IL2CPP;
 using Feedback;
 using FX_EffectSystem;
 using Gear;
@@ -395,6 +396,38 @@ internal static class StreamReadiness
         lastAskedFrame = frame;
         return Time.time - wieldedSince >= SettleSeconds;
     }
+
+    // The stream holds off while the gun is lowered or hidden (a mantle, a ladder, an interaction -
+    // the game's own guns can't fire then either), and while sprinting unless GTFO.AbsurdMoves is
+    // installed with [Fire On The Move] Fire While Running Enabled on.
+    internal static bool Blocked(PlayerAgent player)
+    {
+        var holder = player.FPItemHolder;
+        if (holder != null && (holder.m_itemDownCounter > 0
+            || holder.m_currentState is FPItemStateName.Down or FPItemStateName.Hidden))
+            return true;
+        return player.Locomotion != null && player.Locomotion.IsRunning && !(FireWhileRunning()?.Value ?? false);
+    }
+
+    private static ConfigEntry<bool>? fireWhileRunning;
+    private static bool lookedUp;
+
+    private static ConfigEntry<bool>? FireWhileRunning()
+    {
+        if (lookedUp) return fireWhileRunning;
+        lookedUp = true;
+        try
+        {
+            if (IL2CPPChainloader.Instance.Plugins.TryGetValue("MindAttic.GTFO.AbsurdMoves", out var info)
+                && info.Instance is BasePlugin moves)
+                moves.Config.TryGetEntry("Fire On The Move", "Fire While Running Enabled", out fireWhileRunning);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogWarning($"GTFO.AbsurdWeapons couldn't read GTFO.AbsurdMoves' Fire While Running setting: {e.Message}");
+        }
+        return fireWhileRunning;
+    }
 }
 
 internal sealed class LaserDriver : MonoBehaviour
@@ -409,7 +442,7 @@ internal sealed class LaserDriver : MonoBehaviour
         {
             var player = PlayerManager.GetLocalPlayerAgent();
             if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
-            if (player.Locomotion != null && player.Locomotion.IsRunning) return; // no beam while sprinting
+            if (StreamReadiness.Blocked(player)) return;
             if (!StreamReadiness.IsSettled(player)) return; // not yet raised into its aim position
             var gun = player.Inventory?.WieldedItem?.TryCast<BulletWeapon>();
             var archetype = gun?.ArchetypeData;

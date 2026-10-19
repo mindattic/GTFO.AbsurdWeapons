@@ -362,7 +362,7 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
         {
             var player = PlayerManager.GetLocalPlayerAgent();
             if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
-            if (player.Locomotion != null && player.Locomotion.IsRunning) return; // no beam while sprinting
+            if (StreamReadiness.Blocked(player)) return;
             if (!StreamReadiness.IsSettled(player)) return; // not yet raised into its aim position
             var gun = player.Inventory?.WieldedItem?.TryCast<Gear.BulletWeapon>();
             var archetype = gun?.ArchetypeData;
