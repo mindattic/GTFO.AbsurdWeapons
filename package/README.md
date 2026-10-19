@@ -583,7 +583,6 @@ Shared by everything that flings enemies (the Warhammer).
 **Delete** infinite health, each announced as a warden message and off at the start. They're the
 same two keys every GTFO.* mod has, from one shared copy of the code; with several installed only
 one answers, so a press never toggles twice.
-| `StreamPercentPerSecond` | 2 | Percent of a full reserve the beam guns (lasers, Chain Lightning, Shrink Beam) use per second of fire (2 = 1% every half second). They never reload. |
 
 ### `[Gear Cycling]`
 
