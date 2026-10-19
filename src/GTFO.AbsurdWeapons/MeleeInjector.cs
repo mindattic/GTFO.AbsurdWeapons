@@ -73,6 +73,7 @@ internal static class MeleeInjector
             var light = SwordTempo.SpeedFor(id);
             var charged = SwordTempo.ChargedSpeedFor(id);
             if (light != 1f || charged != 1f) WithTempo(archetype, id, light, charged);
+            SwordTempo.Baked(id, light, charged); // only once the timings really are at this pace
         }
         catch (Exception e)
         {
