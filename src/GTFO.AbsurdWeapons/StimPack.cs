@@ -138,7 +138,13 @@ internal static class StimPack
     private static void Tick(Dam_PlayerDamageLocal __instance) => Overheal.Tick(__instance);
 
     // A new level means a new local player; a buff still running from the last one is dropped,
-    // and a max raised for it is put back on the object the game reuses.
+    // and a max raised for it is put back on the object the game reuses. The raise comes off
+    // before the game's own Setup, which sets HealthMax afresh - taken off after, it would cut
+    // into the new level's max.
+    [HarmonyPatch(typeof(Dam_PlayerDamageLocal), nameof(Dam_PlayerDamageLocal.Setup))]
+    [HarmonyPrefix]
+    private static void BeforeSetup(Dam_PlayerDamageLocal __instance) => Overheal.DropRaise(__instance);
+
     [HarmonyPatch(typeof(Dam_PlayerDamageLocal), nameof(Dam_PlayerDamageLocal.Setup))]
     [HarmonyPostfix]
     private static void Setup(Dam_PlayerDamageLocal __instance)
@@ -204,9 +210,16 @@ internal static class Overheal
         Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Stim Pack: overhealing to {target:0.##} HP (max {max:0.##}).");
     }
 
+    // Takes the overheal's raise back off `damage`'s max, if it's the overhealed one (a bot's own
+    // damage object never is).
+    internal static void DropRaise(Dam_SyncedDamageBase damage)
+    {
+        if (raisedBy > 0f && damage.Pointer == owner) SetRaise(damage, 0f);
+    }
+
     internal static void Clear(Dam_SyncedDamageBase? sameInstance = null)
     {
-        if (raisedBy > 0f && sameInstance != null && sameInstance.Pointer == owner) SetRaise(sameInstance, 0f);
+        if (sameInstance != null) DropRaise(sameInstance);
         owner = IntPtr.Zero;
         active = false;
         raisedBy = 0f;
