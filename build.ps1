@@ -7,16 +7,16 @@ param(
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 
-# DisplayName is the assembly/plugin-folder name (GTFO.AbsurdWeapons). It's kept separate from the
+# DisplayName is the assembly/plugin-folder name (GTFO.EZ.AbsurdWeapons). It's kept separate from the
 # Thunderstore manifest's "name" field, which is restricted to letters/numbers/underscores only
 # and can't contain a period.
-$displayName = "GTFO.AbsurdWeapons"
+$displayName = "GTFO.EZ.AbsurdWeapons"
 $manifest = Get-Content "$root\package\manifest.json" -Raw | ConvertFrom-Json
 $packageName = $manifest.name
 $version = $manifest.version_number
 
 Write-Host "Building $displayName v$version (configuration: $Configuration, profile: $GameName - $Profile)..."
-dotnet build "$root\src\GTFO.AbsurdWeapons\GTFO.AbsurdWeapons.csproj" -c $Configuration -p:GameName=$GameName -p:Profile=$Profile
+dotnet build "$root\src\GTFO.EZ.AbsurdWeapons\GTFO.EZ.AbsurdWeapons.csproj" -c $Configuration -p:GameName=$GameName -p:Profile=$Profile
 if ($LASTEXITCODE -ne 0) { throw "Build failed." }
 
 $bepInEx = Join-Path $env:AppData "Thunderstore Mod Manager\DataFolder\$GameName\profiles\$GameName - $Profile\BepInEx"

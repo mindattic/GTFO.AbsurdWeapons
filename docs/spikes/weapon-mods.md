@@ -16,7 +16,7 @@ Everything is one plugin, and the weapons are wired into each other through shar
 - `GunInjector` / `MeleeInjector` hold every weapon's datablock code plus the shared helpers.
 - `SeekerGuns.BeforeWeaponRay` is one long `if` chain that knows every gun by id; the stream
   (no-fire) prefix lists the laser and chain lightning ids; infinite ammo checks `GunInjector.IsOurs`.
-- One config file (`MindAttic.GTFO.AbsurdWeapons.cfg`) holds every weapon's section.
+- One config file (`MindAttic.GTFO.EZ.AbsurdWeapons.cfg`) holds every weapon's section.
 
 Removing a weapon (as done in T27-T40) meant edits in five or six files; adding one is the same.
 
@@ -52,7 +52,7 @@ templates/weapon/            `dotnet new` template (or new-weapon.ps1) for a new
 ### A weapon mod is
 
 ```csharp
-[BepInPlugin("MindAttic.GTFO.AbsurdWeapons.Railgun", "Railgun (!)", "1.0.0")]
+[BepInPlugin("MindAttic.GTFO.EZ.AbsurdWeapons.Railgun", "Railgun (!)", "1.0.0")]
 [BepInDependency(Core.Guid)]
 public class RailgunPlugin : BasePlugin
 {

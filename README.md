@@ -1,13 +1,15 @@
-# GTFO.AbsurdWeapons
+# GTFO.EZ.AbsurdWeapons
 
-Dev repo for **GTFO.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds eighteen new weapons, each shown with "(!)"
+Dev repo for **GTFO.EZ.AbsurdWeapons**, a BepInEx IL2CPP plugin for GTFO that adds eighteen new weapons, each shown with "(!)"
 after its name: four melee weapons that put one weapon's model on another's moves (Katana, Mjolnir, Warhammer, Shadow Dagger), thirteen guns (Plasma,
-Hive, Laser and Grenade Pistol/Rifle, Tentacle Cannon, Railgun, Chain Lightning Gun, Rocket Launcher, Shrink Beam), and a tool (Victory Banner). Its consumables (Hand Grenade, Stim Pack) and loot mix moved to GTFO.AbsurdItems.
+Hive, Laser and Grenade Pistol/Rifle, Tentacle Cannon, Railgun, Chain Lightning Gun, Rocket Launcher, Shrink Beam), and a tool (Victory Banner). Its consumables (Hand Grenade, Stim Pack) and loot mix moved to GTFO.EZ.AbsurdItems.
 Their names get the marker from `DataBlocks.DisplayName`; block names stay unmarked. Every weapon
 can be switched off in the config, and 200+ settings retune them. See `package/README.md` for the
 player-facing breakdown and the full config reference.
 
-Not yet published on Thunderstore (the package name will be `GtfoAbsurdWeapons`).
+Not yet published on Thunderstore (the package name will be `GtfoEZAbsurdWeapons`).
+
+GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite ammo and health toggles and their warden messages) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdWeapons before its first release.
 
 Like GTFO.EZ, this ships no copies of the game's data files. It patches `GameDataInit.Initialize`
 and registers new datablocks cloned from the game's own loaded ones at runtime, so the weapons
@@ -113,7 +115,7 @@ homes onto and damages players only, so it can't be used as-is.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
   is the normal bullet path, so it syncs host and client.
 - **Multiplayer:** each shot is sent to teammates with GTFO-API's `NetworkAPI`
-  (`MindAttic.GTFO.AbsurdWeapons.SeekerShot`). They spawn a visual-only copy that deals no damage.
+  (`MindAttic.GTFO.EZ.AbsurdWeapons.SeekerShot`). They spawn a visual-only copy that deals no damage.
   GTFO-API ships inside BepInExPack_GTFO, so it isn't a separate dependency.
 
 ### Tentacle Cannon (`TentacleCannon`, `TentacleLash`)
@@ -157,7 +159,7 @@ homes onto and damages players only, so it can't be used as-is.
 - **Damage:** the bite lands the moment it's out (0.04 s in): `BulletDamage` (`TentacleDamage`, 25 by
   default, stagger `StaggerMulti` x12) on the target's limb nearest the lash's end, on the shooter's
   game only. With no enemy at the end, it melts a door lock instead (`LockDamage.Radius`).
-- **Multiplayer:** teammates get `MindAttic.GTFO.AbsurdWeapons.TentacleLash` (start and end) per tentacle
+- **Multiplayer:** teammates get `MindAttic.GTFO.EZ.AbsurdWeapons.TentacleLash` (start and end) per tentacle
   and draw visual-only lashes.
 - **Pool size (`TentaclePool`):** each tentacle type's GPU pool is a fixed size
   (`GPUC_Setup.m_globalLimit`), and its compute buffers are built from it in `GPUC_Setup.Setup`. A
@@ -183,7 +185,7 @@ homes onto and damages players only, so it can't be used as-is.
 - **Burn:** where the beam lands, a second short `LineRenderer` is a flickering white-hot spot, an
   `EffectLight` flickers orange, and every 0.06 s `FX_Manager.PlayEffect` plays `Impact_Metal`
   (sparks; a decal every 6th) and on enemies, every third, `Impact_EnemyBody`.
-- **Multiplayer:** each tick is sent as `MindAttic.GTFO.AbsurdWeapons.LaserBeam` (start, end, hit kind,
+- **Multiplayer:** each tick is sent as `MindAttic.GTFO.EZ.AbsurdWeapons.LaserBeam` (start, end, hit kind,
   surface normal); teammates draw the same beam and burn.
 
 ### Katana dash (`KatanaDash`, `DashRunner`)
@@ -207,7 +209,7 @@ hits by distance and calls `BulletDamage` once per enemy on the first limb met (
 head). `RailBeam` draws two helix strands (`LineRenderer`s) around the first 80 m (2.4 m a turn, 12
 points a turn, 6 cm radius), laid out once and then just faded to transparent over 0.8 s, with an
 `EffectLight`. `Impact_Metal` sparks play at every wall the line crosses. Teammates get
-`MindAttic.GTFO.AbsurdWeapons.RailShot`.
+`MindAttic.GTFO.EZ.AbsurdWeapons.RailShot`.
 
 ### Chain Lightning Gun (`ChainLightning`, `ChainLightningDriver`, `LightningBolt`)
 
@@ -221,7 +223,7 @@ successive ticks overlap into one continuous arc. Each tick takes the enemy a ra
 last strike with a clear `MASK_WORLD` line, up to five jumps at 75% of the previous damage.
 `LightningBolt` re-jags a `LineRenderer` through the strike points every frame for 0.16 s, with a
 `BurstFlash` and `Impact_Electronics` sparks at each strike. The path (up to 7 points) goes to
-teammates as `MindAttic.GTFO.AbsurdWeapons.ChainLightning`.
+teammates as `MindAttic.GTFO.EZ.AbsurdWeapons.ChainLightning`.
 
 ### Grenade Pistol and Rifle (`GrenadeLauncher`, `LauncherGrenade`, `Explosion`)
 
@@ -243,7 +245,7 @@ teammates as `MindAttic.GTFO.AbsurdWeapons.ChainLightning`.
 ### Moved out: Hand Grenade, Stim Pack, loot mix
 
 The Hand Grenade (item 1203), the Stim Pack (item 1204) and the loot mix (`LootMix`, running the
-shared `KitLoot`) live in GTFO.AbsurdItems now, with the same config keys; this mod no longer
+shared `KitLoot`) live in GTFO.EZ.AbsurdItems now, with the same config keys; this mod no longer
 touches consumables or loot, and `tools/publish-shared.ps1` in GTFO.EZ no longer sends it `KitLoot.cs`.
 
 ### Sounds (`Sounds`, `LoopSounds`)
@@ -317,7 +319,7 @@ spinning about its right axis (end over end), out to 25 m or the first `MASK_WOR
 to the thrower at 32 m/s. On the thrower's game it `SphereCastAll`s (0.6 m) each step for enemies
 (20 damage, x4, once each way) and every 0.12 s calls `ChainLightning.Pulse` (nearest visible enemy
 within 6 m, then two jumps; the bolt is sent like any chain-lightning bolt). Teammates get
-`MindAttic.GTFO.AbsurdWeapons.MjolnirThrow` and fly a visual copy back to the sender's player agent. The
+`MindAttic.GTFO.EZ.AbsurdWeapons.MjolnirThrow` and fly a visual copy back to the sender's player agent. The
 thunderclap (`ImpactBurst.Thunderclap`) now goes off on every landed hit.
 
 ### Hammer impact bursts (`ImpactBursts`)
@@ -335,7 +337,7 @@ It finds every living enemy in the radius around `data.hitPos` (`OverlapSphere` 
 gets `BulletDamage`, the bullet path, so it syncs. Stagger is damage x stagger multiplier, so the
 shockwave's 1 x 100 knocks back anything that isn't stagger-immune. The flash is a fading
 `EffectLight` (`BurstFlash`, an injected MonoBehaviour), sent to teammates over
-`MindAttic.GTFO.AbsurdWeapons.ImpactBurst`.
+`MindAttic.GTFO.EZ.AbsurdWeapons.ImpactBurst`.
 
 **Knockback (`Knockback`, `KnockbackSlides`):** the Warhammer's bursts also shove enemies: the
 struck one 4 m along the swing (12 m charged), the rest of the burst 6 m out from the impact. The
@@ -344,7 +346,7 @@ ledges. **Wall slam:** a burst's `SlamDamagePerMeter` (Warhammer 5) turns the
 distance a slide didn't get to travel when it hit the edge (minus 1 free metre) into damage and a
 x3 stagger on the limb nearest the wall, dealt on the host but credited to the player (and weapon) that knocked it back, with an
 `Impact_Concrete` puff. Enemy positions belong to the host: a client sends
-`MindAttic.GTFO.AbsurdWeapons.Knockback` (the enemy's `pEnemyAgent` network id, direction, distance, slam
+`MindAttic.GTFO.EZ.AbsurdWeapons.Knockback` (the enemy's `pEnemyAgent` network id, direction, distance, slam
 damage; its position only as a fallback) and the host slides it; the game's own position sync
 shows it to everyone.
 
@@ -363,7 +365,7 @@ shows it to everyone.
   them) adds `StealthBonusPerKill` (+25%) to a damage bonus applied to every Shadow Dagger hit for
   the rest of that stealth, up to `StealthMaxBonus` (+100%); a kill with a full windup also stretches
   the stealth by `StealthKillTimeBonus` (0.25 s).
-- **Sync:** the hit is sent over GTFO-API (`MindAttic.GTFO.AbsurdWeapons.Stealth`); the sender is the
+- **Sync:** the hit is sent over GTFO-API (`MindAttic.GTFO.EZ.AbsurdWeapons.Stealth`); the sender is the
   hidden player. Every game keeps the same `hiddenUntil` table. That matters most on the host,
   where enemy AI runs.
 - **Enemies ignore hidden players:**
@@ -396,7 +398,7 @@ While it's down, every client heals its own local player `HealPercent` (1%) of m
 ## Layout
 
 ```
-src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the game installed to build)
+src/GTFO.EZ.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the game installed to build)
   Pure/GearJson.cs      gear-JSON reading/rewriting (no game types; unit tested)
   Pure/Formulas.cs      the weapons' numbers (no game types; unit tested)
   Plugin.cs             entry point: config, Il2Cpp type registration, network event, Harmony
@@ -432,13 +434,13 @@ src/GTFO.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the gam
   TentaclePool.cs       raises every tentacle type's GPU pool size (config PoolMultiplier)
   ImpactBursts.cs       hammer impact bursts (Mjolnir thunderclap, Warhammer shockwave) and their flash
 package/                exactly what ships to Thunderstore / gets zipped for sharing
-  manifest.json         Thunderstore package name is "GtfoAbsurdWeapons" (no period allowed there)
+  manifest.json         Thunderstore package name is "GtfoEZAbsurdWeapons" (no period allowed there)
   README.md             becomes the Thunderstore page
   CHANGELOG.md
   icon.png
-tests/GTFO.AbsurdWeapons.Tests/  NUnit tests for Pure/ - plain `dotnet test`, no game needed
+tests/GTFO.EZ.AbsurdWeapons.Tests/  NUnit tests for Pure/ - plain `dotnet test`, no game needed
 docs/USER_STORIES.md    generated from the workflow database - change it with the workflow CLI
-build.ps1               builds the plugin and packages dist/GTFO.AbsurdWeapons-<version>.zip
+build.ps1               builds the plugin and packages dist/GTFO.EZ.AbsurdWeapons-<version>.zip
 ```
 
 ## Building
@@ -454,21 +456,21 @@ start) in a Thunderstore Mod Manager or r2modman profile.
 If you're on the older r2modman app instead of Thunderstore Mod Manager, its profiles live under a
 different path. Pass it directly instead:
 ```powershell
-dotnet build .\src\GTFO.AbsurdWeapons\GTFO.AbsurdWeapons.csproj -p:BepInEx="$env:AppData\r2modmanPlus-local\GTFO\profiles\Default\BepInEx"
+dotnet build .\src\GTFO.EZ.AbsurdWeapons\GTFO.EZ.AbsurdWeapons.csproj -p:BepInEx="$env:AppData\r2modmanPlus-local\GTFO\profiles\Default\BepInEx"
 ```
 
-This builds straight into that profile's `BepInEx/plugins/GTFO.AbsurdWeapons/` folder, so you can launch
-the game and test immediately. It also produces `dist/GTFO.AbsurdWeapons-<version>.zip` for sharing or
+This builds straight into that profile's `BepInEx/plugins/GTFO.EZ.AbsurdWeapons/` folder, so you can launch
+the game and test immediately. It also produces `dist/GTFO.EZ.AbsurdWeapons-<version>.zip` for sharing or
 upload.
 
 ## Testing
 
 ```powershell
-dotnet test tests/GTFO.AbsurdWeapons.Tests/GTFO.AbsurdWeapons.Tests.csproj
+dotnet test tests/GTFO.EZ.AbsurdWeapons.Tests/GTFO.EZ.AbsurdWeapons.Tests.csproj
 ```
 
-`tests/GTFO.AbsurdWeapons.Tests` (NUnit, no game needed) covers the game-free code in
-`src/GTFO.AbsurdWeapons/Pure/`, which the test project compiles straight in (the mod still ships
+`tests/GTFO.EZ.AbsurdWeapons.Tests` (NUnit, no game needed) covers the game-free code in
+`src/GTFO.EZ.AbsurdWeapons/Pure/`, which the test project compiles straight in (the mod still ships
 as one DLL):
 
 - `GearJson`: reading and rewriting gear JSON (category, fire mode, hold), the "(!)" names, names
@@ -537,7 +539,7 @@ Still to verify in-game:
 
 ## Config
 
-`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg`: first `[0. Mod]` (the master switch below), then
+`BepInEx/config/MindAttic.GTFO.EZ.AbsurdWeapons.cfg`: first `[0. Mod]` (the master switch below), then
 one section per weapon (a pistol/rifle pair shares one, since they share stats), plus `[Knockback]`,
 `[Tentacles]`, `[Gear Cycling]`, `[Sounds]` and `[Internal]` (the migration version - don't edit).
 **The full reference - every setting, its default and what it does - is in

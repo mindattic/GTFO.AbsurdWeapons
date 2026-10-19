@@ -2,10 +2,13 @@
 
 ## v1
 
+- Renamed from GTFO.AbsurdWeapons to **GTFO.EZ.AbsurdWeapons** before release, as a GTFO.EZ companion mod built
+  on GTFO.EZ's core (plugin GUID `MindAttic.GTFO.EZ.AbsurdWeapons`, config file
+  `MindAttic.GTFO.EZ.AbsurdWeapons.cfg`, Thunderstore package `GtfoEZAbsurdWeapons`).
 - Master switch: `[0. Mod] Enabled` (default `true`) is the config file's first entry; set it to
   `false` and the whole mod is off - nothing is patched, no weapon is added, no hotkey.
 - **Moved out:** the Hand Grenade, the Stim Pack and the loot mix now live in
-  [GTFO.AbsurdItems](https://github.com/mindattic/GTFO.AbsurdItems), with the same `[Hand Grenade]`
+  [GTFO.EZ.AbsurdItems](https://github.com/mindattic/GTFO.EZ.AbsurdItems), with the same `[Hand Grenade]`
   and `[Stim Pack]` settings and `HandGrenadeThrow`/`HandGrenadeBounce` sounds; its kit loot
   (*Consumables Are Kits*) runs them as one loot run, under GTFO.EZ's kit setting names
   (`Kit Loot (%)`, `Health Kit Weight`, ...) in place of `KitLootPercent`, `HealthKitWeight` and the

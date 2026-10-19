@@ -1,8 +1,8 @@
 {
-  "name": "GtfoAbsurdWeapons",
+  "name": "GtfoEZAbsurdWeapons",
   "version_number": "1.0.0",
-  "website_url": "https://github.com/mindattic/GTFO.AbsurdWeapons",
-  "description": "Eighteen new weapons marked (!): katana, Mjolnir, sledgehammer, stealth dagger; plasma, smart, laser, tentacle, grenade, rail, lightning, rocket and shrink-ray guns; and a healing banner. Page Up/Down swaps mid-level, Home reverts.",
+  "website_url": "https://github.com/mindattic/GTFO.EZ.AbsurdWeapons",
+  "description": "GTFO.EZ companion: eighteen new weapons marked (!): katana, Mjolnir, sledgehammer, stealth dagger; plasma, smart, laser, tentacle, grenade, rail, lightning, rocket and shrink-ray guns; a healing banner. Page Up/Down swaps mid-level, Home reverts.",
   "dependencies": [
     "BepInEx-BepInExPack_GTFO-3.2.3"
   ]

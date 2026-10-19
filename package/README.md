@@ -1,7 +1,9 @@
-# GTFO.AbsurdWeapons
+# GTFO.EZ.AbsurdWeapons
 
-*(Listed on Thunderstore as `GtfoAbsurdWeapons` — package names there are restricted to letters, numbers,
+*(Listed on Thunderstore as `GtfoEZAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
+
+GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite ammo and health toggles and their warden messages) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdWeapons before its first release.
 
 A BepInEx plugin for GTFO that adds **eighteen new weapons**: four melee weapons, thirteen guns
 and a tool. No game files are shipped or edited. Every weapon is built at load time from the game's own
@@ -214,7 +216,7 @@ you're back to full well within a minute.
 
 ## Hand Grenade, Stim Pack and loot
 
-The Hand Grenade, the Stim Pack and the loot mix (kits, grenades and stims as consumable loot) moved to [GTFO.AbsurdItems](https://github.com/mindattic/GTFO.AbsurdItems), with the same settings. This mod no longer changes consumables or loot.
+The Hand Grenade, the Stim Pack and the loot mix (kits, grenades and stims as consumable loot) moved to [GTFO.EZ.AbsurdItems](https://github.com/mindattic/GTFO.EZ.AbsurdItems), with the same settings. This mod no longer changes consumables or loot.
 
 ## Swapping weapons in a level
 
@@ -238,7 +240,7 @@ you never swapped aren't touched.
 
 ## Config
 
-`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg` is created on first launch. Every number above is
+`BepInEx/config/MindAttic.GTFO.EZ.AbsurdWeapons.cfg` is created on first launch. Every number above is
 in it, grouped one section per weapon (pistol/rifle pairs share one section, since they share one
 set of stats).
 
@@ -570,7 +572,7 @@ the host, who owns enemy positions.
   fixed. Keys don't
   overlap (this mod uses Home/PgUp/PgDn; GTFO.EZ uses E, X and Z), and Insert/Delete are the shared
   toggles both mods carry - only one answers.
-- **GTFO.AbsurdItems:** compatible - the Hand Grenade, Stim Pack and loot mix that used to be in
+- **GTFO.EZ.AbsurdItems:** compatible - the Hand Grenade, Stim Pack and loot mix that used to be in
   this mod live there now. A GTFO.* mod switched off in its config (`[0. Mod] Enabled`) counts as
   not installed for the others.
 - **Other mods that add weapons** at the same ids (1002-1006 melee, 1101-1119 guns, 1202
