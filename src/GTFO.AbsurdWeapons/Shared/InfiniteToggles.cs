@@ -1,9 +1,8 @@
-// Generated from GTFO.EZ src/GTFO.EZ/Shared/InfiniteToggles.cs (39a419b) - don't edit here.
+// Generated from GTFO.EZ src/GTFO.EZ/Shared/InfiniteToggles.cs (a2ed1c2) - don't edit here.
 // Change GTFO.EZ's copy and run GTFO.EZ/tools/publish-shared.ps1.
 using System;
 using Gear;
 using HarmonyLib;
-using Il2CppInterop.Runtime;
 using Player;
 using UnityEngine;
 
@@ -12,7 +11,7 @@ namespace MindAttic.GTFO.Shared;
 // Insert toggles infinite ammo, Delete infinite health, in every GTFO.* mod, each announced as a
 // warden message. Only the owning copy (SharedOwner) reads the keys and refills ammo; the on/off
 // state is shared, so every copy's damage block and any mod's own guns (InfiniteAmmoOn) agree.
-// Off at the start of every session.
+// Off at every game launch, and they stay as set across expeditions until toggled again.
 internal static class InfiniteToggles
 {
     private const string AmmoKey = "InfiniteAmmo";
@@ -47,28 +46,11 @@ internal static class InfiniteToggles
         Show($"{what}: {(on ? "ON" : "OFF")}");
     }
 
-    // Whether one of these messages is queued or on screen (cleared by its onDone).
-    private static bool _showing;
-
-    // A new toggle message replaces one still up instead of queueing behind it; the game's own
-    // messages are never cut short.
     private static void Show(string message)
     {
         try
         {
-            var intel = GuiManager.PlayerLayer?.m_wardenIntel;
-            if (intel == null) return;
-            if (_showing)
-            {
-                if (intel.m_newObjectiveRoutine != null) intel.StopCoroutine(intel.m_newObjectiveRoutine);
-                if (intel.m_revealTextRoutine != null) intel.StopCoroutine(intel.m_revealTextRoutine);
-                intel.m_newObjectiveRoutine = null;
-                intel.m_revealTextRoutine = null;
-                intel.ResetSubObjectiveMesssagQueue();
-            }
-            _showing = true;
-            intel.ShowSubObjectiveMessage("", message, false, 200f, 5f,
-                DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(new Action(() => _showing = false)));
+            if (!WardenMessage.Show(message)) SharedOwner.Log.LogInfo(message);
         }
         catch (Exception e)
         {

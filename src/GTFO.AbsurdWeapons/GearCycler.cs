@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using BepInEx.Configuration;
 using GameData;
 using Gear;
-using Il2CppInterop.Runtime;
+using MindAttic.GTFO.Shared;
 using Player;
 using UnityEngine;
 
@@ -82,7 +82,6 @@ internal sealed class GearCycler : MonoBehaviour
                 ammo.Clear();
                 pending.Clear();
                 wieldSlot = InventorySlot.None;
-                showing = false;
                 return;
             }
 
@@ -259,29 +258,13 @@ internal sealed class GearCycler : MonoBehaviour
 
     private static bool IsOurs(uint categoryId) => DataBlocks.AddedCategories.Contains(categoryId);
 
-    // Whether one of our messages is queued or on screen (cleared by its onDone).
-    private static bool showing;
-
-    // A new message replaces ours if one is still up, instead of queueing behind it. The game's own
-    // messages are never cut short: only while ours is up is the panel's sequence stopped and its
-    // queue reset.
+    // A new message replaces one of ours (or another GTFO.* mod's) still up, instead of queueing
+    // behind it; the game's own messages are never cut short (MindAttic.GTFO.Shared.WardenMessage).
     internal static void Show(string message)
     {
         try
         {
-            var intel = GuiManager.PlayerLayer?.m_wardenIntel;
-            if (intel == null) return;
-            if (showing)
-            {
-                if (intel.m_newObjectiveRoutine != null) intel.StopCoroutine(intel.m_newObjectiveRoutine);
-                if (intel.m_revealTextRoutine != null) intel.StopCoroutine(intel.m_revealTextRoutine);
-                intel.m_newObjectiveRoutine = null;
-                intel.m_revealTextRoutine = null;
-                intel.ResetSubObjectiveMesssagQueue();
-            }
-            showing = true;
-            intel.ShowSubObjectiveMessage("", message, false, 200f, 5f,
-                DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(new Action(() => showing = false)));
+            WardenMessage.Show(message);
         }
         catch (Exception e)
         {

@@ -1,4 +1,4 @@
-// Generated from GTFO.EZ src/GTFO.EZ/Shared/KitLoot.cs (39a419b) - don't edit here.
+// Generated from GTFO.EZ src/GTFO.EZ/Shared/KitLoot.cs (a2ed1c2) - don't edit here.
 // Change GTFO.EZ's copy and run GTFO.EZ/tools/publish-shared.ps1.
 using System;
 using System.Collections.Generic;
@@ -48,27 +48,33 @@ internal static class KitLoot
         var (health, weaponAmmo, toolAmmo) = AverageBudgetPerZone();
 
         var kits = new List<(uint Id, float Weight)>();
-        Add(settings, kits, Find(settings, "health", min, max, "medi", "health"), health * settings.HealthWeight, "health");
-        Add(settings, kits, Find(settings, "tool", min, max, "tool"), toolAmmo * settings.ToolWeight, "tool");
-        Add(settings, kits, Find(settings, "ammo", min, max, "ammo"), weaponAmmo * settings.AmmoWeight, "ammo");
-        if (kits.Count == 0) return 0;
+        int found = 0;
+        float settingsWeight = 0f;
+        Add(settings, kits, Find(settings, "health", min, max, "medi", "health"), health, settings.HealthWeight, "health", ref found, ref settingsWeight);
+        Add(settings, kits, Find(settings, "tool", min, max, "tool"), toolAmmo, settings.ToolWeight, "tool", ref found, ref settingsWeight);
+        Add(settings, kits, Find(settings, "ammo", min, max, "ammo"), weaponAmmo, settings.AmmoWeight, "ammo", ref found, ref settingsWeight);
+        if (found == 0) return 0; // no kit items in this game version: leave the consumables be
+
+        float extraWeight = 0f;
+        foreach (var (_, weight) in settings.Extras) extraWeight += Mathf.Max(0f, weight);
+        if (kits.Count == 0 && extraWeight <= 0f) return Empty(settings);
 
         // The budget only splits the kits between kinds; together they weigh what their settings
-        // add up to (3 by default), so Extras' weights read as plain odds against them.
+        // add up to (3 by default; only kinds actually in the lottery count), so Extras' weights
+        // read as plain odds against them.
         float budgetWeight = 0f;
         foreach (var (_, weight) in kits) budgetWeight += weight;
-        var scale = (Mathf.Max(0f, settings.HealthWeight) + Mathf.Max(0f, settings.ToolWeight) + Mathf.Max(0f, settings.AmmoWeight)) / budgetWeight;
+        var scale = budgetWeight > 0f ? settingsWeight / budgetWeight : 0f;
         for (var i = 0; i < kits.Count; i++) kits[i] = (kits[i].Id, kits[i].Weight * scale);
 
         var averageKit = (min + max) / 2f * ChargePercent / 100f;
         var kitsPerZone = Mathf.Max(0f, settings.LootPercent) / 100f * (health + weaponAmmo + toolAmmo) / averageKit;
 
         // Extras share the lottery, so each table needs that many more slots for the kits to still
-        // come out at kitsPerZone.
-        float kitWeight = 0f, extraWeight = 0f;
+        // come out at kitsPerZone. With every kit weight at 0, the Extras take the kits' slots.
+        float kitWeight = 0f;
         foreach (var (_, weight) in kits) kitWeight += weight;
-        foreach (var (_, weight) in settings.Extras) extraWeight += Mathf.Max(0f, weight);
-        var slotsPerZone = kitsPerZone * (kitWeight + extraWeight) / kitWeight;
+        var slotsPerZone = kitWeight > 0f ? kitsPerZone * (kitWeight + extraWeight) / kitWeight : kitsPerZone;
 
         var averageSpawns = AverageSpawnsPerZone();
         int tables = 0, slots = 0;
@@ -120,10 +126,31 @@ internal static class KitLoot
         return tables == 0 ? 0f : (float)total / tables;
     }
 
-    private static void Add(KitLootSettings settings, List<(uint, float)> kits, uint? id, float weight, string what)
+    // Every kit weight set to 0: kits are on but none are wanted, so the tables spawn nothing
+    // rather than falling back to the vanilla consumables.
+    private static int Empty(KitLootSettings settings)
     {
-        if (id == null) SharedOwner.Log.LogWarning($"{settings.LogName}: no {what} kit item found - left out.");
-        else if (weight > 0f) kits.Add((id.Value, weight));
+        var tables = 0;
+        foreach (var block in GameDataBlockBase<ConsumableDistributionDataBlock>.GetAllBlocks())
+        {
+            if (block?.SpawnData == null || block.SpawnData.Count == 0) continue;
+            block.SpawnsPerZone = 0;
+            tables++;
+        }
+        SharedOwner.Log.LogInfo($"{settings.LogName}: every kit weight is 0 - {tables} table(s) spawn no consumables.");
+        return tables;
+    }
+
+    // `budget` is the kind's share of the zone's resource budget; `setting` its weight setting.
+    private static void Add(KitLootSettings settings, List<(uint, float)> kits, uint? id, float budget, float setting, string what,
+        ref int found, ref float settingsWeight)
+    {
+        if (id == null) { SharedOwner.Log.LogWarning($"{settings.LogName}: no {what} kit item found - left out."); return; }
+        found++;
+        var weight = budget * setting;
+        if (weight <= 0f) return;
+        kits.Add((id.Value, weight));
+        settingsWeight += setting;
     }
 
     // The resource pack whose name has one of `keys` in it. Tool packs are skipped when looking for
