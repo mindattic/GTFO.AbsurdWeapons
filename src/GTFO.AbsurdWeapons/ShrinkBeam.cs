@@ -75,6 +75,7 @@ internal static class ShrinkBeam
     {
         public EnemyAgent Enemy = null!;
         public float Scale = 1f;
+        public Vector3 BaseScale = Vector3.one; // its own size before the beam touched it
         public float BaseRunSpeed;
         public bool CapturedBase;
         public float LastHit;
@@ -121,7 +122,7 @@ internal static class ShrinkBeam
     {
         if (!shrunk.TryGetValue(enemy.Pointer, out var state))
         {
-            state = new Shrunk { Enemy = enemy };
+            state = new Shrunk { Enemy = enemy, BaseScale = enemy.transform.localScale };
             shrunk[enemy.Pointer] = state;
         }
         state.LastHit = Time.time;
@@ -151,7 +152,7 @@ internal static class ShrinkBeam
         if (enemy == null) return;
         try
         {
-            enemy.transform.localScale = Vector3.one * state.Scale;
+            enemy.transform.localScale = state.BaseScale * state.Scale;
             var locomotion = enemy.Locomotion;
             if (locomotion != null && state.BaseRunSpeed > 0f) locomotion.m_maxMovementSpeed = state.BaseRunSpeed * state.Scale;
         }
