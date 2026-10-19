@@ -2,6 +2,8 @@
 
 ## v1
 
+- Master switch: `[0. Mod] Enabled` (default `true`) is the config file's first entry; set it to
+  `false` and the whole mod is off - nothing is patched, no weapon is added, no hotkey or loot change.
 - Loot uses GTFO.EZ's kit loot, shared between the two mods: a few small kits of 1-2 charges
   adding about 20% to the zone's resource packs (`KitLootPercent`, `KitChargesMin/Max`), with Hand
   Grenades at 4 to the kits' 3 and Stim Packs alongside. `KitSize` and `SpawnsPerZoneMultiplier`

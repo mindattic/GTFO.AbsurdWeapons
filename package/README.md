@@ -289,6 +289,15 @@ If you're upgrading from an older version: BepInEx keeps whatever value is alrea
 so when a *default* changes between versions (see `CHANGELOG.md`), the mod corrects that once per
 affected setting the first time you launch the version that changes it.
 
+### Turning the whole mod off
+
+The file's first entry switches off everything at once, for a mod manager profile that doesn't list
+the mod:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `[0. Mod] Enabled` † | true | Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys, no loot changes. Your other settings stay in the file as they are. |
+
 ### Turning weapons off
 
 Every weapon has its own on/off switch, `<Weapon> Enabled` †, in its section. All are on by default.

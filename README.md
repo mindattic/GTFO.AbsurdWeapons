@@ -576,13 +576,23 @@ Still to verify in-game:
 
 ## Config
 
-`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg`, one section per weapon (a pistol/rifle pair
-shares one, since they share stats), plus `[Knockback]`, `[Tentacles]`, `[Gear Cycling]`,
-`[Sounds]` and `[Internal]` (the migration version - don't edit). **The full reference - every
-setting, its default and what it does - is in [`package/README.md`](package/README.md#config).**
+`BepInEx/config/MindAttic.GTFO.AbsurdWeapons.cfg`: first `[0. Mod]` (the master switch below), then
+one section per weapon (a pistol/rifle pair shares one, since they share stats), plus `[Knockback]`,
+`[Tentacles]`, `[Gear Cycling]`, `[Sounds]` and `[Internal]` (the migration version - don't edit).
+**The full reference - every setting, its default and what it does - is in
+[`package/README.md`](package/README.md#config).**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `[0. Mod] Enabled` | `true` | Turn the whole mod on or off. When false, the mod loads nothing: no patches, no weapons, no hotkeys, no loot changes. |
 
 Conventions:
 
+- **`[0. Mod] Enabled`** is bound first in `Plugin.Load` (BepInEx writes sections in ordinal order,
+  so `0. Mod` is the file's first entry). Off, `Load` logs one line and returns before any other
+  `Bind`, `ConfigMigrations.Apply`, `ClassInjector` registration, `Init`, `PatchAll` or
+  `AddComponent`. The unbound settings stay in the file as orphaned entries, and migrations still
+  due run the next time the mod is on.
 - **`<Weapon> Enabled`** (default `true`), in each weapon's own section, is checked first thing in
   `MeleeInjector.TryAdd` / `GunInjector.TryAdd` / `HandGrenade.AddItem`: off, the weapon's
   datablocks are never registered, so it's absent from the loadout and the Page Up/Down cycle
