@@ -54,8 +54,8 @@ internal static class GunInjector
     // 1201 was the Grenade Launcher tool (now the Grenade Pistol/Rifle); left unused.
     internal const uint VictoryBannerId = 1202;   // a tool: same reason
 
-    // The ten original guns' own stats (0 keeps the built-in value; takes effect on restart - baked
-    // in at GameDataInit.Initialize, same as every other datablock here).
+    // The ten original guns' own stats (written straight into each gun's archetype, so 0 really is 0;
+    // takes effect on restart - baked in at GameDataInit.Initialize, same as every other datablock here).
     internal static ConfigEntry<float> PlasmaDamage = null!, PlasmaShotDelay = null!;
     internal static ConfigEntry<int> PlasmaClipSize = null!;
     internal static ConfigEntry<float> HiveDamage = null!, HiveShotDelay = null!;
