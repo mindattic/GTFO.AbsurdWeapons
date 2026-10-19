@@ -388,7 +388,8 @@ The C-Foam launcher's `WantToFireGlue` hook toggles instead of firing a projecti
 from chest height, kept short of a wall, then raycast straight down to the floor, and the flag is
 lifted so the lowest vertex of its meshes sits on the hit point. It is sent to teammates
 (`...BannerPlant`) and the owner switches to their main weapon. It's picked up like a sentry (Use
-while looking at it within 2.5 m), and it retires when the owner's tool slot no longer holds it.
+while looking at it within 2.5 m), and it retires when the owner's tool slot no longer holds it,
+or - checked on each client every half second - when its owner is no longer in the level.
 While it's down, every client heals its own local player `HealPercent` (1%) of max health every
 `HealSeconds` (0.25 s) while they're within `Radius`. That's all it does.
 

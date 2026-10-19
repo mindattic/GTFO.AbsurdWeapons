@@ -225,7 +225,8 @@ internal static class VictoryBanner
 /// <see cref="VictoryBanner.HealSeconds"/> each client heals its own local player if they're within
 /// <see cref="VictoryBanner.Radius"/>, so nothing has to cross the network; an expanding ring shows
 /// every couple of seconds. Picking it back up, planting a new one for the same owner, or the
-/// owner switching away from the Victory Banner in their tool slot all retire it, on every client.
+/// owner switching away from the Victory Banner in their tool slot all retire it, on every client;
+/// so does the owner leaving the game (each client notices that on its own).
 /// </summary>
 internal sealed class BannerPylon : MonoBehaviour
 {
@@ -333,10 +334,20 @@ internal sealed class BannerPylon : MonoBehaviour
             {
                 nextToolCheckAt = Time.time + ToolCheckSeconds;
                 var local = PlayerManager.GetLocalPlayerAgent();
-                if (local != null && local.Owner != null && local.Owner.Lookup == ownerLookup && !StillInToolSlot())
+                if (local != null && local.Owner != null && local.Owner.Lookup == ownerLookup)
                 {
+                    if (!StillInToolSlot())
+                    {
+                        Retire();
+                        VictoryBanner.BroadcastPickUp();
+                        return;
+                    }
+                }
+                else if (local != null && !OwnerInLevel())
+                {
+                    // A teammate's banner whose owner left: their game will never send the pick-up,
+                    // so it goes here instead of healing on at its spot until the safety net.
                     Retire();
-                    VictoryBanner.BroadcastPickUp();
                     return;
                 }
             }
@@ -419,6 +430,17 @@ internal sealed class BannerPylon : MonoBehaviour
         var backpack = PlayerBackpackManager.LocalBackpack;
         if (backpack == null || !backpack.TryGetBackpackItem(InventorySlot.GearClass, out var item) || item?.GearIDRange == null) return true;
         return item.GearIDRange.GetCompID(eGearComponent.Category) == GunInjector.VictoryBannerId;
+    }
+
+    // Whether the player who planted this banner is still in the level (alive or not).
+    [HideFromIl2Cpp]
+    private bool OwnerInLevel()
+    {
+        var players = PlayerManager.PlayerAgentsInLevel;
+        if (players == null) return true; // can't tell: keep it
+        foreach (var player in players)
+            if (player != null && player.Owner != null && player.Owner.Lookup == ownerLookup) return true;
+        return false;
     }
 
     // Heals the local player if they're standing within the radius.

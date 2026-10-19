@@ -205,7 +205,8 @@ You carry the flag itself. Press fire and it's **planted right in front of you**
 with a green banner waving from it - no charging up - and you switch to your main weapon. Like a
 sentry, you **pick it back up** by walking up to it, looking at it and pressing **Use** (a prompt
 shows). Switching your tool slot away from it - Page Up/Down, equipping something else, or pressing
-Home to restore your starting loadout - **retires it on its own**.
+Home to restore your starting loadout - **retires it on its own**, and it goes with you if you leave
+the game.
 
 While it's up, a **glowing green aura** lies on the ground around it out to **8 m**. Every quarter
 second it pulses, **healing** everyone standing inside it 1% of their max health - stay in it and
