@@ -398,14 +398,19 @@ internal static class ShrinkBeam
 internal sealed class ShrinkStream : MonoBehaviour
 {
     private const float LingerSeconds = 0.2f;
-    private const int PointsPerLink = 12;
-    private const float Sway = 0.06f;
+    private const int Strands = 3;
+    private const int PointsPerStrand = 24;
+    private const float Wiggle = 0.012f;
+    private const float StartRadius = 0.035f; // around the barrel
+    private const float EndRadius = 0.01f;    // drawn together at the target
+    private const float SpinDegreesPerSecond = 540f;
+    private const float TwistDegreesPerMetre = 90f;
     private static readonly Color BeamColor = new(0.35f, 1f, 0.3f, 0.85f);
     private static Material? material;
 
     private static readonly Dictionary<ulong, ShrinkStream> streams = new();
 
-    private LineRenderer line = null!;
+    private LineRenderer[] lines = null!;
     private Vector3 start, end;
     private ulong source;
     private float lastFed;
@@ -422,10 +427,20 @@ internal sealed class ShrinkStream : MonoBehaviour
         {
             stream = new GameObject("GTFO.AbsurdWeapons Shrink Beam").AddComponent<ShrinkStream>();
             stream.source = source;
-            stream.line = stream.gameObject.AddComponent<LineRenderer>();
-            stream.line.useWorldSpace = true;
-            stream.line.positionCount = PointsPerLink;
-            stream.line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+            stream.lines = new LineRenderer[Strands];
+            for (var i = 0; i < Strands; i++)
+            {
+                var strand = new GameObject("strand");
+                strand.transform.SetParent(stream.transform, false);
+                var line = strand.AddComponent<LineRenderer>();
+                line.useWorldSpace = true;
+                line.positionCount = PointsPerStrand;
+                line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+                line.startWidth = 0.012f;
+                line.endWidth = 0.018f;
+                line.startColor = line.endColor = BeamColor;
+                stream.lines[i] = line;
+            }
             streams[source] = stream;
         }
         stream.start = start;
@@ -458,17 +473,30 @@ internal sealed class ShrinkStream : MonoBehaviour
     }
 
     [HideFromIl2Cpp]
+    // Three thin strands corkscrewing around the beam's line, spinning around the barrel and
+    // drawn together at the target, each jittering on its own.
     private void Draw()
     {
-        for (var i = 0; i < PointsPerLink; i++)
+        var axis = end - start;
+        var length = axis.magnitude;
+        if (length < 0.001f) return;
+        var forward = axis / length;
+        var right = Vector3.Cross(forward, Mathf.Abs(forward.y) > 0.95f ? Vector3.forward : Vector3.up).normalized;
+        var up = Vector3.Cross(right, forward);
+        var spin = Time.time * SpinDegreesPerSecond;
+        for (var s = 0; s < Strands; s++)
         {
-            var t = i / (float)(PointsPerLink - 1);
-            var sway = Mathf.Sin(t * Mathf.PI) * Sway;
-            line.SetPosition(i, Vector3.Lerp(start, end, t) + UnityEngine.Random.insideUnitSphere * sway);
+            var phase = spin + s * 360f / Strands;
+            for (var i = 0; i < PointsPerStrand; i++)
+            {
+                var t = i / (float)(PointsPerStrand - 1);
+                var angle = (phase + t * length * TwistDegreesPerMetre) * Mathf.Deg2Rad;
+                var radius = Mathf.Lerp(StartRadius, EndRadius, t);
+                var offset = (right * Mathf.Cos(angle) + up * Mathf.Sin(angle)) * radius;
+                var jitter = i == 0 || i == PointsPerStrand - 1 ? Vector3.zero : UnityEngine.Random.insideUnitSphere * Wiggle;
+                lines[s].SetPosition(i, start + axis * t + offset + jitter);
+            }
         }
-        line.startWidth = 0.05f;
-        line.endWidth = 0.08f;
-        line.startColor = line.endColor = BeamColor;
     }
 }
 

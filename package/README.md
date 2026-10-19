@@ -196,7 +196,8 @@ a chain of mid-air explosions, or burst one over a crowd or around a corner.
 
 ### Shrink Beam (special)
 
-A continuous green ray. Hold it on an enemy and it shrinks - smaller and slower by the same share -
+A continuous green ray: three thin, jittering strands corkscrewing around the barrel and drawing
+together on the target. Hold it on an enemy and it shrinks - smaller and slower by the same share -
 the longer you keep the beam on it; let go and, after a second off the beam, it starts growing back,
 so a shrink has to finish in one sustained hold. Shrink it to **45%** of its size and it gibs
 outright. Once it's at **70%** size or smaller, get within **2 m** of it and look down at it and you
