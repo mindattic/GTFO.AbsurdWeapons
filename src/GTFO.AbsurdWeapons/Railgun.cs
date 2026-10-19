@@ -22,6 +22,7 @@ internal static class Railgun
     internal static ConfigEntry<float> Range = null!;
     private const string ShotEvent = "MindAttic.GTFO.AbsurdWeapons.RailShot";
     private const float BeamStartAhead = 1.2f; // metres past where the gun sits on screen
+    private const float LockSlack = 0.2f;      // metres past the first wall a lock still counts
 
     internal static void Bind(ConfigFile config) =>
         Range = config.Bind("Railgun", "PenetrationRange", 1000f, "Metres the piercing slug reaches, through every enemy and wall on the way.");
@@ -53,7 +54,13 @@ internal static class Railgun
             limb.BulletDamage(damage, owner.Cast<Agent>(), hit.point, aim, hit.normal,
                 allowDirectionalBonus: true, staggerMulti, precisionMulti, gearCategoryId);
         }
-        LockDamage.Line(eye, aim, Range.Value, damage, owner.Cast<Agent>());
+        // Locks only up to the first wall: through walls it would break every padlock on the line,
+        // out to the slug's full reach. A lock sits on its door's face, so a little slack past the
+        // wall keeps one the slug meets right at the door.
+        var lockRange = Physics.Raycast(eye, aim, out var wall, Range.Value, LayerManager.MASK_WORLD)
+            ? Mathf.Min(Range.Value, wall.distance + LockSlack)
+            : Range.Value;
+        LockDamage.Line(eye, aim, lockRange, damage, owner.Cast<Agent>());
 
         // Pushed out ahead of the gun so the beam doesn't start in the player's face.
         var start = LaserGuns.ScreenStart(eye, aim) + aim * BeamStartAhead;
