@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using GameData;
 using Gear;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -60,7 +61,7 @@ internal static class MjolnirThrow
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<ThrowMessage>(ThrowEvent, (sender, message) =>
+        RemoteEvents.Register<ThrowMessage>(ThrowEvent, (sender, message) =>
             ThrownHammer.Spawn(null, PlayerFor(sender), new Vector3(message.X, message.Y, message.Z),
                 new Vector3(message.DirX, message.DirY, message.DirZ), null));
     }

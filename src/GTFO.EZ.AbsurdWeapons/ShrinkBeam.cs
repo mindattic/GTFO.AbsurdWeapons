@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using Enemies;
 using FX_EffectSystem;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime.Attributes;
 using LevelGeneration;
 using Player;
@@ -63,7 +64,7 @@ internal static class ShrinkBeam
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<BeamMessage>(BeamEvent, (sender, message) =>
+        RemoteEvents.Register<BeamMessage>(BeamEvent, (sender, message) =>
         {
             var start = new Vector3(message.X0, message.Y0, message.Z0);
             var end = new Vector3(message.X1, message.Y1, message.Z1);

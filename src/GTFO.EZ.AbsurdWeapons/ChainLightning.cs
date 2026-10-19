@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using Enemies;
 using FX_EffectSystem;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -51,7 +52,7 @@ internal static class ChainLightning
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<BoltMessage>(BoltEvent, (sender, message) => LightningBolt.Spawn(message.Points(), message.Count > 2, sender));
+        RemoteEvents.Register<BoltMessage>(BoltEvent, (sender, message) => LightningBolt.Spawn(message.Points(), message.Count > 2, sender));
     }
 
     // How often the stream strikes while the trigger is held. Each strike's damage is scaled from

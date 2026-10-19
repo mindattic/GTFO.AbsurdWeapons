@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -59,10 +60,10 @@ internal static class RocketLauncher
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<LaunchMessage>(LaunchEvent, (_, message) =>
+        RemoteEvents.Register<LaunchMessage>(LaunchEvent, (_, message) =>
             RocketProjectile.Spawn(message.Id, null, new Vector3(message.X, message.Y, message.Z),
                 new Vector3(message.DirX, message.DirY, message.DirZ)));
-        NetworkAPI.RegisterEvent<DetonateMessage>(DetonateEvent, (_, message) =>
+        RemoteEvents.Register<DetonateMessage>(DetonateEvent, (_, message) =>
             RocketProjectile.Detonate(message.Id, new Vector3(message.X, message.Y, message.Z)));
     }
 

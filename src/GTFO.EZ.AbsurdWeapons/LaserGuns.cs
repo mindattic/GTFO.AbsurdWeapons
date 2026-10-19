@@ -57,7 +57,7 @@ internal static class LaserGuns
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<BeamMessage>(BeamEvent, (sender, message) =>
+        RemoteEvents.Register<BeamMessage>(BeamEvent, (sender, message) =>
         {
             var kind = ForId(message.Kind);
             if (kind != null)

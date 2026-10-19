@@ -4,6 +4,7 @@ using Agents;
 using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -29,7 +30,7 @@ internal static class Railgun
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<ShotMessage>(ShotEvent, (_, message) =>
+        RemoteEvents.Register<ShotMessage>(ShotEvent, (_, message) =>
         {
             var start = new Vector3(message.X, message.Y, message.Z);
             var end = new Vector3(message.EndX, message.EndY, message.EndZ);

@@ -4,6 +4,7 @@ using Agents;
 using BepInEx.Configuration;
 using Enemies;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Attributes;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -136,7 +137,7 @@ internal static class TentacleCannon
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<LashMessage>(LashEvent, (_, message) =>
+        RemoteEvents.Register<LashMessage>(LashEvent, (_, message) =>
             TentacleLash.Spawn(new Vector3(message.X, message.Y, message.Z), -1,
                 new Vector3(message.EndX, message.EndY, message.EndZ), Vector3.zero, null, null, 0f, 0f, 0));
     }

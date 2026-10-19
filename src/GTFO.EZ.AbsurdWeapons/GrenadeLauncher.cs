@@ -5,6 +5,7 @@ using AssetShards;
 using BepInEx.Configuration;
 using FX_EffectSystem;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using UnityEngine;
@@ -55,10 +56,10 @@ internal static class GrenadeLauncher
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<LaunchMessage>(LaunchEvent, (_, message) =>
+        RemoteEvents.Register<LaunchMessage>(LaunchEvent, (_, message) =>
             LauncherGrenade.Spawn(message.Id, null, new Vector3(message.X, message.Y, message.Z),
                 new Vector3(message.VelX, message.VelY, message.VelZ)));
-        NetworkAPI.RegisterEvent<DetonateMessage>(DetonateEvent, (_, message) =>
+        RemoteEvents.Register<DetonateMessage>(DetonateEvent, (_, message) =>
             LauncherGrenade.Detonate(message.Id, new Vector3(message.X, message.Y, message.Z)));
     }
 

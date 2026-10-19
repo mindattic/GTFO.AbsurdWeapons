@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using Enemies;
 using Gear;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -87,7 +88,7 @@ internal static class ImpactBursts
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<BurstMessage>(BurstEvent, (_, message) =>
+        RemoteEvents.Register<BurstMessage>(BurstEvent, (_, message) =>
         {
             var burst = ImpactBurst.ForId(message.Burst);
             if (burst != null) BurstFlash.Spawn(burst, new Vector3(message.X, message.Y, message.Z));

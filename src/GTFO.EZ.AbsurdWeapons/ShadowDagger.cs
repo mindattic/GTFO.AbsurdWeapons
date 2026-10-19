@@ -6,6 +6,7 @@ using Enemies;
 using FX_EffectSystem;
 using Gear;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppInterop.Runtime.Attributes;
@@ -64,7 +65,7 @@ internal static class Stealth
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<StealthMessage>(StealthEvent, (sender, message) => Hide(sender, message.Seconds));
+        RemoteEvents.Register<StealthMessage>(StealthEvent, (sender, message) => Hide(sender, message.Seconds));
     }
 
     internal static bool IsHidden(Agent? agent) => Remaining(agent) > 0f;

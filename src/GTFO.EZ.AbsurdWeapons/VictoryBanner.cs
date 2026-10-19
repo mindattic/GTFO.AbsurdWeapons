@@ -6,6 +6,7 @@ using BepInEx.Configuration;
 using Enemies;
 using Gear;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -67,9 +68,9 @@ internal static class VictoryBanner
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<PlantMessage>(PlantEvent, (sender, message) =>
+        RemoteEvents.Register<PlantMessage>(PlantEvent, (sender, message) =>
             BannerPylon.Spawn(sender, new Vector3(message.X, message.Y, message.Z), new Vector3(message.NormalX, message.NormalY, message.NormalZ)));
-        NetworkAPI.RegisterEvent<PickUpMessage>(PickUpEvent, (sender, _) => BannerPylon.Retire(sender));
+        RemoteEvents.Register<PickUpMessage>(PickUpEvent, (sender, _) => BannerPylon.Retire(sender));
     }
 
     // Called by the owner's own game (BannerPylon.StillInToolSlot) when their tool slot - PageUp/

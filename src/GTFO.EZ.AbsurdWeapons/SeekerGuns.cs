@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using Enemies;
 using Gear;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Player;
 using UnityEngine;
@@ -147,7 +148,7 @@ internal static class SeekerGuns
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<SeekerShot>(ShotEvent, OnRemoteShot);
+        RemoteEvents.Register<SeekerShot>(ShotEvent, OnRemoteShot);
     }
 
     // Shotgun overrides Fire, so both are patched. Each prefix saves the outer value and its

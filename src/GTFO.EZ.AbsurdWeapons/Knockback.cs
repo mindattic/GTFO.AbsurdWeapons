@@ -4,6 +4,7 @@ using Agents;
 using BepInEx.Configuration;
 using Enemies;
 using GTFO.API;
+using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
 using SNetwork;
@@ -40,7 +41,7 @@ internal static class Knockback
 
     internal static void Init()
     {
-        NetworkAPI.RegisterEvent<KnockMessage>(KnockEvent, (sender, message) =>
+        RemoteEvents.Register<KnockMessage>(KnockEvent, (sender, message) =>
         {
             if (!SNet.IsMaster) return;
             var enemy = message.Enemy.TryGet(out var named) && named != null ? named : EnemyNear(new Vector3(message.X, message.Y, message.Z));
