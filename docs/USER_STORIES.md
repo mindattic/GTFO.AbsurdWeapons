@@ -67,7 +67,7 @@ _Nothing recorded yet._
 | G.AWPN-T40 | 2026-10-17 | chore | closed | Remove the Flamethrower (gun 1111): its cone, afterburn, fire spread, fuel bomb and docs | G.AWPN-T82 |
 | G.AWPN-T41 | 2026-10-17 | chore | closed | Deploy the package icon (and manifest) next to the plugin DLL on every build, so the mod manager shows the mod's icon for the local install | G.AWPN-T82 |
 | G.AWPN-T42 | 2026-10-17 | feature | closed | Chain Lightning Gun: one continuous stream of lightning while the trigger is held instead of individual shots (same total damage per second) | G.AWPN-T82 |
-| G.AWPN-T43 | 2026-10-17 | chore | open | Spike: reorganize into a shared AbsurdWeapons.Core plus one small mod per weapon (registry, single-patch dispatchers, per-weapon config/package); prove it with Railgun and Katana | docs/spikes/weapon-mods.md |
+| G.AWPN-T43 | 2026-10-17 | chore | wont-do | Spike: reorganize into a shared AbsurdWeapons.Core plus one small mod per weapon (registry, single-patch dispatchers, per-weapon config/package); prove it with Railgun and Katana | Superseded: GTFO.EZ became the core the companion mods build on (G.EZ-T76) |
 | G.AWPN-T44 | 2026-10-17 | feature | closed | Railgun: halve the double helix's spirals (a full turn every 1.2 m instead of 0.6 m) | G.AWPN-T82 |
 | G.AWPN-T45 | 2026-10-17 | feature | closed | Pistol/Rifle pairs look right per model: grenades, plasma balls and laser beams leave each model's own barrel (as drawn on screen) and each grenade gun kicks like its own model, while what a shot does stays identical | G.AWPN-T82 |
 | G.AWPN-T46 | 2026-10-17 | feature | closed | Railgun has no kickback at all (kickless recoil instead of T39's half kick), like the laser and lightning guns | G.AWPN-T82 |
