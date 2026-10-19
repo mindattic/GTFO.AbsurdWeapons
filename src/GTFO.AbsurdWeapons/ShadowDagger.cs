@@ -297,10 +297,11 @@ internal sealed class StealthVisuals : MonoBehaviour
         try
         {
             var players = PlayerManager.PlayerAgentsInLevel;
-            if (players == null) return;
-            foreach (var player in players)
+            HashSet<IntPtr>? present = hidden.Count > 0 ? new() : null;
+            if (players != null) foreach (var player in players)
             {
                 if (player == null) continue;
+                present?.Add(player.Pointer);
                 Stealth.EndIfDaggerPutAway(player);
                 // The host's bots are locally owned too, and would reset the player's kill bonuses.
                 if (player.IsLocallyOwned && player.Owner != null && !player.Owner.IsBot) Stealth.ProcessKills(player);
@@ -317,6 +318,15 @@ internal sealed class StealthVisuals : MonoBehaviour
                 }
                 else if (tracked) Reappear(player.Pointer, state!);
             }
+
+            // Someone who left (or a level that ended) while hidden is never visited above again:
+            // their see-through copies are dropped here instead of leaking.
+            if (present == null) return;
+            List<IntPtr>? gone = null;
+            foreach (var pointer in hidden.Keys)
+                if (!present.Contains(pointer)) (gone ??= new List<IntPtr>()).Add(pointer);
+            if (gone == null) return;
+            foreach (var pointer in gone) Reappear(pointer, hidden[pointer]);
         }
         catch (Exception e)
         {
