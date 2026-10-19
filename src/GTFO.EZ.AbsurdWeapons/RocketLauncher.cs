@@ -77,14 +77,24 @@ internal static class RocketLauncher
         NetworkAPI.InvokeEvent(LaunchEvent, new LaunchMessage(id, position, direction));
     }
 
-    // No aiming down sights: right-click is the remote detonator instead. The game asks this of
-    // every equippable, including ones still being built (seen at startup) or already destroyed,
-    // so it must never throw: an exception here escapes into the il2cpp trampoline.
-    [HarmonyPatch(typeof(ItemEquippable), nameof(ItemEquippable.AimingAllowed), MethodType.Getter)]
-    [HarmonyPostfix]
-    private static void NoAiming(ItemEquippable __instance, ref bool __result)
+    // No aiming down sights: right-click is the remote detonator instead. The first-person holder's
+    // aim-input step is skipped while it holds the Rocket Launcher. Not ItemEquippable.AimingAllowed:
+    // that getter is a one-line body il2cpp folds together with other identical getters, so detouring
+    // it also catches unrelated objects' calls (a NullReferenceException in the trampoline at startup).
+    [HarmonyPatch(typeof(FirstPersonItemHolder), "UpdateAimInput")]
+    [HarmonyPrefix]
+    private static bool NoAiming(FirstPersonItemHolder __instance)
     {
-        if (__result && IsRocketLauncher(__instance)) __result = false;
+        try
+        {
+            if (!IsRocketLauncher(__instance.WieldedItem)) return true;
+            __instance.ItemAimTrigger = false;
+            return false;
+        }
+        catch (Exception)
+        {
+            return true;
+        }
     }
 
     // Right-click this frame while the local player holds the Rocket Launcher.
