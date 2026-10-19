@@ -183,3 +183,4 @@ _Nothing recorded yet._
 | G.AWPN-T156 | 2026-10-18 | fix | closed | Melee attack speed: the animation follows a mid-session LightAttackSpeed/ChargedAttackSpeed edit while the swing timings stay baked from startup | — |
 | G.AWPN-T157 | 2026-10-18 | fix | closed | Melee attack speed: a negative LightAttackSpeed/ChargedAttackSpeed plays the swing backwards instead of keeping the built-in pace | — |
 | G.AWPN-T158 | 2026-10-18 | fix | closed | Victory Banner: a teammate who leaves mid-level leaves their banner up, healing everyone for up to 10 minutes | — |
+| G.AWPN-T159 | 2026-10-18 | fix | closed | Shrink Beam: with GunShotDelay 0 or less, teammates never see the target shrink (or see it grow) - the shooter clamps the tick, the receivers don't | — |
