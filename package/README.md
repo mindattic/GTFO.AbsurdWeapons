@@ -206,9 +206,8 @@ step on it - it gibs too. **Door padlocks shrink the same way** and break at 50%
 You carry the flag itself. Press fire and it's **planted right in front of you** at once - a pole
 with a green banner waving from it - no charging up - and you switch to your main weapon. Like a
 sentry, you **pick it back up** by walking up to it, looking at it and pressing **Use** (a prompt
-shows). Switching your tool slot away from it - Page Up/Down, equipping something else, or pressing
-Home to restore your starting loadout - **retires it on its own**, and it goes with you if you leave
-the game.
+shows). Switching your tool slot away from it - cycling the slot or equipping something else -
+**retires it on its own**, and it goes with you if you leave the game.
 
 While it's up, a **glowing green aura** lies on the ground around it out to **8 m**. Every quarter
 second it pulses, **healing** everyone standing inside it 1% of their max health - stay in it and
@@ -220,23 +219,18 @@ The Hand Grenade, the Stim Pack and the loot mix (kits, grenades and stims as co
 
 ## Swapping weapons in a level
 
-Hold a main, special, tool or melee weapon and press **Page Up** for the next weapon for that slot,
-or **Page Down** for the previous one. Or just **press that slot's own key again** - 1 to 4 by
-default (melee, main, special, tool): with the slot already in hand, each press moves on to its next
-weapon. A five-second message names what you switched to.
+Hold a main, special, tool or melee weapon and **press that slot's own key again** - 1 to 4 by
+default (melee, main, special, tool), or whatever you've rebound them to: with the slot already in
+hand, each press moves on to its next weapon. A five-second message names what you switched to.
 Teammates get the swap too.
 
 The first time you swap a slot, **the gear you dropped in with joins that slot's cycle**, ahead of
-this mod's weapons - so your own main, special, tool and melee are always one press away. (Weapons
+this mod's weapons - so cycling on brings your own main, special, tool and melee back round. (Weapons
 you've switched off in the config aren't in it.)
 
 **Every weapon keeps its own ammo** for the rest of the level: swap away and its magazine and
 reserve are put aside; swap back and you get exactly that back. One of this mod's weapons starts
 completely full the first time you equip it in a level.
-
-Press **Home** to go back to a serious run: every slot you've swapped this level - main, special,
-tool and melee, all at once - goes back to the gear you dropped in with, with its own ammo. Slots
-you never swapped aren't touched.
 
 ## Config
 
@@ -247,7 +241,7 @@ set of stats).
 - Settings marked **†** are baked into the weapon when the game loads its data, so they **take effect
   on the next game restart**.
 - Everything else is read while you play. The file is re-read whenever a melee weapon's model is
-  built (the loadout screen, equipping it, or a Page Up/Down swap), so edits to those land without
+  built (the loadout screen, equipping it, or cycling to it), so edits to those land without
   restarting.
 - In the melee sections, **0 means "keep the built-in value"** listed in the weapon's description
   above.
@@ -268,7 +262,7 @@ the mod:
 ### Turning weapons off
 
 Every weapon has its own on/off switch, `<Weapon> Enabled` †, in its section. All are on by default.
-A weapon that's off simply isn't added: it's not in the loadout screen or the Page Up/Down cycle,
+A weapon that's off simply isn't added: it's not in the loadout screen or the weapon cycle,
 and nothing else about the game changes. Pistol and rifle versions of a gun are switched separately.
 
 | Section | Switches |
@@ -525,16 +519,8 @@ Shared by everything that flings enemies (the Warhammer).
 same two keys every GTFO.* mod has, from one shared copy of the code; with several installed only
 one answers, so a press never toggles twice.
 
-### `[Gear Cycling]`
-
-| Setting | Default | What it does |
-|---|---|---|
-| `NextWeaponKey` | PageUp | Swap to the next weapon in the held slot's cycle: the gear you dropped in with, then this mod's weapons. |
-| `PreviousWeaponKey` | PageDown | Swap to the previous one. |
-| `SlotKeysCycle` | true | Pressing a slot's own select key (1-4 by default) while that slot is in hand cycles it, like `NextWeaponKey`. |
-| `RestoreLoadoutKey` | Home | Put every swapped slot back to the gear you dropped in with, with its own ammo. |
-
-Any [Unity `KeyCode`](https://docs.unity3d.com/ScriptReference/KeyCode.html) name works; `None` disables that key.
+Weapon cycling has no settings: it uses the game's own slot keys (see
+[Swapping weapons in a level](#swapping-weapons-in-a-level)).
 
 ### `[Sounds]`
 
@@ -570,7 +556,7 @@ the host, who owns enemy positions.
   changes in the game's data is applied after GTFO.EZ's. Weapons are built after EZ's tuning, so
   each starts from EZ's version of the weapon it's copied from; stats this mod sets itself stay
   fixed. Keys don't
-  overlap (this mod uses Home/PgUp/PgDn; GTFO.EZ uses E, X and Z), and Insert/Delete are the shared
+  overlap (this mod only adds a second press of the game's slot keys; GTFO.EZ uses E, X and Z), and Insert/Delete are the shared
   toggles both mods carry - only one answers.
 - **GTFO.EZ.AbsurdItems:** compatible - the Hand Grenade, Stim Pack and loot mix that used to be in
   this mod live there now. A GTFO.* mod switched off in its config (`[0. Mod] Enabled`) counts as

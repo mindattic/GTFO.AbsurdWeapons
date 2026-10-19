@@ -39,7 +39,6 @@ public class Plugin : BasePlugin
 
         WeaponSettings.Bind(Config);
         TentaclePool.Bind(Config);
-        GearCycler.Bind(Config);
         InfiniteAmmo.Bind(Config);
         Stealth.Bind(Config);
         KatanaDash.Bind(Config);

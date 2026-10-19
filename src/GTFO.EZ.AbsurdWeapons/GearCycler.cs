@@ -10,25 +10,18 @@ using UnityEngine;
 namespace GTFO.EZ.AbsurdWeapons;
 
 /// <summary>
-/// Swaps the weapon in the slot you're holding for the next (or previous) one in that slot's
-/// cycle, mid-level - main, special, tool or melee. The cycle is the gear you dropped in with
-/// (added the first time you swap that slot) followed by this mod's weapons for the slot, so what
-/// you brought is always one press away. Keys come from the config ([Gear Cycling], PageUp /
-/// PageDown by default). It equips through the game's own loadout path
-/// (PlayerBackpackManager.EquipLocalGear, which syncs to teammates), then re-wields the slot, and a
-/// five-second warden message names what you switched to.
+/// Pressing a slot's own select key (melee, main, special, tool - 1 to 4 by default, following
+/// rebinds) while that slot is already in hand swaps its weapon for the next one in that slot's
+/// cycle, mid-level. The cycle is the gear you dropped in with (added the first time you swap that
+/// slot) followed by this mod's weapons for the slot, so what you brought comes round again. It
+/// equips through the game's own loadout path (PlayerBackpackManager.EquipLocalGear, which syncs to
+/// teammates), then re-wields the slot, and a five-second warden message names what you switched to.
 /// Every weapon keeps its own ammo for the rest of the level: what's in its magazine and the
 /// slot's reserve are saved when you swap away from it and put back when you swap to it again. One
-/// of this mod's weapons starts full the first time it's equipped in a level. Home puts every
-/// swapped slot back to the gear you dropped in with, all at once, to resume a serious run.
+/// of this mod's weapons starts full the first time it's equipped in a level.
 /// </summary>
 internal sealed class GearCycler : MonoBehaviour
 {
-    private static ConfigEntry<KeyCode> nextKey = null!;
-    private static ConfigEntry<KeyCode> previousKey = null!;
-    private static ConfigEntry<KeyCode> restoreKey = null!;
-    private static ConfigEntry<bool> slotKeysCycle = null!;
-
     // The game's own select-slot actions (so rebinds are followed): pressed again while that slot is
     // already in hand, it cycles the slot - the game itself does nothing with that press.
     private static readonly (InputAction Action, InventorySlot Slot)[] SlotKeys =
@@ -60,18 +53,6 @@ internal sealed class GearCycler : MonoBehaviour
 
     public GearCycler(IntPtr ptr) : base(ptr) { }
 
-    internal static void Bind(ConfigFile config)
-    {
-        nextKey = config.Bind("Gear Cycling", "NextWeaponKey", KeyCode.PageUp,
-            "Swaps the weapon in the slot you're holding (main, special, tool or melee) for the next one in that slot's cycle: the gear you dropped in with, then this mod's weapons.");
-        previousKey = config.Bind("Gear Cycling", "PreviousWeaponKey", KeyCode.PageDown,
-            "Swaps it for the previous one.");
-        restoreKey = config.Bind("Gear Cycling", "RestoreLoadoutKey", KeyCode.Home,
-            "Puts every slot you've swapped this level - main, special, tool and melee at once - back to the gear you dropped in with, with that gear's own ammo.");
-        slotKeysCycle = config.Bind("Gear Cycling", "SlotKeysCycle", true,
-            "Pressing a slot's own select key (melee, main, special, tool - 1 to 4 by default) while that slot is already in hand cycles it to the next weapon, same as NextWeaponKey.");
-    }
-
     private void Update()
     {
         try
@@ -88,10 +69,7 @@ internal sealed class GearCycler : MonoBehaviour
             if (pending.Count > 0) FinishPending();
 
             if (FocusStateManager.CurrentState != eFocusState.FPS) return;
-            if (Input.GetKeyDown(restoreKey.Value)) Restore();
-            else if (Input.GetKeyDown(nextKey.Value)) Cycle(1);
-            else if (Input.GetKeyDown(previousKey.Value)) Cycle(-1);
-            else if (slotKeysCycle.Value && SlotKeyPressedAgain()) Cycle(1);
+            if (SlotKeyPressedAgain()) Cycle(1);
         }
         catch (Exception e)
         {
@@ -149,29 +127,6 @@ internal sealed class GearCycler : MonoBehaviour
         foreach (var (action, slot) in SlotKeys)
             if (slot == wielded && InputMapper.GetButtonDownKeyMouse(action, eFocusState.FPS)) return true;
         return false;
-    }
-
-    private void Restore()
-    {
-        var player = PlayerManager.GetLocalPlayerAgent();
-        if (player == null || !player.Alive) return;
-        if (starting.Count == 0)
-        {
-            Show("Already on your starting loadout");
-            return;
-        }
-
-        var hand = player.Inventory.WieldedSlot;
-        foreach (var (slot, gear) in starting)
-        {
-            var category = gear.GetCompID(eGearComponent.Category);
-            var current = pending.TryGetValue(slot, out var building) ? building : CategoryIn(slot);
-            if (current == category) continue;
-            if (!pending.ContainsKey(slot)) SaveAmmo(slot);
-            Equip(slot, gear, hand);
-        }
-        starting.Clear();
-        Show("Starting loadout restored");
     }
 
     private void Equip(InventorySlot slot, GearIDRange gear, InventorySlot wieldAfter)

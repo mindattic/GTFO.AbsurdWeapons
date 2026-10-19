@@ -293,13 +293,13 @@ stealth by the windup, sent to everyone. Wielding anything but the dagger ends t
 
 ### In-level weapon swapping (`GearCycler`)
 
-An injected MonoBehaviour reads `[Gear Cycling]` keys (PageUp / PageDown) while
-`FocusStateManager.CurrentState` is `FPS`, and - with `SlotKeysCycle` on - the game's own
+An injected MonoBehaviour reads, while `FocusStateManager.CurrentState` is `FPS`, the game's own
 `SelectMelee`/`SelectStandard`/`SelectSpecial`/`SelectTool` actions when that slot is already the
-wielded one (the game ignores that press itself), which cycle forward like PageUp. For the wielded slot (standard, special, class or melee)
+wielded one (the game ignores that press itself), which cycle the slot forward. It has no keys or
+settings of its own. For the wielded slot (standard, special, class or melee)
 the cycle is the slot's starting gear (its `BackpackItem.GearIDRange`, recorded on the slot's first
 swap of the level) followed by the `GearManager.GetAllGearForSlot` entries whose category is in
-`DataBlocks.AddedCategories`. It equips the next or previous with
+`DataBlocks.AddedCategories`. It equips the next with
 `PlayerBackpackManager.EquipLocalGear` - the lobby's own path, which syncs - and shows a
 five-second `PUI_WardenIntel` sub-objective message.
 
@@ -307,8 +307,7 @@ five-second `PUI_WardenIntel` sub-objective message.
 and the slot's `GetAmmoInPack` reserve under the outgoing gear's category. `FinishPending` waits
 until each newly equipped item `IsLoaded` (5 s at most), then puts its saved ammo back - or, for
 one of ours never seen this level, a full magazine and `AmmoMaxCap` reserve - and re-wields the
-slot. **Home** re-equips every slot whose category differs from its starting gear the same way.
-Everything clears on leaving `InLevel`.
+slot. Everything clears on leaving `InLevel`.
 
 ### Mjolnir's throw (`MjolnirThrow`, `ThrownHammer`)
 
@@ -419,7 +418,7 @@ src/GTFO.EZ.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the 
   VictoryBanner.cs      Victory Banner placement/pickup and healing
   GrenadeLauncher.cs    Grenade Pistol/Rifle launch, grenade flight, fuse, blast
   SwordTempo.cs         the swords' light-attack speeds
-  GearCycler.cs         PageUp/PageDown in-level weapon swapping, Home restores the starting loadout
+  GearCycler.cs         In-level weapon swapping on a second press of the slot keys
   LaserGuns.cs          trigger-driven laser beam (no shots), its ticks and burn
   Sounds.cs             per-weapon sound choices, vanilla shot audio suppression, loop sounds
   KatanaDash.cs         the Katana's full-charge dash-slash
@@ -500,11 +499,11 @@ Still to verify in-game:
 - Warhammer: every landed hit staggers everything within 6 m, including the struck enemy; check
   which heavies shrug it off.
 - New since the last in-game test: Grenade Pistol/Rifle (model, bounce, fuse, flash,
-  blast), Railgun, Chain Lightning Gun, PageUp/PageDown swapping mid-level.
+  blast), Railgun, Chain Lightning Gun, slot-key swapping mid-level.
 
 - Victory Banner: firing it sets one down right in front of you (no throw); walking up to it and
-  pressing Use (within 2.5 m) picks it back up; PageUp/PageDown away from it, re-equipping another
-  tool, or Home's restore all despawn it on their own within half a second. The ring heals everyone
+  pressing Use (within 2.5 m) picks it back up; cycling the tool slot away from it or re-equipping
+  another tool despawns it on its own within half a second. The ring heals everyone
   standing in it; that's all it does now (the damage buff was removed).
 - Tentacle Cannon (tentacles draw and bite, confirmed):
   - The level fan reads as wild without going up or down.
@@ -541,7 +540,7 @@ Still to verify in-game:
 
 `BepInEx/config/MindAttic.GTFO.EZ.AbsurdWeapons.cfg`: first `[0. Mod]` (the master switch below), then
 one section per weapon (a pistol/rifle pair shares one, since they share stats), plus `[Knockback]`,
-`[Tentacles]`, `[Gear Cycling]`, `[Sounds]` and `[Internal]` (the migration version - don't edit).
+`[Tentacles]`, `[Sounds]` and `[Internal]` (the migration version - don't edit).
 **The full reference - every setting, its default and what it does - is in
 [`package/README.md`](package/README.md#config).**
 
@@ -558,7 +557,7 @@ Conventions:
   due run the next time the mod is on.
 - **`<Weapon> Enabled`** (default `true`), in each weapon's own section, is checked first thing in
   `MeleeInjector.TryAdd` / `GunInjector.TryAdd`: off, the weapon's
-  datablocks are never registered, so it's absent from the loadout and the Page Up/Down cycle
+  datablocks are never registered, so it's absent from the loadout and the weapon cycle
   (`GearCycler` cycles `DataBlocks.AddedCategories`). Same key style as GTFO.EZ's own toggles.
 - **Restart vs live:** anything that goes into a datablock - every `Enabled`, gun
   `Damage`/`ShotDelay`/`ClipSize`, the melee archetype overrides, the seeker/laser/impact-burst kinds

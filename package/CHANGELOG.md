@@ -54,10 +54,11 @@
 - Loot consumables are only Hand Grenades and health, tool and ammo kits (`[Loot]`), plus Stim
   Packs when switched on - the Stim Pack is off by default for now.
   Artifacts stay as rare as vanilla.
-- Swap weapons in a level with Page Up / Page Down (configurable): the gear you dropped in with joins
-  the cycle the first time you swap, and Home puts it all back.
+- Swap weapons in a level by pressing a slot's own key again (1 to 4 by default, following rebinds): the
+  gear you dropped in with joins the cycle the first time you swap. No keys of its own - the Page Up /
+  Page Down / Home keys and the `[Gear Cycling]` settings are gone.
 - Config: every weapon has its own on/off switch (`<Weapon> Enabled`, pistol and rifle versions
   separately), and 200+ settings retune them - damage, rate of fire, ranges, blasts, the Katana's
   dash, Mjolnir's throw, the Warhammer's shockwave and slam, the Shadow Dagger's stealth, Chain
-  Lightning's jump count, every sound, and more. `[Gear Cycling]` keys; `[Tentacles] PoolMultiplier`
+  Lightning's jump count, every sound, and more. `[Tentacles] PoolMultiplier`
   raises how many tentacles the game can draw at once. Full reference in the README.
