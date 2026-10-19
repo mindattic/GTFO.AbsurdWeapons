@@ -96,7 +96,7 @@ internal static class StimPack
     private static void BeforeAddHealth(Dam_SyncedDamageBase __instance, ref float addHealth)
     {
         if (!applying) return;
-        var max = Overheal.OriginalMax(__instance);
+        var max = Overheal.BaseMax(__instance);
         addHealth = max * HealPercent.Value / 100f;
         Overheal.Grant(__instance, addHealth);
     }
@@ -121,6 +121,9 @@ internal static class StimPack
 /// <summary>
 /// The local player's overheal. AddHealth caps at max natively, so the overheal is pushed with the
 /// synced SendSetHealth afterwards, raising HealthMax for its duration if the game caps that too.
+/// Only the overheal's own share of HealthMax (<c>raisedBy</c>) is ever added or taken back, so
+/// anything else that changes max health meanwhile (GTFO.EZ's Bold artifact) is left intact; the
+/// player's real max is always the live HealthMax minus that share.
 /// Health is stepped once a second rather than every frame to keep network traffic down.
 /// </summary>
 internal static class Overheal
@@ -130,12 +133,21 @@ internal static class Overheal
     private const int OverhealAttempts = 2;
 
     private static IntPtr owner;
-    private static bool active, maxRaised;
-    private static float target, originalMax, lastSent = float.NaN, untilTick;
+    private static bool active;
+    private static float target, raisedBy, lastSent = float.NaN, untilTick;
     private static int attempt;
 
-    internal static float OriginalMax(Dam_SyncedDamageBase damage) =>
-        active && maxRaised && damage.Pointer == owner ? originalMax : damage.HealthMax;
+    // Max health without the overheal's own raise.
+    internal static float BaseMax(Dam_SyncedDamageBase damage) =>
+        damage.Pointer == owner ? damage.HealthMax - raisedBy : damage.HealthMax;
+
+    // Raises or lowers the overheal's share of HealthMax to `share`, leaving the rest of max alone.
+    private static void SetRaise(Dam_SyncedDamageBase damage, float share)
+    {
+        share = Mathf.Max(0f, share);
+        damage.HealthMax += share - raisedBy;
+        raisedBy = share;
+    }
 
     internal static void Grant(Dam_SyncedDamageBase damage, float amount)
     {
@@ -143,28 +155,28 @@ internal static class Overheal
         {
             Clear();
             owner = damage.Pointer;
-            originalMax = damage.HealthMax;
         }
-        var cap = originalMax * Mathf.Max(100f, StimPack.MaxHealthPercent.Value) / 100f;
+        var max = BaseMax(damage);
+        var cap = max * Mathf.Max(100f, StimPack.MaxHealthPercent.Value) / 100f;
         target = Mathf.Min(cap, Current(damage.Health) + amount);
-        if (target <= originalMax + Epsilon)
+        if (target <= max + Epsilon)
         {
-            End(null, "plain heal, nothing over max");
+            End(damage, "plain heal, nothing over max");
             return;
         }
         active = true;
         attempt = 0;
         lastSent = float.NaN;
         untilTick = TickSeconds;
-        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Stim Pack: overhealing to {target:0.##} HP (max {originalMax:0.##}).");
+        Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Stim Pack: overhealing to {target:0.##} HP (max {max:0.##}).");
     }
 
     internal static void Clear(Dam_SyncedDamageBase? sameInstance = null)
     {
-        if (maxRaised && sameInstance != null && sameInstance.Pointer == owner) sameInstance.HealthMax = originalMax;
+        if (raisedBy > 0f && sameInstance != null && sameInstance.Pointer == owner) SetRaise(sameInstance, 0f);
         owner = IntPtr.Zero;
         active = false;
-        maxRaised = false;
+        raisedBy = 0f;
         lastSent = float.NaN;
     }
 
@@ -179,19 +191,16 @@ internal static class Overheal
         // First the overheal is pushed past the native cap (raising max if a plain push doesn't
         // stick); once it has stuck - or damage has taken health back under max - it only drains.
         var health = local.Health;
+        var max = BaseMax(local);
         if (attempt <= OverhealAttempts)
         {
-            if (health >= target - Epsilon || health < originalMax - Epsilon)
+            if (health >= target - Epsilon || health < max - Epsilon)
             {
                 attempt = OverhealAttempts + 1;
             }
             else if (attempt < OverhealAttempts)
             {
-                if (attempt == 1 && target > local.HealthMax + Epsilon)
-                {
-                    local.HealthMax = target;
-                    maxRaised = true;
-                }
+                if (attempt == 1 && target > local.HealthMax + Epsilon) SetRaise(local, target - max);
                 local.SendSetHealth(target);
                 lastSent = target;
                 attempt++;
@@ -205,28 +214,28 @@ internal static class Overheal
         }
 
         var now = Current(health);
-        if (now <= originalMax + Epsilon)
+        if (now <= max + Epsilon)
         {
             End(local, "back at max health");
             return;
         }
-        var next = Mathf.Max(originalMax, now - originalMax * StimPack.DrainPercentPerSecond.Value / 100f * elapsed);
-        if (maxRaised) local.HealthMax = Mathf.Max(originalMax, next);
+        var next = Mathf.Max(max, now - max * StimPack.DrainPercentPerSecond.Value / 100f * elapsed);
+        if (raisedBy > 0f) SetRaise(local, next - max);
         local.SendSetHealth(next);
         lastSent = next;
-        if (next <= originalMax + Epsilon) End(local, "drained back to max health");
+        if (next <= max + Epsilon) End(local, "drained back to max health");
     }
 
     // On a client, Health can briefly read the pre-SendSetHealth value; trusting the last value
     // sent stops a stale read from undoing a drain step.
     private static float Current(float health) => float.IsNaN(lastSent) ? health : Mathf.Min(health, lastSent);
 
-    private static void End(Dam_PlayerDamageLocal? local, string reason)
+    private static void End(Dam_SyncedDamageBase damage, string reason)
     {
-        if (local != null && maxRaised)
+        if (raisedBy > 0f && damage.Pointer == owner)
         {
-            local.HealthMax = originalMax;
-            if (local.Health > originalMax) local.SendSetHealth(originalMax);
+            SetRaise(damage, 0f);
+            if (damage.Health > damage.HealthMax) damage.SendSetHealth(damage.HealthMax);
         }
         if (active) Plugin.Logger.LogInfo($"GTFO.AbsurdWeapons Stim Pack overheal ended: {reason}.");
         Clear();
