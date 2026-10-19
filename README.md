@@ -9,7 +9,7 @@ player-facing breakdown and the full config reference.
 
 Not yet published on Thunderstore (the package name will be `GtfoEZAbsurdWeapons`).
 
-GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite ammo and health toggles and their warden messages) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdWeapons before its first release.
+GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite ammo and health toggles, and MessageHelper, which puts on-screen messages wherever they fit) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdWeapons before its first release.
 
 Like GTFO.EZ, this ships no copies of the game's data files. It patches `GameDataInit.Initialize`
 and registers new datablocks cloned from the game's own loaded ones at runtime, so the weapons

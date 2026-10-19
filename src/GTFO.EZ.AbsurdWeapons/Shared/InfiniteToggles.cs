@@ -1,4 +1,4 @@
-// Generated from GTFO.EZ src/GTFO.EZ/Shared/InfiniteToggles.cs (dc46943) - don't edit here.
+// Generated from GTFO.EZ src/GTFO.EZ/Shared/InfiniteToggles.cs (9591f5f) - don't edit here.
 // Change GTFO.EZ's copy and run GTFO.EZ/tools/publish-shared.ps1.
 using System;
 using Gear;
@@ -8,8 +8,9 @@ using UnityEngine;
 
 namespace MindAttic.GTFO.Shared;
 
-// Insert toggles infinite ammo, Delete infinite health, in every GTFO.* mod, each announced as a
-// warden message. Only the owning copy (SharedOwner) reads the keys and refills ammo; the on/off
+// Insert toggles infinite ammo, Delete infinite health, in every GTFO.* mod, each announced in the
+// event log (MessageHelper), where it can't cut off a warden objective. Only the owning copy
+// (SharedOwner) reads the keys and refills ammo; the on/off
 // state is shared, so every copy's damage block and any mod's own guns (InfiniteAmmoOn) agree.
 // Off at every game launch, and they stay as set across expeditions until toggled again.
 internal static class InfiniteToggles
@@ -50,7 +51,7 @@ internal static class InfiniteToggles
     {
         try
         {
-            if (!WardenMessage.Show(message)) SharedOwner.Log.LogInfo(message);
+            if (!MessageHelper.Show(message, MessageType.EventLog)) SharedOwner.Log.LogInfo(message);
         }
         catch (Exception e)
         {

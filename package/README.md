@@ -3,7 +3,7 @@
 *(Listed on Thunderstore as `GtfoEZAbsurdWeapons` — package names there are restricted to letters, numbers,
 and underscores, so they can't contain a period.)*
 
-GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite ammo and health toggles and their warden messages) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdWeapons before its first release.
+GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on [GTFO.EZ](https://github.com/mindattic/GTFO.EZ)'s core: it carries GTFO.EZ's shared code (the Insert/Delete infinite ammo and health toggles, and MessageHelper, which puts on-screen messages wherever they fit) and works with or without GTFO.EZ installed. It was called GTFO.AbsurdWeapons before its first release.
 
 A BepInEx plugin for GTFO that adds **eighteen new weapons**: four melee weapons, thirteen guns
 and a tool. No game files are shipped or edited. Every weapon is built at load time from the game's own
@@ -515,7 +515,7 @@ Shared by everything that flings enemies (the Warhammer).
 | `StreamPercentPerSecond` | 2 | Ammo reserve the beam guns use per second of fire, in percent of a full reserve. |
 
 **Insert** toggles infinite ammo (every gun, this mod's and vanilla, never runs out or reloads) and
-**Delete** infinite health, each announced as a warden message and off at the start. They're the
+**Delete** infinite health, each announced in the event log and off at the start. They're the
 same two keys every GTFO.* mod has, from one shared copy of the code; with several installed only
 one answers, so a press never toggles twice.
 

@@ -214,12 +214,12 @@ internal sealed class GearCycler : MonoBehaviour
     private static bool IsOurs(uint categoryId) => DataBlocks.AddedCategories.Contains(categoryId);
 
     // A new message replaces one of ours (or another GTFO.* mod's) still up, instead of queueing
-    // behind it; the game's own messages are never cut short (MindAttic.GTFO.Shared.WardenMessage).
+    // behind it; the game's own messages are never cut short (MindAttic.GTFO.Shared.MessageHelper).
     internal static void Show(string message)
     {
         try
         {
-            WardenMessage.Show(message);
+            MessageHelper.Show(message, MessageType.Warden);
         }
         catch (Exception e)
         {
