@@ -185,3 +185,4 @@ _Nothing recorded yet._
 | G.AWPN-T158 | 2026-10-18 | fix | closed | Victory Banner: a teammate who leaves mid-level leaves their banner up, healing everyone for up to 10 minutes | — |
 | G.AWPN-T159 | 2026-10-18 | fix | closed | Shrink Beam: with GunShotDelay 0 or less, teammates never see the target shrink (or see it grow) - the shooter clamps the tick, the receivers don't | — |
 | G.AWPN-T160 | 2026-10-18 | fix | closed | Mjolnir: ThrowPulseJumps above 5 strikes more enemies than teammates are shown (the bolt message holds 5 jumps); the setting is unbounded | — |
+| G.AWPN-T161 | 2026-10-18 | fix | closed | Shared code from GTFO.EZ (G.EZ-T72/T75): warden message never cuts the game's own short; infinite-health check can't throw | — |
