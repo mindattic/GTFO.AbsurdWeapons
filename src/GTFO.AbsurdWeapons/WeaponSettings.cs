@@ -70,9 +70,9 @@ internal sealed class WeaponSettings
         AttackSphereRadius = file.Bind(weapon, "AttackSphereRadius", 0f, "How wide a swing's hit sphere is, in meters. 0 keeps the built-in value. Takes effect on restart.");
         ChargeSpeedMulti = file.Bind(weapon, "ChargeSpeedMulti", 0f, "Move-speed multiplier while charging (1 = normal speed). 0 keeps the built-in value. Takes effect on restart.");
         LightAttackSpeed = file.Bind(weapon, "LightAttackSpeed", 0f,
-            $"Light-attack pace: 2 swings twice as fast. 0 keeps the built-in value ({lightAttackSpeed}). Takes effect on restart.");
+            $"Light-attack pace: 2 swings twice as fast. 0 (or less) keeps the built-in value ({lightAttackSpeed}). Takes effect on restart.");
         ChargedAttackSpeed = file.Bind(weapon, "ChargedAttackSpeed", 0f,
-            $"Pace of a charged swing's release and hit (the charge-up keeps its own timing). 0 keeps the built-in value ({chargedAttackSpeed}). Takes effect on restart.");
+            $"Pace of a charged swing's release and hit (the charge-up keeps its own timing). 0 (or less) keeps the built-in value ({chargedAttackSpeed}). Takes effect on restart.");
     }
 
     internal static void Bind(ConfigFile file)
@@ -85,8 +85,9 @@ internal sealed class WeaponSettings
         ShadowDagger = new WeaponSettings(file, "Shadow Dagger", 1f, "1.75, the knife's", lightAttackSpeed: 2.5f);
     }
 
-    // `entry` wins when it's set (non-zero); otherwise the built-in `builtIn` value.
-    internal static float Or(ConfigEntry<float> entry, float builtIn) => entry.Value != 0f ? entry.Value : builtIn;
+    // `entry` wins when it's set (above zero); otherwise the built-in `builtIn` value. A pace can't
+    // be negative: one would play the swing's animation backwards while its timings kept their own.
+    internal static float Or(ConfigEntry<float> entry, float builtIn) => entry.Value > 0f ? entry.Value : builtIn;
 
     internal static WeaponSettings? ForCategory(uint categoryId) => categoryId switch
     {
