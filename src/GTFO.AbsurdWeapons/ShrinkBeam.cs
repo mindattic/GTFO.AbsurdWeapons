@@ -49,10 +49,10 @@ internal static class ShrinkBeam
         ShrinkPerSecond = config.Bind("Shrink Beam", "ShrinkPerSecond", 0.25f, "Share of full size (and speed) removed per second the beam holds on an enemy.");
         RegrowDelaySeconds = config.Bind("Shrink Beam", "RegrowDelaySeconds", 1f, "Seconds off the beam before a shrunk enemy starts growing back.");
         RegrowPerSecond = config.Bind("Shrink Beam", "RegrowPerSecond", 0.15f, "Share of full size regained per second once it starts growing back.");
-        MinScale = config.Bind("Shrink Beam", "MinScale", 0.33f, "Share of full size at which it gibs.");
+        MinScale = config.Bind("Shrink Beam", "MinScale", 0.45f, "Share of full size at which it gibs.");
         PopDamage = config.Bind("Shrink Beam", "PopDamage", 99999f, "Damage dealt on the pop (enough to kill anything outright).");
-        StepOnScale = config.Bind("Shrink Beam", "StepOnScale", 0.5f, "At or below this share of full size you can step on it: get within StepOnRadius and look down at it and it gibs.");
-        StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 1f, "Metres from a small-enough enemy within which looking down at it steps on it.");
+        StepOnScale = config.Bind("Shrink Beam", "StepOnScale", 0.7f, "At or below this share of full size you can step on it: get within StepOnRadius and look down at it and it gibs.");
+        StepOnRadius = config.Bind("Shrink Beam", "StepOnRadius", 2f, "Metres from a small-enough enemy within which looking down at it steps on it.");
         StepOnLookConeDegrees = config.Bind("Shrink Beam", "StepOnLookConeDegrees", 35f, "How close to your crosshair a small-enough enemy has to be for you to count as looking down at it.");
         GunShotDelay = config.Bind("Shrink Beam", "GunShotDelay", 0.08f, "Seconds between beam ticks (it never actually fires - the stream is trigger-driven).");
         GunClipSize = config.Bind("Shrink Beam", "GunClipSize", 100, "Magazine size.");

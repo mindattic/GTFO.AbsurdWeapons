@@ -100,7 +100,7 @@ internal static class GunInjector
         LaserClipSize = config.Bind("Laser Guns", "ClipSize", 100, "Magazine size.");
         LaserPistolEnabled = config.Bind("Laser Guns", "Laser Pistol Enabled", true, "Adds the Laser Pistol (main slot) to the loadout screen. Takes effect on restart.");
         LaserRifleEnabled = config.Bind("Laser Guns", "Laser Rifle Enabled", true, "Adds the Laser Rifle (special slot) to the loadout screen. Takes effect on restart.");
-        RailgunDamage = config.Bind("Railgun", "Damage", 150f, "Damage to every enemy on the line (Quake's rail kills outright).");
+        RailgunDamage = config.Bind("Railgun", "Damage", 9999f, "Damage to every enemy on the line (kills anything outright).");
         RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
         RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Magazine size.");
         RailgunEnabled = config.Bind("Railgun", "Railgun Enabled", true, "Adds the Railgun to the loadout screen. Takes effect on restart.");

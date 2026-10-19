@@ -12,7 +12,7 @@ namespace GTFO.AbsurdWeapons;
 
 /// <summary>
 /// The Railgun: one hitscan slug with infinite penetration. It goes through every enemy and every
-/// wall along its line, out to 200 m, hitting each enemy once (through the limb it meets first,
+/// wall along its line, out to 1000 m, hitting each enemy once (through the limb it meets first,
 /// so a head is still a head) via the normal bullet path, so it syncs. It's drawn as a white-hot
 /// beam wrapped in a double helix that spins, widens and fades, with sparks wherever it punches
 /// through a wall. Teammates are sent each shot and see the same beam.
@@ -24,7 +24,7 @@ internal static class Railgun
     private const float BeamStartAhead = 1.2f; // metres past where the gun sits on screen
 
     internal static void Bind(ConfigFile config) =>
-        Range = config.Bind("Railgun", "PenetrationRange", 200f, "Metres the piercing slug reaches.");
+        Range = config.Bind("Railgun", "PenetrationRange", 1000f, "Metres the piercing slug reaches, through every enemy and wall on the way.");
 
     internal static void Init()
     {
@@ -105,8 +105,8 @@ internal sealed class RailBeam : MonoBehaviour
     private const float Radius = 0.06f;
     private const float Width = 0.03f;
     // Green-tinted and semi-transparent from the start (alpha below 1), then faded to nothing.
-    private static readonly Color StrandA = new(0.2f, 1f, 0.35f, 0.6f);
-    private static readonly Color StrandB = new(0.1f, 0.65f, 0.2f, 0.6f);
+    private static readonly Color StrandA = new(0.15f, 1f, 0.8f, 0.6f);
+    private static readonly Color StrandB = new(0.05f, 0.6f, 0.65f, 0.6f);
     private static Material? material;
 
     private LineRenderer strandA = null!, strandB = null!;

@@ -170,8 +170,8 @@ shot is a **lock melter rigged to blow**.
 ### Railgun (special)
 
 The Köning PR 11, semi-auto, one shot every 1.5 seconds. Each shot is an instant slug with **infinite
-penetration**: it goes through every enemy and every wall out to 200 m, doing **150 damage** to every
-enemy on the line (headshots still count). It's drawn as a green double helix along the shot
+penetration**: it goes through every enemy and every wall out to 1000 m, doing **9999 damage** to every
+enemy on the line - it kills anything it touches. It's drawn as a teal (green-blue) double helix along the shot
 that fades away to nothing over 0.8 s, with sparks wherever it punches through a wall. Keeps
 the sniper's scope, with no kickback.
 
@@ -198,8 +198,8 @@ a chain of mid-air explosions, or burst one over a crowd or around a corner.
 
 A continuous green ray. Hold it on an enemy and it shrinks - smaller and slower by the same share -
 the longer you keep the beam on it; let go and, after a second off the beam, it starts growing back,
-so a shrink has to finish in one sustained hold. Shrink it to **33%** of its size and it gibs
-outright. Once it's at **50%** size or smaller, get within **1 m** of it and look down at it and you
+so a shrink has to finish in one sustained hold. Shrink it to **45%** of its size and it gibs
+outright. Once it's at **70%** size or smaller, get within **2 m** of it and look down at it and you
 step on it - it gibs too.
 
 ## Tool
@@ -480,10 +480,10 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Damage` † | 150 | Damage to every enemy on the line. |
+| `Damage` † | 9999 | Damage to every enemy on the line. |
 | `ShotDelay` † | 1.5 | Seconds between shots. |
 | `ClipSize` † | 5 | Magazine size. |
-| `PenetrationRange` | 200 | Metres the piercing slug reaches. |
+| `PenetrationRange` | 1000 | Metres the piercing slug reaches. |
 
 ### `[Chain Lightning Gun]`
 
@@ -522,10 +522,10 @@ Shared by everything that flings enemies (the Warhammer).
 | `ShrinkPerSecond` | 0.25 | Share of full size (and speed) removed per second on the beam. |
 | `RegrowDelaySeconds` | 1 | Seconds off the beam before a shrunk enemy starts growing back. |
 | `RegrowPerSecond` | 0.15 | Share of full size regained per second while growing back. |
-| `MinScale` | 0.33 | Share of full size at which it gibs. |
+| `MinScale` | 0.45 | Share of full size at which it gibs. |
 | `PopDamage` | 99999 | Damage dealt when it gibs. |
-| `StepOnScale` | 0.5 | At or below this share of full size you can step on it. |
-| `StepOnRadius` | 1 | Metres within which looking down at a small-enough enemy steps on it. |
+| `StepOnScale` | 0.7 | At or below this share of full size you can step on it. |
+| `StepOnRadius` | 2 | Metres within which looking down at a small-enough enemy steps on it. |
 | `StepOnLookConeDegrees` | 35 | How close to your crosshair it has to be to count as looking down at it. |
 
 ### `[Victory Banner]`

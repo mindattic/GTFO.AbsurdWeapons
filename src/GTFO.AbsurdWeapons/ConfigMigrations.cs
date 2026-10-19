@@ -34,6 +34,11 @@ internal static class ConfigMigrations
         (9, "Loot", "HandGrenadeWeight", 2f),
         (10, "Stim Pack", "Stim Pack Enabled", true),
         (11, "Ammo", "StreamPercentPerSecond", 1f),
+        (12, "Railgun", "Damage", 150f),
+        (12, "Railgun", "PenetrationRange", 200f),
+        (12, "Shrink Beam", "MinScale", 0.33f),
+        (12, "Shrink Beam", "StepOnScale", 0.5f),
+        (12, "Shrink Beam", "StepOnRadius", 1f),
     };
 
     // After every setting is bound.

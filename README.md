@@ -36,7 +36,7 @@ category and renamed. The model's own gear entry also decides the inventory slot
 | Tentacle Cannon | 1103 | the XDist2's archetype | the XDist2's | `ShotgunRanged` (Buckland XDist2, special, iron sights) | `AddTentacle`: `FireMode` Auto, 1 pellet, no cone or spread, damage 25 (per tentacle bite), shot delay 0.235 s, `ShellCasingSize` 0, clip 60, no spin-up, own kickless `RecoilDataBlock` 1103, own first-person hold `ItemFPSSettingsDataBlock` 1103 (`AddFarLowHold`: vanilla `Shotgun` pushed lower and further out, aim FOV 30); the lashes (from twelve fixed spawn spots) are runtime (`TentacleCannon`) |
 | Laser Pistol | 1106 | the DEL P1's archetype (shared with the Laser Rifle) | the Treffen 2's | `Pistolauto` (Raptus Treffen 2, main, no sight) | `AddLaser`: `FireMode` Auto, damage 2 per tick, beam 70 m, shot delay 0.05 s (20 ticks/s), clip 100, no spread, `ShellCasingSize` 0, kickless recoil 1106, hold swapped to `ItemFPSSettings` 48 (`Pistol_Chunky`, 10 cm lower) so the beam shows; the beam is runtime (`LaserGuns`) |
 | Laser Rifle | 1107 | the DEL P1's archetype | the ND6's | `SMGHeavyAuto` (Accrat ND6, no animated parts) | `AddLaser`: same stats as the Laser Pistol, kickless recoil 1107, model's own hold; the ND6 is a main-slot SMG in vanilla, so its cloned gear category's `BaseItem` is forced to the special slot's item (`forceSpecialSlot: true`) |
-| Railgun | 1108 | the PR 11's archetype for its fire mode | the PR 11's (`Sniper`) | `SniperSemi` (Koning PR 11, special) | `AddRailgun`: Semi, damage 150 (to every enemy on the line), shot delay 1.5 s, clip 5, no spread, `ShellCasingSize` 0, the sniper's own recoil and scope; the slug is runtime (`Railgun`) |
+| Railgun | 1108 | the PR 11's archetype for its fire mode | the PR 11's (`Sniper`) | `SniperSemi` (Koning PR 11, special) | `AddRailgun`: Semi, damage 9999 (to every enemy on the line), shot delay 1.5 s, clip 5, no spread, `ShellCasingSize` 0, the sniper's own recoil and scope; the slug is runtime (`Railgun`) |
 | Chain Lightning Gun | 1109 | the exp1's archetype for its fire mode | the exp1's (`MachineGun_LowRPM`) | `HELGun` (Omneco exp1, special) | `AddChainLightning`: Auto, damage 5 (first strike), shot delay 0.15 s, clip 60, no spread or spin-up, no brass, kickless recoil 1109; the bolts are runtime (`ChainLightning`) |
 | Grenade Pistol | 1115 | the Arid 5's archetype (shared with the Grenade Rifle) | the 3RB's | `RevolverHEL` (Bataldo 3RB, main) | `AddGrenadeGun`: Semi, 1 round, no spread, damage shown 75 (the blast), shot delay 0.6 s, clip 6, no brass, the Arid 5's recoil; each round is a grenade (`GrenadeLauncher`) |
 | Grenade Rifle | 1116 | same archetype as the Grenade Pistol | the Veruta XII's | `MachinegunAuto` (TechMan Veruta XII, special) | `AddGrenadeGun`: same stats as the Grenade Pistol |
@@ -204,7 +204,7 @@ lands right there. If the release won't take, a `BulletDamage` cut stands in.
 ### Railgun (`Railgun`, `RailBeam`)
 
 The `CastWeaponRay` prefix swallows the Railgun's ray. For the local shooter `Railgun.Fire` runs
-`RaycastAll` on `MASK_ENEMY_DAMAGABLE` along the aim out to 200 m - walls don't stop it - sorts the
+`RaycastAll` on `MASK_ENEMY_DAMAGABLE` along the aim out to 1000 m - walls don't stop it - sorts the
 hits by distance and calls `BulletDamage` once per enemy on the first limb met (so a head is a
 head). `RailBeam` draws two helix strands (`LineRenderer`s) around the first 80 m (2.4 m a turn, 12
 points a turn, 6 cm radius), laid out once and then just faded to transparent over 0.8 s, with an
