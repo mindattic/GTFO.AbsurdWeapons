@@ -196,3 +196,4 @@ _Nothing recorded yet._
 | G.AWPN-T169 | 2026-10-18 | feature | closed | Launcher grenades and rockets explode on hitting a teammate or bot too (never the shooter), not just enemies and walls (user request) | 5c762d5 (landed together with G.AWPN-T170) |
 | G.AWPN-T170 | 2026-10-18 | feature | closed | Rocket Launcher: dust trail much sparser and 1.5 m behind the rocket, plus a steady glow, so you can see the rocket to time a right-click detonation (user request) | — |
 | G.AWPN-T171 | 2026-10-19 | chore | closed | Remove the removed Flamethrower's leftover afterburn formula (Formulas.AfterburnStacks) and its test | — |
+| G.AWPN-T172 | 2026-10-19 | fix | closed | Shadow Dagger glow stayed lit where a teammate stood after they left: StealthVisuals now drops glows of players no longer in the level (fixed in working tree, uncommitted) | StealthVisuals held-glow pruning; build 0 warnings |

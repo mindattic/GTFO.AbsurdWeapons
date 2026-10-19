@@ -298,7 +298,7 @@ internal sealed class StealthVisuals : MonoBehaviour
         try
         {
             var players = PlayerManager.PlayerAgentsInLevel;
-            HashSet<IntPtr>? present = hidden.Count > 0 ? new() : null;
+            HashSet<IntPtr>? present = hidden.Count > 0 || held.Count > 0 ? new() : null;
             if (players != null) foreach (var player in players)
             {
                 if (player == null) continue;
@@ -321,8 +321,18 @@ internal sealed class StealthVisuals : MonoBehaviour
             }
 
             // Someone who left (or a level that ended) while hidden is never visited above again:
-            // their see-through copies are dropped here instead of leaking.
+            // their see-through copies are dropped here instead of leaking, and a dagger's glow
+            // goes out rather than staying lit where they last stood.
             if (present == null) return;
+            List<IntPtr>? leftGlow = null;
+            foreach (var pointer in held.Keys)
+                if (!present.Contains(pointer)) (leftGlow ??= new List<IntPtr>()).Add(pointer);
+            if (leftGlow != null)
+                foreach (var pointer in leftGlow)
+                {
+                    if (held[pointer].Glow != null) Destroy(held[pointer].Glow.gameObject);
+                    held.Remove(pointer);
+                }
             List<IntPtr>? gone = null;
             foreach (var pointer in hidden.Keys)
                 if (!present.Contains(pointer)) (gone ??= new List<IntPtr>()).Add(pointer);
