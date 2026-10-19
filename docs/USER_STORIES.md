@@ -181,3 +181,4 @@ _Nothing recorded yet._
 | G.AWPN-T154 | 2026-10-18 | feature | closed | Master switch: [0. Mod] Enabled as the cfg's first entry; off means the mod loads nothing (user request) | — |
 | G.AWPN-T155 | 2026-10-18 | feature | closed | Shared code republished from GTFO.EZ: SharedOwner treats a switched-off GTFO.* mod as not installed; the laser guns read GTFO.AbsurdMoves' Fire While Running through SharedOwner.TryGetSetting | f18efc9 |
 | G.AWPN-T156 | 2026-10-18 | fix | closed | Melee attack speed: the animation follows a mid-session LightAttackSpeed/ChargedAttackSpeed edit while the swing timings stay baked from startup | — |
+| G.AWPN-T157 | 2026-10-18 | fix | closed | Melee attack speed: a negative LightAttackSpeed/ChargedAttackSpeed plays the swing backwards instead of keeping the built-in pace | — |
