@@ -332,7 +332,7 @@ Each of `[Katana]`, `[Mjolnir]`, `[Warhammer]` and `[Shadow Dagger]` has these:
 | `ThrowPulseSeconds` | 0.12 | Seconds between the flying hammer's lightning pulses. |
 | `ThrowPulseRange` | 3 | It casts chain lightning whenever an enemy is within this many metres. |
 | `ThrowPulseDamage` | 6 | Damage of a pulse's first strike. |
-| `ThrowPulseJumps` | 2 | Chain-lightning jumps per pulse, after the first strike. |
+| `ThrowPulseJumps` | 2 | Chain-lightning jumps per pulse, after the first strike (0-5). |
 
 ### `[Warhammer]`
 

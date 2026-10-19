@@ -52,7 +52,10 @@ internal static class MjolnirThrow
         PulseSeconds = config.Bind("Mjolnir", "ThrowPulseSeconds", 0.12f, "Seconds between the flying hammer's lightning pulses.");
         PulseRange = config.Bind("Mjolnir", "ThrowPulseRange", 3f, "The flying hammer casts chain lightning whenever an enemy is within this many metres of it.");
         PulseDamage = config.Bind("Mjolnir", "ThrowPulseDamage", 6f, "Damage of a pulse's first strike.");
-        PulseJumps = config.Bind("Mjolnir", "ThrowPulseJumps", 2, "Chain-lightning jumps per pulse, after the first strike.");
+        // Capped like the Chain Lightning Gun's Jumps: the bolt teammates are sent holds that many.
+        PulseJumps = config.Bind("Mjolnir", "ThrowPulseJumps", 2,
+            new ConfigDescription($"Chain-lightning jumps per pulse, after the first strike (at most {ChainLightning.MaxJumps}).",
+                new AcceptableValueRange<int>(0, ChainLightning.MaxJumps)));
     }
 
     internal static void Init()
