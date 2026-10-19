@@ -195,3 +195,4 @@ _Nothing recorded yet._
 | G.AWPN-T168 | 2026-10-18 | fix | closed | Chain Lightning, Tentacle Cannon and Laser Rifle spent their whole reserve on one magazine: copied guns kept the source gun's per-round CostOfBullet but got a 60-100 round magazine. Cost of a round now scales with the magazine size | — |
 | G.AWPN-T169 | 2026-10-18 | feature | closed | Launcher grenades and rockets explode on hitting a teammate or bot too (never the shooter), not just enemies and walls (user request) | 5c762d5 (landed together with G.AWPN-T170) |
 | G.AWPN-T170 | 2026-10-18 | feature | closed | Rocket Launcher: dust trail much sparser and 1.5 m behind the rocket, plus a steady glow, so you can see the rocket to time a right-click detonation (user request) | — |
+| G.AWPN-T171 | 2026-10-19 | chore | closed | Remove the removed Flamethrower's leftover afterburn formula (Formulas.AfterburnStacks) and its test | — |
