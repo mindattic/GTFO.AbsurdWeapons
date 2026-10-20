@@ -378,7 +378,9 @@ internal sealed class TentacleLash : MonoBehaviour
             if (!bitten && age >= OutSeconds)
             {
                 bitten = true;
-                Sounds.Play(Sounds.TentacleBite.Value, end, owner != null);
+                // "Local" is the local player's own lash - not a teammate's copy, nor a host's bot's.
+                var localPlayer = PlayerManager.GetLocalPlayerAgent();
+                Sounds.Play(Sounds.TentacleBite.Value, end, owner != null && localPlayer != null && owner.Pointer == localPlayer.Pointer);
                 Bite();
             }
             Draw(Mathf.Clamp01(extend));
