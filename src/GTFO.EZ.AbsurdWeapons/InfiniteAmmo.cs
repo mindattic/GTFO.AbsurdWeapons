@@ -100,12 +100,16 @@ internal static class InfiniteAmmo
         return clip > 0;
     }
 
-    // Sets the local player's wielded gun's magazine and syncs it to the HUD and teammates.
+    // Sets the local player's wielded gun's magazine and syncs it to the HUD and teammates. Any other
+    // locally owned gun (the host's bots) just gets its magazine: the HUD and LocalBackpack are the
+    // local player's, not the bot's.
     internal static void SetClip(BulletWeapon gun, int clip)
     {
         var storage = PlayerBackpackManager.LocalBackpack?.AmmoStorage;
         var player = gun.Owner;
-        var reserve = player != null ? storage?.GetInventorySlotAmmo(player.Inventory.WieldedSlot) : null;
+        var local = PlayerManager.GetLocalPlayerAgent();
+        var isLocalPlayer = player != null && local != null && player.Pointer == local.Pointer;
+        var reserve = isLocalPlayer ? storage?.GetInventorySlotAmmo(player!.Inventory.WieldedSlot) : null;
         if (storage == null || reserve == null)
         {
             gun.SetCurrentClip(Mathf.Clamp(clip, 0, gun.ClipSize));
