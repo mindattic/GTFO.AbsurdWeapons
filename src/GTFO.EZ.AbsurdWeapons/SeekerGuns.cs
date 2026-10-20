@@ -532,7 +532,12 @@ internal static class Barrel
         // projectile's sphere that starts overlapping the wall doesn't see it). Start clear of it on
         // this side, further off than any projectile's radius, so the shot meets the wall.
         if (Physics.Linecast(eye, from + direction * 0.25f, out var blocked, LayerManager.MASK_WORLD))
+        {
             from = blocked.point + blocked.normal * 0.25f;
+            // Aimed again from here: from a muzzle drawn through the wall it pointed back at us.
+            var fromHere = target - from;
+            direction = fromHere.sqrMagnitude > 0.25f ? fromHere.normalized : aim;
+        }
         return (from, direction);
     }
 }
