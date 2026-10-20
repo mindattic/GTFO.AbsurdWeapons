@@ -524,19 +524,20 @@ internal static class Barrel
     internal static (Vector3 Start, Vector3 Direction) Shot(PlayerAgent? owner, Transform? muzzle, Vector3 eye, Vector3 aim)
     {
         var start = Start(owner, muzzle, eye, aim);
-        var target = Physics.Raycast(eye, aim, out var hit, AimRange, LayerManager.MASK_BULLETWEAPON_RAY) ? hit.point : eye + aim * AimRange;
+        var aimed = Physics.Raycast(eye, aim, out var hit, AimRange, LayerManager.MASK_BULLETWEAPON_RAY);
+        var target = aimed ? hit.point : eye + aim * AimRange;
         var toTarget = target - start;
         var direction = toTarget.sqrMagnitude > 0.25f ? toTarget.normalized : aim; // point-blank: just along the aim
         var from = start + direction * 0.1f;
-        // Up against a wall or door the barrel's point is already through it (or too close: a
-        // projectile's sphere that starts overlapping the wall doesn't see it). Start clear of it on
-        // this side, further off than any projectile's radius, so the shot meets the wall.
-        if (Physics.Linecast(eye, from + direction * 0.25f, out var blocked, LayerManager.MASK_WORLD))
+        // A world surface between the eye and the barrel (up against a wall or door, or beside a
+        // door jamb): the barrel's point is through it or too close to it for a projectile's sphere
+        // to see it. The shot goes from the crosshair's own line instead - known clear up to what it's
+        // on - starting short of that by more than any projectile's radius.
+        if (Physics.Linecast(eye, from + direction * 0.25f, LayerManager.MASK_WORLD))
         {
-            from = blocked.point + blocked.normal * 0.25f;
-            // Aimed again from here: from a muzzle drawn through the wall it pointed back at us.
-            var fromHere = target - from;
-            direction = fromHere.sqrMagnitude > 0.25f ? fromHere.normalized : aim;
+            var clear = aimed ? hit.distance : AimRange;
+            direction = aim.normalized;
+            from = eye + direction * Mathf.Clamp(clear - 0.25f, 0f, 0.5f);
         }
         return (from, direction);
     }
