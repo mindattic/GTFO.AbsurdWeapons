@@ -584,5 +584,6 @@ internal sealed class BannerPylon : MonoBehaviour
     private static Material? ringMaterial;
 
     [HideFromIl2Cpp]
-    private static Material RingMaterial() => ringMaterial ??= new Material(Shader.Find("Sprites/Default")) { color = BannerColor };
+    private static Material RingMaterial() => ringMaterial != null ? ringMaterial // Unity's null: rebuilt if unloaded
+        : ringMaterial = new Material(Shader.Find("Sprites/Default")) { color = BannerColor };
 }

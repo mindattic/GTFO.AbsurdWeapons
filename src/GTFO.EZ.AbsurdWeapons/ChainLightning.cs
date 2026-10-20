@@ -260,7 +260,8 @@ internal sealed class LightningBolt : MonoBehaviour
         bolt.line = go.AddComponent<LineRenderer>();
         bolt.line.useWorldSpace = true;
         bolt.line.numCapVertices = 2;
-        bolt.line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+        if (material == null) material = new Material(Shader.Find("Sprites/Default")); // Unity's null: rebuilt if unloaded
+        bolt.line.material = material;
         bolt.Jag();
 
         // Every strike point after the gun flashes and sparks (a plain miss just sparks).

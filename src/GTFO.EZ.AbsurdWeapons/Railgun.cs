@@ -153,7 +153,8 @@ internal sealed class RailBeam : MonoBehaviour
         line.useWorldSpace = true;
         line.numCapVertices = 2;
         line.startWidth = line.endWidth = Width;
-        line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+        if (material == null) material = new Material(Shader.Find("Sprites/Default")); // Unity's null: rebuilt if unloaded
+        line.material = material;
         return line;
     }
 

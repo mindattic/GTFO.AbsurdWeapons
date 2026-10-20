@@ -457,7 +457,8 @@ internal sealed class ShrinkStream : MonoBehaviour
                 var line = strand.AddComponent<LineRenderer>();
                 line.useWorldSpace = true;
                 line.positionCount = PointsPerStrand;
-                line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+                if (material == null) material = new Material(Shader.Find("Sprites/Default")); // Unity's null: rebuilt if unloaded
+                line.material = material;
                 line.startWidth = 0.012f;
                 line.endWidth = 0.018f;
                 line.startColor = line.endColor = BeamColor;

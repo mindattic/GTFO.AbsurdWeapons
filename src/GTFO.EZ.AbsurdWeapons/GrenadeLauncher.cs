@@ -374,7 +374,8 @@ internal sealed class LauncherGrenade : MonoBehaviour
 
     [HideFromIl2Cpp]
     private static Material LedMaterial() =>
-        ledMaterial ??= new Material(Shader.Find("Sprites/Default")) { color = FlashColor };
+        ledMaterial != null ? ledMaterial // Unity's null: rebuilt if unloaded
+            : ledMaterial = new Material(Shader.Find("Sprites/Default")) { color = FlashColor };
 }
 
 /// <summary>The blast's look and sound: the trip mine's explosion effect, a flash and the frag grenade bang.</summary>

@@ -117,7 +117,8 @@ internal sealed class HiveLocks : MonoBehaviour
             line.loop = true;
             line.positionCount = 4;
             line.numCornerVertices = 1;
-            line.material = material ??= new Material(Shader.Find("Sprites/Default"));
+            if (material == null) material = new Material(Shader.Find("Sprites/Default")); // Unity's null: rebuilt if unloaded
+            line.material = material;
             rings[i] = line;
         }
         return new Track { Enemy = enemy, Needed = needed, Marker = marker, Rings = rings };
