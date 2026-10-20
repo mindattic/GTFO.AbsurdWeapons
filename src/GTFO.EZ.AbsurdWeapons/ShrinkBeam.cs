@@ -68,9 +68,16 @@ internal static class ShrinkBeam
             var start = new Vector3(message.X0, message.Y0, message.Z0);
             var end = new Vector3(message.X1, message.Y1, message.Z1);
             ShrinkStream.Spawn(start, end, sender);
-            var enemy = NearestEnemy(end, RemoteFindRadius);
-            if (enemy != null && enemy.Alive) Shrink(enemy, TickSeconds);
-            else if (NearestLock(end) is { } padlock) ShrinkLock(padlock, TickSeconds);
+            // Only what the shooter's beam is on: a beam on the floor beside an enemy shrinks nothing.
+            if (message.Hit == BeamMessage.HitEnemy)
+            {
+                var enemy = NearestEnemy(end, RemoteFindRadius);
+                if (enemy != null && enemy.Alive) Shrink(enemy, TickSeconds);
+            }
+            else if (message.Hit == BeamMessage.HitLock && NearestLock(end) is { } padlock)
+            {
+                ShrinkLock(padlock, TickSeconds);
+            }
         });
     }
 
@@ -145,7 +152,8 @@ internal static class ShrinkBeam
         }
 
         ShrinkStream.Spawn(start, end, source);
-        NetworkAPI.InvokeEvent(BeamEvent, new BeamMessage(start, end));
+        var hitKind = hitEnemy != null && hitEnemy.Alive ? BeamMessage.HitEnemy : hitLock != null ? BeamMessage.HitLock : BeamMessage.HitNothing;
+        NetworkAPI.InvokeEvent(BeamEvent, new BeamMessage(start, end, hitKind));
     }
 
     // Shrinks `enemy` by one tick's worth and applies it (scale and, scaled the same, its own top
@@ -400,12 +408,15 @@ internal static class ShrinkBeam
     // Plain fields so GTFO-API can copy them as raw bytes.
     private readonly struct BeamMessage
     {
+        public const byte HitNothing = 0, HitEnemy = 1, HitLock = 2;
         public readonly float X0, Y0, Z0, X1, Y1, Z1;
+        public readonly byte Hit; // what the shooter's beam is actually on: only that shrinks on teammates' games
 
-        public BeamMessage(Vector3 start, Vector3 end)
+        public BeamMessage(Vector3 start, Vector3 end, byte hit)
         {
             (X0, Y0, Z0) = (start.x, start.y, start.z);
             (X1, Y1, Z1) = (end.x, end.y, end.z);
+            Hit = hit;
         }
     }
 }
