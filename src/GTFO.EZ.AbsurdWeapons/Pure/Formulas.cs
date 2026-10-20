@@ -12,6 +12,11 @@ internal static class Formulas
     internal static bool IsFullCharge(float heldSeconds, float fullChargeSeconds, float leeway) =>
         heldSeconds >= fullChargeSeconds * leeway;
 
+    // A hammer hit bursts only when it is the first of its swing: no burst (a hit's, or the
+    // Warhammer slam's) went off within `swingSeconds` before it.
+    internal static bool IsFirstHitOfSwing(float now, float lastBurstTime, float swingSeconds) =>
+        now - lastBurstTime >= swingSeconds;
+
     // Area damage at `distance` from the center: full at the center, falling linearly to
     // `edgeFraction` of it at `radius`.
     internal static float AreaFalloff(float distance, float radius, float edgeFraction)

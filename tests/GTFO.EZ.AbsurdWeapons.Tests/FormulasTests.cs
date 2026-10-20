@@ -14,6 +14,15 @@ public class FormulasTests
         Assert.That(Formulas.IsFullCharge(held, full, 0.95f), Is.EqualTo(expected));
     }
 
+    [TestCase(10.1f, 10.0f, false)] // the slam burst at 10.0 (0.25 s after release); the swing's hit lands 0.1 s later
+    [TestCase(10.29f, 10.0f, false)]
+    [TestCase(10.3f, 10.0f, true)]  // a new swing
+    [TestCase(10.0f, -10f, true)]   // nothing has burst yet
+    public void IsFirstHitOfSwing_ASlamBurstCountsAsTheSwingsBurst(float now, float lastBurst, bool expected)
+    {
+        Assert.That(Formulas.IsFirstHitOfSwing(now, lastBurst, 0.3f), Is.EqualTo(expected));
+    }
+
     [Test]
     public void AreaFalloff_FullAtCenterEdgeShareAtRadius()
     {

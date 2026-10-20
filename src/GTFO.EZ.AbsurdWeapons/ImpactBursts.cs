@@ -113,7 +113,7 @@ internal static class ImpactBursts
 
             // A cleaving swing calls this once per enemy it hits: only its first hit bursts; the
             // others just get their own shove.
-            var firstHitOfSwing = Time.time - lastBurstTime >= SwingSeconds;
+            var firstHitOfSwing = Formulas.IsFirstHitOfSwing(Time.time, lastBurstTime, SwingSeconds);
             if (!firstHitOfSwing)
             {
                 if (hitEnemy != null && burst.KnockStruckLight > 0f)
@@ -151,8 +151,11 @@ internal static class ImpactBursts
 
     // A burst set off by the weapon itself (the Warhammer's slam, WarhammerSlam) rather than by a hit:
     // damage and stagger around `center`, everyone caught thrown out from it, and the flash.
+    // It counts as its swing's burst, so a hit from the same swing landing just after it only
+    // shoves the struck enemy instead of setting off a second shockwave.
     internal static void Release(ImpactBurst burst, PlayerAgent owner, Vector3 center, uint gearCategoryId)
     {
+        lastBurstTime = Time.time;
         var caught = AreaDamage.Apply(center, burst.Radius, burst.Damage, burst.EdgeDamageFraction, burst.StaggerMulti,
             owner.Cast<Agent>(), null, gearCategoryId);
         if (burst.KnockArea > 0f)
