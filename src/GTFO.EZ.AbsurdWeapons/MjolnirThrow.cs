@@ -95,6 +95,10 @@ internal static class MjolnirThrow
             if (camera == null || ThrownHammer.LocalInFlight) return; // one throw at a time
             var direction = camera.Forward;
             var start = camera.Position + direction * 0.8f + Vector3.down * 0.15f;
+            // Up against a wall or door, that point is already through it: start short of it instead
+            // (the flight's own wall check then turns it straight back).
+            if (Physics.Linecast(camera.Position, start, out var blocked, LayerManager.MASK_WORLD))
+                start = blocked.point - (start - camera.Position).normalized * 0.2f;
             ThrownHammer.Spawn(owner, owner, start, direction, __instance.gameObject);
             NetworkAPI.InvokeEvent(ThrowEvent, new ThrowMessage(start, direction));
         }
