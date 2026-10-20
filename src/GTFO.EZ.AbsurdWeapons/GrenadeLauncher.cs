@@ -228,22 +228,29 @@ internal sealed class LauncherGrenade : MonoBehaviour
         if (distance < 0.0001f) return;
         var direction = step / distance;
 
+        // The world first, so a wall or door between the grenade and whoever stands behind it
+        // stops it: an enemy or player only counts when it's nearer than the world along the sweep.
+        var hitWorld = Physics.SphereCast(position, Radius, direction, out var hit, distance, LayerManager.MASK_WORLD);
+        var reach = hitWorld ? hit.distance : distance;
+
         // An enemy, a teammate or a bot in the way: it goes off on contact (the shooter's game
         // decides; the shooter themselves never sets it off).
-        if (owner != null && Physics.SphereCast(position, Radius, direction, out var enemyHit, distance, LayerManager.MASK_ENEMY_DAMAGABLE))
+        if (owner != null && Physics.SphereCast(position, Radius, direction, out var enemyHit, distance, LayerManager.MASK_ENEMY_DAMAGABLE)
+            && (!hitWorld || enemyHit.distance < reach))
         {
             transform.position = enemyHit.point;
             Explode();
             return;
         }
-        if (owner != null && ProjectileHits.OtherPlayer(position, Radius, direction, distance, owner, out var playerHit))
+        if (owner != null && ProjectileHits.OtherPlayer(position, Radius, direction, distance, owner, out var playerHit)
+            && (!hitWorld || playerHit.distance < reach))
         {
             transform.position = playerHit.point;
             Explode();
             return;
         }
 
-        if (Physics.SphereCast(position, Radius, direction, out var hit, distance, LayerManager.MASK_WORLD))
+        if (hitWorld)
         {
             transform.position = hit.point + hit.normal * (Radius + 0.01f);
             velocity = Vector3.Reflect(velocity, hit.normal) * GrenadeLauncher.GrenadeBounciness.Value;
