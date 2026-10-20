@@ -8,6 +8,7 @@ using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
+using SNetwork;
 using UnityEngine;
 
 namespace GTFO.EZ.AbsurdWeapons;
@@ -441,21 +442,32 @@ internal sealed class BannerPylon : MonoBehaviour
         return false;
     }
 
-    // Heals the local player if they're standing within the radius.
+    // Heals the local player if they're standing within the radius - and, on the host, the bots
+    // standing in it: they have no game of their own to heal them.
     [HideFromIl2Cpp]
     private void Heal()
     {
-        var local = PlayerManager.GetLocalPlayerAgent();
-        if (local == null || !local.Alive) return;
-        if (Vector3.Distance(local.Position, transform.position) > VictoryBanner.Radius.Value) return;
+        HealIfInside(PlayerManager.GetLocalPlayerAgent());
+        if (!SNet.IsMaster) return;
+        var players = PlayerManager.PlayerAgentsInLevel;
+        if (players == null) return;
+        foreach (var player in players)
+            if (player != null && player.Owner != null && player.Owner.IsBot) HealIfInside(player);
+    }
+
+    [HideFromIl2Cpp]
+    private void HealIfInside(PlayerAgent? player)
+    {
+        if (player == null || !player.Alive) return;
+        if (Vector3.Distance(player.Position, transform.position) > VictoryBanner.Radius.Value) return;
 
         try
         {
-            var damage = local.Damage;
+            var damage = player.Damage;
             if (damage == null) return;
             // The game's own heal (synced), a share of max health.
             if (damage.Health >= damage.HealthMax) return;
-            damage.AddHealth(damage.HealthMax * VictoryBanner.HealPercent.Value / 100f, local.Cast<Agent>());
+            damage.AddHealth(damage.HealthMax * VictoryBanner.HealPercent.Value / 100f, player.Cast<Agent>());
         }
         catch (Exception e)
         {
