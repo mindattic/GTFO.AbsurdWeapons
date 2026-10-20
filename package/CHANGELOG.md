@@ -1,5 +1,13 @@
 # Changelog
 
+## v14
+
+- **Bug fix:** the lasers, Chain Lightning, Shrink Beam and Tentacle Cannon emptied in about two
+  seconds. Their ammo now goes by how long you hold the trigger: a full magazine lasts 10 seconds of
+  sustained fire (new `[Ammo] MagazineSeconds`, replacing `StreamPercentPerSecond`). The beam guns
+  refill an empty magazine from the reserve instead of reloading; the Tentacle Cannon no longer
+  charges a round per bite and reloads like any gun.
+
 ## v13
 
 - **Versioning:** the GTFO.EZ family - GTFO.EZ, GTFO.EZ.AbsurdWeapons, GTFO.EZ.AbsurdMoves and

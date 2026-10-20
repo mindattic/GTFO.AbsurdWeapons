@@ -227,6 +227,36 @@ internal static class TentacleCannon
 }
 
 /// <summary>
+/// The Tentacle Cannon's ammo: its shots themselves are free (SeekerGuns puts the magazine back),
+/// so while its trigger is held and it has rounds, the magazine drains by the time held
+/// (InfiniteAmmo.Drain). It reloads from the reserve like any gun once it's empty.
+/// </summary>
+internal sealed class TentacleAmmoDriver : MonoBehaviour
+{
+    public TentacleAmmoDriver(IntPtr ptr) : base(ptr) { }
+
+    private void Update()
+    {
+        try
+        {
+            var player = PlayerManager.GetLocalPlayerAgent();
+            if (player == null || !player.Alive || FocusStateManager.CurrentState != eFocusState.FPS) return;
+            if (StreamReadiness.Blocked(player)) return;
+            var gun = player.Inventory?.WieldedItem?.TryCast<Gear.BulletWeapon>();
+            if (gun == null || !TentacleCannon.IsTentacleGun(gun.ArchetypeData?.persistentID ?? 0) || gun.GetCurrentClip() <= 0) return;
+            // Only while it can actually fire: not mid-reload, nor still coming up after a swap.
+            if (gun.IsReloading || !StreamReadiness.IsSettled(player)) return;
+            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS)) return;
+            InfiniteAmmo.Drain(player, Time.deltaTime, refill: false);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons Tentacle Cannon ammo failed: {e.Message}");
+        }
+    }
+}
+
+/// <summary>
 /// One tentacle lash: a pooled striker tentacle (GPUCurvy) whose control points are laid along a
 /// snaking line from its spawn spot to its target every frame - out, bite, hang, back in - then
 /// handed back to the pool, freeing the spot.
@@ -445,7 +475,6 @@ internal sealed class TentacleLash : MonoBehaviour
         var direction = (end - start).normalized;
         nearest.BulletDamage(damage, owner.Cast<Agent>(), end, direction, -direction,
             allowDirectionalBonus: false, staggerMulti, 1f, gearCategoryId);
-        if (damage > 0f) InfiniteAmmo.SpendTentacleBite(owner); // only a bite that lands costs a round
 
         // Proof it landed, not just that it was sent: the limb's own health before and after,
         // throttled so continuous fire doesn't flood the log.

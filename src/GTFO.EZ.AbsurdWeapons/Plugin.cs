@@ -14,7 +14,7 @@ public class Plugin : BasePlugin
 {
     public const string GUID = "MindAttic.GTFO.EZ.AbsurdWeapons";
     public const string NAME = "GTFO.EZ.AbsurdWeapons";
-    public const string VERSION = "13.0.0";
+    public const string VERSION = "14.0.0";
 
     // Optional: only used to order our datablock injection after it.
     internal const string GtfoEzGuid = "MindAttic.GTFO.EZ";
@@ -71,6 +71,7 @@ public class Plugin : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<LightningBolt>();
         ClassInjector.RegisterTypeInIl2Cpp<ThrownHammer>();
         ClassInjector.RegisterTypeInIl2Cpp<BannerPylon>();
+        ClassInjector.RegisterTypeInIl2Cpp<TentacleAmmoDriver>();
         SeekerGuns.Init();
         ImpactBursts.Init();
         Stealth.Init();
@@ -95,6 +96,7 @@ public class Plugin : BasePlugin
         AddComponent<ChainLightningDriver>();
         AddComponent<ShrinkBeamDriver>();
         AddComponent<ShrinkRegrowth>();
+        AddComponent<TentacleAmmoDriver>();
         MjolnirThrow.Init();
         Logger.LogInfo($"{NAME} v{VERSION} loaded.");
     }

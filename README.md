@@ -102,14 +102,14 @@ homes onto and damages players only, so it can't be used as-is.
   - `Shard` (split seekers) is still defined but nothing uses it right now.
   - Every impact flashes a small `EffectLight`. Teammates' visual copies fly and flash on their
     own; a smart round's message carries its target's position, which the copy curves to.
-- **Ammo:** our guns use ammo like vanilla ones, except the stream guns, which never reach `Fire`
-  and have no magazine: their drivers call `InfiniteAmmo.TrySpend(player, tickSeconds)`, which takes
-  `StreamPercentPerSecond` (2%) of the slot's `AmmoMaxCap` per second straight off the reserve
-  (`SetAmmo`), shows the magazine full while any reserve is left and empty after, and stops the
-  beam once it's gone. They never reload.
-  The Tentacle Cannon fires normally but its shots are refunded (the magazine before the outermost
-  `Fire` is put back in `EndFire`); each lash that `BulletDamage`s an enemy costs one round instead
-  (`InfiniteAmmo.SpendTentacleBite`). With infinite ammo on (`InfiniteAmmo.On`, the shared Insert toggle in
+- **Ammo:** our guns use ammo like vanilla ones, except the held-trigger guns, which spend by time:
+  every frame the trigger is held, `InfiniteAmmo.Drain(player, Time.deltaTime)` spends that frame's
+  share of a magazine (`ClipSize / [Ammo] MagazineSeconds` rounds a second, fractions carried to the
+  next frame). The stream guns (lasers, Chain Lightning, Shrink Beam) never reach `Fire` and never
+  reload: `Drain` refills an empty magazine from the reserve (`UpdateBulletsInPack`) and the beam
+  stops once both are empty. The Tentacle Cannon fires normally but its shots are refunded (the
+  magazine before the outermost `Fire` is put back in `EndFire`); `TentacleAmmoDriver` drains it by
+  time held instead, and it reloads like any gun. The magazine is shown with `UpdateSlotAmmoUI`. With infinite ammo on (`InfiniteAmmo.On`, the shared Insert toggle in
   `Shared/InfiniteToggles.cs`), the `Fire` postfixes top the clip back up after every shot so firing
   costs nothing - any gun, vanilla included.
 - **Damage:** only the shooter's copy deals damage, through `Dam_EnemyDamageLimb.BulletDamage`. That
@@ -582,7 +582,8 @@ form.
 
 The GTFO.EZ family - GTFO.EZ, GTFO.EZ.AbsurdWeapons, GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems -
 shares one version number, so a matching set is easy to spot: the companions' first release is
-**v13**, in step with GTFO.EZ (not v1), and a release of the family bumps all four together.
+**v13**, in step with GTFO.EZ (not v1), and every release of the family bumps all four together
+(current: v14).
 
 ## Sharing with friends
 

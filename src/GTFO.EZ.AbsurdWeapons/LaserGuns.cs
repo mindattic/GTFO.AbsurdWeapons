@@ -445,15 +445,10 @@ internal sealed class LaserDriver : MonoBehaviour
             if (camera == null) return;
 
             // Lit every frame the trigger is held, so it's one constant beam until it's released;
-            // the damage comes on the ticks.
+            // ammo goes by the time it's held, the damage comes on the ticks.
+            if (!InfiniteAmmo.HasStreamAmmo(player) || !InfiniteAmmo.Drain(player, Time.deltaTime)) return; // out of ammo: no beam
             var damageTick = Time.time >= nextTick;
-            if (damageTick)
-            {
-                var seconds = Mathf.Max(0.02f, archetype.ShotDelay);
-                if (!InfiniteAmmo.TrySpend(player, seconds)) return; // out of ammo: no beam
-                nextTick = Time.time + seconds;
-            }
-            else if (!InfiniteAmmo.HasStreamAmmo(player)) return;
+            if (damageTick) nextTick = Time.time + Mathf.Max(0.02f, archetype.ShotDelay);
             LaserGuns.Tick(kind, player, gun.MuzzleAlign, camera.Position, camera.Forward, archetype.Damage, 1f, 1f, kind.GunId, damageTick);
         }
         catch (Exception e)

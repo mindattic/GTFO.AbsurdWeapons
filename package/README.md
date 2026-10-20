@@ -32,9 +32,10 @@ in the config file BepInEx creates on first launch — see [Config](#config).
 The guns use ammo like any vanilla gun - a magazine, a reserve in the slot's ammo pool, reloads,
 and ammo packs top them up. Each one starts **completely full** the first time you equip it in a
 level, and keeps its own ammo from then on (see [Swapping weapons in a level](#swapping-weapons-in-a-level)).
-The beam guns (lasers, Chain Lightning, Shrink Beam) have **no magazine and never reload**:
-sustained fire uses **1%** of a full ammo reserve every **half second**, so a full one is 50 seconds of beam,
-and they stop when it's empty. (Infinite ammo, on **Insert**, brings back bottomless guns.) They're tuned
+The held-trigger guns (lasers, Chain Lightning, Shrink Beam and the Tentacle Cannon) spend ammo by
+**how long you hold the trigger**: a full magazine lasts **10 seconds** of sustained fire
+(`[Ammo] MagazineSeconds`). The beam guns (all but the Tentacle Cannon) **never reload** - an empty
+magazine refills straight from the reserve - and stop when the reserve is empty too. (Infinite ammo, on **Insert**, brings back bottomless guns.) They're tuned
 to be fun first; balance comes later.
 
 | Weapon | Slot | Model | In one line |
@@ -147,8 +148,8 @@ your eyeline around the view and thrashing in from off-screen. **While an enemy 
 crosshair and in reach**, every tentacle in the burst reaches for it, each landing its own bite;
 with none in reach they reach out along their own random lines for the nearest wall, floor or crate
 (and melt a lock they grab). It's carried very low at the waist, like a minigun. Each bite does 25
-and staggers hard (x12); ~4.3 bursts a second. **Only a tentacle that bites an enemy costs a round**:
-firing itself is free, so misses and tentacles that grab a wall cost nothing.
+and staggers hard (x12); ~4.3 bursts a second. Ammo goes by **how long you hold the trigger** - a
+full magazine is 10 seconds of fire, whatever the tentacles hit - and it reloads like any gun.
 
 ### Grenade Pistol (main) and Grenade Rifle (special)
 
@@ -513,7 +514,7 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `StreamPercentPerSecond` | 2 | Ammo reserve the beam guns use per second of fire, in percent of a full reserve. |
+| `MagazineSeconds` | 10 | Seconds of held trigger a full magazine lasts, for the lasers, Chain Lightning, Shrink Beam and Tentacle Cannon (their ammo goes by time held, not shots). The beam guns refill an empty magazine from the reserve instead of reloading. |
 
 **Insert** toggles infinite ammo (every gun, this mod's and vanilla, never runs out or reloads) and
 **Delete** infinite health, each announced in the event log and off at the start. They're the

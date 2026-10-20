@@ -234,8 +234,8 @@ internal static class SeekerGuns
     private static void AfterSyncedShotgunFire(ShotgunSynced __instance, uint __state) => EndFire(__instance, __state);
 
     // The magazine before the outermost Fire of a shot, put back after so the shot costs nothing:
-    // any gun with InfiniteAmmo on, and the Tentacle Cannon always (only a tentacle that bites an
-    // enemy costs it a round - TentacleLash.Bite).
+    // any gun with InfiniteAmmo on, and the Tentacle Cannon always (its ammo goes by the time its
+    // trigger is held instead - TentacleAmmoDriver).
     private static int clipBefore = -1;
 
     private static void BeginFire(BulletWeapon weapon, out uint previous)

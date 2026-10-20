@@ -336,11 +336,13 @@ internal sealed class ChainLightningDriver : MonoBehaviour
             var gun = player.Inventory?.WieldedItem?.TryCast<Gear.BulletWeapon>();
             var archetype = gun?.ArchetypeData;
             if (gun == null || archetype == null || archetype.persistentID != GunInjector.ChainLightningId) return;
-            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS) || Time.time < nextTick) return;
+            if (!InputMapper.GetButtonKeyMouse(InputAction.Fire, eFocusState.FPS)) return;
             var camera = player.FPSCamera;
             if (camera == null) return;
 
-            if (!InfiniteAmmo.TrySpend(player, ChainLightning.TickSeconds)) return; // out of ammo
+            // Ammo goes by the time the trigger is held, every frame; the strikes come on the ticks.
+            if (!InfiniteAmmo.HasStreamAmmo(player) || !InfiniteAmmo.Drain(player, Time.deltaTime)) return; // out of ammo
+            if (Time.time < nextTick) return;
             nextTick = Time.time + ChainLightning.TickSeconds;
             var damage = archetype.Damage * ChainLightning.TickSeconds / Mathf.Max(0.02f, archetype.ShotDelay);
             ChainLightning.Fire(player, camera.Position, camera.Forward, damage, GunInjector.ChainLightningId, gun.MuzzleAlign);
