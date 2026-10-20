@@ -680,25 +680,8 @@ Current: v14 (`14.0.0` in `package/manifest.json` and `Plugin.VERSION`).
 
 - Not yet released: no Thunderstore package, and balance is tuned for fun first.
 - Only the code in `Pure/` has automated tests; everything else is verified by playing.
-- Confirmed in play so far: the Katana's blade length and its dash (at the earlier 4 m), and the
-  Tentacle Cannon's tentacles drawing and biting. Still to verify in-game:
-  - All the weapons appear in the loadout screen in the right slots. If not, their categories may also
-    need adding to `GearCategoryFilterDataBlock` (14 "MeleeWeapons" for melee).
-  - How each model sits in the hand under its borrowed animations, and that melee hits line up with the
-    visible blade at each weapon's reach.
-  - Blade stretching: blades grow away from the grip, the Warhammer head grows outward from the shaft,
-    and teammates see the stretch too.
-  - Warhammer stagger, shockwave, knockback (stopping at walls and ledges, as host and client) and slam.
-  - Mjolnir's thunderclap and throw, including the flash for teammates and nothing through walls.
-  - Shadow Dagger stealth as host and as a client: only a full charge hides you, enemies (sleeping ones
-    and noise included) ignore you, the cap drains, and the fade and flicker show for teammates.
-  - Katana dash out to 10 m, stopping on contact and slashing that enemy.
-  - Grenade Pistol and Rifle, Railgun, Chain Lightning Gun, Rocket Launcher, Shrink Beam and the Victory
-    Banner end to end.
-  - Lasers: one steady beam while held, sparks and glow where it lands, teammates see it.
-  - Seeker guns: the disabled enemy projectile stays quiet, seekers hit enemies and never players, damage
-    registers from host and client, and the plasma tint covers the whole projectile.
-  - Slot-key swapping mid-level, and performance with many impact flashes at once.
+- Every weapon is confirmed in play: loadout slots, models in hand, blade reach and stretching,
+  each weapon's effects and sync as host and client, slot-key swapping and performance.
 
 ## Documentation
 
