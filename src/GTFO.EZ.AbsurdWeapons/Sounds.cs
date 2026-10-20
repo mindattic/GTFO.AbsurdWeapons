@@ -14,7 +14,8 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// (<c>[Sounds]</c>; empty = silent, or the gun's own sound for a shot), so they can be re-picked
 /// without a rebuild. Guns with a shot override have their vanilla fire audio suppressed and play
 /// the override once per shot instead, on every client (the ray hook runs for teammates' guns too).
-/// Events with "2D" in the name are first-person only, so they play for the shooter alone.
+/// Events with "2D" in the name are first-person only, so they play for the shooter alone;
+/// teammates hear that gun's own shot instead.
 /// </summary>
 [HarmonyPatch]
 internal static class Sounds
@@ -72,7 +73,11 @@ internal static class Sounds
     {
         var id = weapon.ArchetypeData?.persistentID ?? 0;
         if (LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId || id == GunInjector.ShrinkBeamId) return true;
-        return ShotFor(id) is { } entry && !string.IsNullOrWhiteSpace(entry.Value);
+        if (ShotFor(id) is not { } entry || string.IsNullOrWhiteSpace(entry.Value)) return false;
+        // A first-person-only ("2D") override isn't played for a teammate's gun (Play), so that gun
+        // keeps its own shot sound here rather than going silent.
+        var local = weapon.Owner != null && weapon.Owner.IsLocallyOwned;
+        return local || entry.Value.IndexOf("2D", StringComparison.OrdinalIgnoreCase) < 0;
     }
 
     // ---- the gun's own fire audio is suppressed where there's an override ----
