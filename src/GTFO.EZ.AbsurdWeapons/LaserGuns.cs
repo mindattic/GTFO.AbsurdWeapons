@@ -365,11 +365,6 @@ internal sealed class LaserBeam : MonoBehaviour
 }
 
 /// <summary>
-/// Drives the local player's laser beam from the trigger: while a laser gun is in hand and Fire is
-/// held, a damage tick at the beam's end every <c>ShotDelay</c> seconds (the archetype's), at the
-/// archetype's damage. The gun's own firing never runs (see <see cref="LaserGuns"/>).
-/// </summary>
-/// <summary>
 /// Shared by every trigger-driven stream (lasers, Chain Lightning, Shrink Beam): whether the local
 /// player's currently wielded item has been up long enough to count as settled into its aim
 /// position, rather than still mid-raise from just being swapped to or coming back from a sprint.
@@ -422,6 +417,11 @@ internal static class StreamReadiness
     }
 }
 
+/// <summary>
+/// Drives the local player's laser beam from the trigger: while a laser gun is in hand and Fire is
+/// held, a damage tick at the beam's end every <c>ShotDelay</c> seconds (the archetype's), at the
+/// archetype's damage. The gun's own firing never runs (see <see cref="LaserGuns"/>).
+/// </summary>
 internal sealed class LaserDriver : MonoBehaviour
 {
     private float nextTick;

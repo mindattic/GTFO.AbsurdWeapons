@@ -104,8 +104,8 @@ internal static class GunInjector
         RailgunShotDelay = config.Bind("Railgun", "ShotDelay", 1.5f, "Seconds between shots (Quake's 1.5 s).");
         RailgunClipSize = config.Bind("Railgun", "ClipSize", 5, "Magazine size.");
         RailgunEnabled = config.Bind("Railgun", "Railgun Enabled", true, "Adds the Railgun to the loadout screen. Takes effect on restart.");
-        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage of the first strike (each jump then does JumpFalloff of the one before).");
-        ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds between shots.");
+        ChainLightningDamage = config.Bind("Chain Lightning Gun", "Damage", 5f, "Damage to the first enemy per ShotDelay of held trigger (the stream strikes every 0.08 s, each strike this scaled to the tick; each jump then does JumpFalloff of the one before).");
+        ChainLightningShotDelay = config.Bind("Chain Lightning Gun", "ShotDelay", 0.15f, "Seconds of held trigger that deal Damage once (it never fires shots: Damage / ShotDelay is its damage a second).");
         ChainLightningClipSize = config.Bind("Chain Lightning Gun", "ClipSize", 60, "Magazine size.");
         ChainLightningGunEnabled = config.Bind("Chain Lightning Gun", "Chain Lightning Gun Enabled", true, "Adds the Chain Lightning Gun to the loadout screen. Takes effect on restart.");
         TentacleDamage = config.Bind("Tentacle Guns", "Damage", 25f, "Damage per Tentacle Cannon bite (the gun's only - enemies' tentacles are untouched).");
@@ -336,9 +336,10 @@ internal static class GunInjector
             "A hitscan slug with infinite penetration: it goes through every enemy and every wall in its path.");
     }
 
-    // The Omneco exp1 HEL machine gun, full-auto at ~6.7 bolts a second, no recoil, no spread, no
-    // brass. Each bolt does 10 to its first enemy, then 75% of the last on each of
-    // up to five jumps (ChainLightning).
+    // The Omneco exp1 HEL machine gun, no recoil, no spread, no brass. It never fires a shot: while
+    // the trigger is held ChainLightningDriver strikes every 0.08 s, each strike the archetype's
+    // Damage (5) scaled by 0.08 / ShotDelay (0.15) - about 2.7, 33 a second - to its first enemy,
+    // then 75% of the last on each of up to five jumps (ChainLightning).
     private static void AddChainLightning(string name, uint id)
     {
         var gear = Lookup<PlayerOfflineGearDataBlock>("HELGun");

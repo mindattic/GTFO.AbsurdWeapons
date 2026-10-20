@@ -360,12 +360,16 @@ shows it to everyone.
   Shadow Dagger lands a fully charged hit (not a push) on something with an `EnemyAgent` parent.
   Fully charged means the state is a charge release/hit and `m_damageToDeal` is at least 95% of
   the archetype's `ChargedAttackDamage`; a partial charge logs its numbers and is ignored. It hides
-  that player for `StealthSeconds` (2 s), keyed by their `SNet_Player.Lookup`; a further full-charge
-  hit tops it back up to the full 2 s (never cutting a stretched stealth short).
+  that player for `StealthSeconds` (3 s), keyed by their `SNet_Player.Lookup`; a further full-charge
+  hit tops it back up to `StealthSeconds`, never past the current cap and never cutting a stretched
+  stealth short.
+- **The cap:** a stealth starts with a cap of `StealthMaxSeconds` (3 s) on how long it can run;
+  every enemy hit while hidden, kill or not, takes `StealthCapDrainPerHit` (5%) off the cap, so it
+  always ends, and the cap resets once it does.
 - **Kills while hidden:** each confirmed kill (checked 0.4 s after the hit, since the host confirms
   them) adds `StealthBonusPerKill` (+25%) to a damage bonus applied to every Shadow Dagger hit for
-  the rest of that stealth, up to `StealthMaxBonus` (+100%); a kill with a full windup also stretches
-  the stealth by `StealthKillTimeBonus` (0.25 s).
+  the rest of that stealth, up to `StealthMaxBonus` (+100%), and stretches the stealth by
+  `StealthKillTimeBonus` (0.33 s), up to the cap.
 - **Sync:** the hit is sent over GTFO-API (`MindAttic.GTFO.EZ.AbsurdWeapons.Stealth`); the sender is the
   hidden player. Every game keeps the same `hiddenUntil` table. That matters most on the host,
   where enemy AI runs.
@@ -516,11 +520,11 @@ Still to verify in-game:
 - Shadow Dagger, as host and as a client:
   - Quick stabs are visibly faster and the charge-up isn't.
   - Only a fully charged hit hides you (the log notes partial charges): enemies stop chasing you
-    for 6 s, including ones already on you.
+    for 3 s, including ones already on you.
   - Sleeping enemies and noise don't give you away while hidden.
   - The 10-a-second shimmer shows for you and for teammates and fills back in over the last
     second.
-  - Everything comes back when the 6 s run out.
+  - Everything comes back when the 3 s run out.
 - Katana: hits land at the tip of the ~2.2 m blade (3.2 m reach). The full-charge dash (confirmed
   working at 4 m) now goes up to 10 m in 0.6 s and stops at the first enemy it reaches: check it
   stops on contact and slashes that enemy.
@@ -536,7 +540,7 @@ Still to verify in-game:
     on the whole projectile (glow, trail, particle core).
   - Hive Pistol/Rifle rounds leave the muzzle (not the camera) and curve onto locked enemies, cycling
     between them.
-  - Neither gun ever reloads or empties.
+  - Both empty and reload like any gun (bottomless only with infinite ammo on, Insert).
 - Performance with many impact flashes at once.
 
 ## Config

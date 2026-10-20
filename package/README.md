@@ -174,9 +174,10 @@ the sniper's scope, with no kickback.
 
 ### Chain Lightning Gun (special)
 
-The Omneco exp1, full-auto at ~6.7 bolts a second. Each bolt strikes the enemy under your crosshair
-(or the nearest within 6° if you just miss), then **jumps** to the nearest enemy within 8 m it
-hasn't hit, up to 5 jumps. Damage is 5 to the first, then 75% of the last on each jump. Jumps need
+The Omneco exp1, a continuous stream of lightning while you hold the trigger: 12.5 strikes a second.
+Each strike hits the enemy under your crosshair (or the nearest within 6° if you just miss), then
+**jumps** to the nearest enemy within 8 m it hasn't hit, up to 5 jumps. The first enemy takes about
+2.7 a strike (33 a second: `Damage` 5 every `ShotDelay` 0.15 s), then 75% of the last on each jump. Jumps need
 a clear line. No recoil, no brass.
 
 ### Rocket Launcher (special)
@@ -460,8 +461,8 @@ Shared by everything that flings enemies (the Warhammer).
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Damage` † | 5 | Damage of the first strike. |
-| `ShotDelay` † | 0.15 | Seconds between shots. |
+| `Damage` † | 5 | Damage to the first enemy per `ShotDelay` of held trigger (each strike, every 0.08 s, is this scaled to the tick). |
+| `ShotDelay` † | 0.15 | Seconds of held trigger that deal `Damage` once (it never fires shots). |
 | `ClipSize` † | 60 | Magazine size. |
 | `Range` | 40 | Metres the first strike reaches. |
 | `AssistConeDegrees` | 6 | A near-miss within this cone still finds a first target. |

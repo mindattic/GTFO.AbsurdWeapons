@@ -24,7 +24,7 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// numbers: 120-damage splash with a half-distance falloff (<c>T_RadiusDamage</c>),
 /// searched out to 160 units - zero past that, a third of the center damage left at the edge (the
 /// same 160 u / a-third the Grenade Launcher's blast already uses) - and a 0.8 s refire. The gun's
-/// own firing - sound, recoil, ammo (infinite, like every gun here) - stays vanilla. The shooter's
+/// own firing - sound, recoil, ammo (a magazine and reloads, like any gun) - stays vanilla. The shooter's
 /// game deals the damage, through the bullet path so it syncs; everyone else is sent the launch and
 /// the blast and sees the same rocket.
 /// It can't aim down sights: right-click instead detonates the shooter's oldest rocket still in

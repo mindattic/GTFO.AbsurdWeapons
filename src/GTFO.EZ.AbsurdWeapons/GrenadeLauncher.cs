@@ -16,10 +16,10 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// The Grenade Pistol and Grenade Rifle: plain semi-auto guns on heavy models (one shared set of
 /// stats - the pair handles identically) whose every shot launches a lock melter rigged to blow
 /// instead of a bullet (SeekerGuns' ray hook calls <see cref="Launch"/>). The gun's own firing -
-/// sound, recoil, ammo (infinite, like every gun here) - stays vanilla. A grenade that hits an
-/// enemy, a teammate or a bot (never the shooter) explodes at once. One that misses
-/// bounces off whatever it hits, flashing red faster and faster, and explodes 3 seconds after it
-/// was fired. The blast damages and staggers enemies only, through the bullet path, on the
+/// sound, recoil, ammo (a magazine and reloads, like any gun) - stays vanilla. A grenade that hits
+/// an enemy, a teammate or a bot (never the shooter) explodes at once. One that misses bounces off
+/// whatever it hits, flashing red faster and faster, and explodes <see cref="FuseSeconds"/> (2.5 s
+/// by default) after it was fired. The blast damages and staggers enemies only, through the bullet path, on the
 /// shooter's game; teammates are sent each launch and detonation and see the same grenades.
 /// </summary>
 internal static class GrenadeLauncher

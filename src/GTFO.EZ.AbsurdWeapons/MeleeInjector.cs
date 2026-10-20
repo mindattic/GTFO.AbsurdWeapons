@@ -16,7 +16,7 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// <item>Katana - the Mastaba Fixed Blade at a real katana's size (~70 cm blade), wielded like the bat; full-charge dash.</item>
 /// <item>Mjolnir - the Santonian Mallet hammer model wielded exactly like the bat.</item>
 /// <item>Warhammer - the Kovac Sledgehammer with a giant head: enormous hits and knockback.</item>
-/// <item>Shadow Dagger - the Mastaba Fixed Blade as a knife; a fully charged hit makes you unseen for 6 s.</item>
+/// <item>Shadow Dagger - the Mastaba Fixed Blade as a knife; a fully charged hit makes you unseen for 3 s (StealthSeconds).</item>
 /// </list>
 /// </summary>
 [HarmonyPatch(typeof(GameDataInit), nameof(GameDataInit.Initialize))]
