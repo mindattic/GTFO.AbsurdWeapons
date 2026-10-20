@@ -26,6 +26,9 @@ internal static class ProjectileHits
             if (agent == null || agent.Pointer == owner.Pointer) continue;
             best = candidate.distance;
             hit = candidate;
+            // Already inside them when the sweep started: Unity reports that hit's point as
+            // (0,0,0), which would set the projectile off at the world origin. It's right here.
+            if (candidate.distance <= 0f) hit.point = from;
             found = true;
         }
         return found;
