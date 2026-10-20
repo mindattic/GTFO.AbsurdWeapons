@@ -540,7 +540,11 @@ internal static class Barrel
         // ahead), where the sphere would touch that surface well before the crosshair's point.
         var shortBy = aimed ? Mathf.Max(0.3f, ClearRadius / Mathf.Max(0.1f, Mathf.Abs(Vector3.Dot(direction, hit.normal))) + 0.05f) : 0.3f;
         var path = Vector3.Distance(from, target) - shortBy;
-        if (Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
+        // What the crosshair is on (an enemy in your face) is no further out than the barrel: from
+        // the barrel the shot would start inside or past it, or fly back at you.
+        var behindBarrel = aimed && Vector3.Dot(target - from, aim.normalized) <= ClearRadius;
+        if (behindBarrel
+            || Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
             || Physics.CheckSphere(from, ClearRadius, LayerManager.MASK_WORLD)
             || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD)))
         {
