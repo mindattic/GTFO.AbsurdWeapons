@@ -177,6 +177,9 @@ internal sealed class GearCycler : MonoBehaviour
         foreach (var (slot, category) in pending)
         {
             backpack.TryGetBackpackItem(slot, out var item);
+            // Gave up with the old weapon still in the slot: its ammo is already its own, and the
+            // chosen weapon's saved ammo mustn't land on it.
+            if (item?.GearIDRange != null && item.GearIDRange.GetCompID(eGearComponent.Category) != category) continue;
             var gun = item?.Instance?.TryCast<BulletWeapon>();
             var hasReserve = slot is InventorySlot.GearStandard or InventorySlot.GearSpecial or InventorySlot.GearClass;
             if (ammo.TryGetValue(category, out var saved))
