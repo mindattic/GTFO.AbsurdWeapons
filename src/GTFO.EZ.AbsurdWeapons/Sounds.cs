@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BepInEx.Configuration;
 using Gear;
 using HarmonyLib;
+using Player;
 using UnityEngine;
 
 namespace GTFO.EZ.AbsurdWeapons;
@@ -76,8 +77,15 @@ internal static class Sounds
         if (ShotFor(id) is not { } entry || string.IsNullOrWhiteSpace(entry.Value)) return false;
         // A first-person-only ("2D") override isn't played for a teammate's gun (Play), so that gun
         // keeps its own shot sound here rather than going silent.
-        var local = weapon.Owner != null && weapon.Owner.IsLocallyOwned;
-        return local || entry.Value.IndexOf("2D", StringComparison.OrdinalIgnoreCase) < 0;
+        return IsLocalPlayer(weapon) || entry.Value.IndexOf("2D", StringComparison.OrdinalIgnoreCase) < 0;
+    }
+
+    // The local player's own gun - not just a locally owned one: the host's bots are locally owned
+    // too, and a "2D" (first-person) sound for their shots would play as if the host had fired.
+    private static bool IsLocalPlayer(BulletWeapon weapon)
+    {
+        var local = PlayerManager.GetLocalPlayerAgent();
+        return weapon.Owner != null && local != null && weapon.Owner.Pointer == local.Pointer;
     }
 
     // ---- the gun's own fire audio is suppressed where there's an override ----
@@ -120,8 +128,7 @@ internal static class Sounds
         if (weapon == null || entry == null || string.IsNullOrWhiteSpace(entry.Value)) return;
         if (lastShotFrame.TryGetValue(weapon.Pointer, out var frame) && frame == Time.frameCount) return;
         lastShotFrame[weapon.Pointer] = Time.frameCount;
-        var local = weapon.Owner != null && weapon.Owner.IsLocallyOwned;
-        Play(entry.Value, position, local);
+        Play(entry.Value, position, IsLocalPlayer(weapon));
     }
 
     // `local`: whether the event's source is the local player (a "2D" event only plays for them).
