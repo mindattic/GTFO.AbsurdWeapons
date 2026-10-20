@@ -279,6 +279,9 @@ internal sealed class StealthVisuals : MonoBehaviour
 
     private readonly Dictionary<IntPtr, Hidden> hidden = new();
 
+    // Every see-through copy currently shown, so one is never mistaken for a renderer's own material.
+    private static readonly HashSet<IntPtr> ghostMaterials = new();
+
     private static readonly Color GlowColor = new(0.6f, 0.3f, 1f);
     private static Shader? ghostShader;
 
@@ -303,13 +306,32 @@ internal sealed class StealthVisuals : MonoBehaviour
             {
                 if (player == null) continue;
                 present?.Add(player.Pointer);
-                Stealth.EndIfDaggerPutAway(player);
-                // The host's bots are locally owned too, and would reset the player's kill bonuses.
-                if (player.IsLocallyOwned && player.Owner != null && !player.Owner.IsBot) Stealth.ProcessKills(player);
+                // The glow first and on its own: nothing failing below may leave the dagger's
+                // purple light lit on whatever is swapped into the hand next.
+                try
+                {
+                    Wielding(player);
+                }
+                catch (Exception e)
+                {
+                    Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons Shadow Dagger glow failed: {e.Message}");
+                    PutOutGlow(player.Pointer);
+                }
+
+                try
+                {
+                    Stealth.EndIfDaggerPutAway(player);
+                    // The host's bots are locally owned too, and would reset the player's kill bonuses.
+                    if (player.IsLocallyOwned && player.Owner != null && !player.Owner.IsBot) Stealth.ProcessKills(player);
+                }
+                catch (Exception e)
+                {
+                    // The look below is still shown (or restored) even if this bookkeeping failed.
+                    Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons stealth bookkeeping failed: {e.Message}");
+                }
+
                 var remaining = Stealth.Remaining(player);
                 var tracked = hidden.TryGetValue(player.Pointer, out var state);
-                Wielding(player);
-
                 if (remaining > 0f)
                 {
                     if (!tracked) hidden[player.Pointer] = state = new Hidden();
@@ -328,11 +350,7 @@ internal sealed class StealthVisuals : MonoBehaviour
             foreach (var pointer in held.Keys)
                 if (!present.Contains(pointer)) (leftGlow ??= new List<IntPtr>()).Add(pointer);
             if (leftGlow != null)
-                foreach (var pointer in leftGlow)
-                {
-                    if (held[pointer].Glow != null) Destroy(held[pointer].Glow.gameObject);
-                    held.Remove(pointer);
-                }
+                foreach (var pointer in leftGlow) PutOutGlow(pointer);
             List<IntPtr>? gone = null;
             foreach (var pointer in hidden.Keys)
                 if (!present.Contains(pointer)) (gone ??= new List<IntPtr>()).Add(pointer);
@@ -351,11 +369,13 @@ internal sealed class StealthVisuals : MonoBehaviour
     {
         var item = player.Inventory?.WieldedItem;
         var isDagger = item != null && item.GearCategoryData?.persistentID == MeleeInjector.ShadowDaggerId;
+        // Only while the dagger is actually out in the hand: mid-swap, or once anything else is
+        // wielded, the light goes out at once, so it never tints the weapon that replaces it.
+        if (isDagger && !item!.gameObject.activeInHierarchy) isDagger = false;
         held.TryGetValue(player.Pointer, out var state);
-        if (state != null && (!isDagger || state.Item != item!.Pointer))
+        if (state != null && (!isDagger || state.Item != item!.Pointer || state.Glow == null))
         {
-            if (state.Glow != null) Destroy(state.Glow.gameObject);
-            held.Remove(player.Pointer);
+            PutOutGlow(player.Pointer);
             state = null;
         }
         if (!isDagger) return;
@@ -376,6 +396,18 @@ internal sealed class StealthVisuals : MonoBehaviour
         state.Glow.Intensity = 0.2f * (0.75f + 0.25f * Mathf.Sin(Time.time * 12f));
     }
 
+    // The dagger's light for `player` off now (dark this frame, not only once it's destroyed) and gone.
+    [HideFromIl2Cpp]
+    private void PutOutGlow(IntPtr player)
+    {
+        if (!held.TryGetValue(player, out var state)) return;
+        held.Remove(player);
+        if (state.Glow == null) return;
+        state.Glow.Intensity = 0f;
+        state.Glow.enabled = false;
+        Destroy(state.Glow.gameObject);
+    }
+
     // Switches the player's showing renderers not tracked yet to see-through copies of their
     // materials: your own first-person view (arms and the item in hand), or a teammate's whole body.
     [HideFromIl2Cpp]
@@ -390,10 +422,14 @@ internal sealed class StealthVisuals : MonoBehaviour
             if (!renderer.enabled || !state.Known.Add(renderer.Pointer)) continue;
             var original = renderer.sharedMaterials;
             if (original == null || original.Length == 0) continue;
+            // Already showing a see-through copy: its own materials aren't known here, and taking
+            // the copy for them would leave it tinted for good once the stealth ends.
+            if (ShowsGhost(original)) continue;
             var ghosts = new Material[original.Length];
             for (var i = 0; i < original.Length; i++)
             {
                 ghosts[i] = new Material(ghostShader);
+                ghostMaterials.Add(ghosts[i].Pointer);
                 var source = original[i];
                 if (source != null && source.HasProperty("_MainTex")) ghosts[i].mainTexture = source.mainTexture;
             }
@@ -429,16 +465,40 @@ internal sealed class StealthVisuals : MonoBehaviour
         }
     }
 
-    // Every part back to its own materials.
+    [HideFromIl2Cpp]
+    private static bool ShowsGhost(Il2CppReferenceArray<Material>? materials)
+    {
+        if (materials == null) return false;
+        foreach (var material in materials)
+            if (material != null && ghostMaterials.Contains(material.Pointer)) return true;
+        return false;
+    }
+
+    // Every part back to its own materials. Off the hidden list first, and each part on its own,
+    // so one that fails can't leave the rest - or every weapon swapped in after - stuck tinted.
+    // A part the game has since given other materials (a weapon swapped or rebuilt) keeps those:
+    // writing the old ones back would put one weapon's look onto another.
     [HideFromIl2Cpp]
     private void Reappear(IntPtr player, Hidden state)
     {
+        hidden.Remove(player);
         foreach (var part in state.Parts)
         {
-            if (part.Renderer != null) part.Renderer.sharedMaterials = part.Original;
+            try
+            {
+                if (part.Renderer != null && ShowsGhost(part.Renderer.sharedMaterials))
+                    part.Renderer.sharedMaterials = part.Original;
+            }
+            catch (Exception e)
+            {
+                Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons stealth visuals: a part couldn't get its own look back: {e.Message}");
+            }
             foreach (var ghost in part.Ghosts)
-                if (ghost != null) Destroy(ghost);
+            {
+                if (ghost == null) continue;
+                ghostMaterials.Remove(ghost.Pointer);
+                Destroy(ghost);
+            }
         }
-        hidden.Remove(player);
     }
 }

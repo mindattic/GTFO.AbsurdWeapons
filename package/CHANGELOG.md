@@ -76,3 +76,6 @@
   dash, Mjolnir's throw, the Warhammer's shockwave and slam, the Shadow Dagger's stealth, Chain
   Lightning's jump count, every sound, and more. `[Tentacles] PoolMultiplier`
   raises how many tentacles the game can draw at once. Full reference in the README.
+- Fix: the Shadow Dagger's purple no longer sticks to the weapon you swap to. Its glow goes out the
+  moment the dagger leaves your hand, and the stealth tint gives each weapon back its own look
+  when it ends, even if one part fails to restore.
