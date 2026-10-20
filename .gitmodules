@@ -1,0 +1,3 @@
+[submodule "external/GTFO.EZ.Shared"]
+	path = external/GTFO.EZ.Shared
+	url = https://github.com/mindattic/GTFO.EZ.Shared.git

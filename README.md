@@ -69,7 +69,7 @@ Requires the [.NET 6 SDK](https://dotnet.microsoft.com/) and `BepInExPack_GTFO` 
 and launched at least once ("Modded" start) in a Thunderstore Mod Manager or r2modman profile.
 
 ```powershell
-git clone https://github.com/mindattic/GTFO.EZ.AbsurdWeapons.git
+git clone --recurse-submodules https://github.com/mindattic/GTFO.EZ.AbsurdWeapons.git
 cd GTFO.EZ.AbsurdWeapons
 .\build.ps1
 ```
@@ -626,7 +626,7 @@ src/GTFO.EZ.AbsurdWeapons/       the plugin project (BepInEx/Il2Cpp - needs the 
   ProjectileHits.cs     what a hand-flown rocket or grenade can hit besides enemies (other players and bots)
   Sounds.cs             per-weapon sound choices, vanilla shot audio suppression, loop sounds
   ConfigMigrations.cs   one-time moves of a changed default onto configs still sitting on the old one
-  Shared/               generated from GTFO.EZ's src/GTFO.EZ/Shared - never edit here: SharedOwner,
+  Shared/               linked from external/GTFO.EZ.Shared (a git submodule; change it there): SharedOwner,
                         the Insert/Delete toggles, MessageHelper and RemoteEvents (throw-safe network events)
 package/                exactly what ships to Thunderstore / gets zipped for sharing
   manifest.json         Thunderstore package name is "GtfoEZAbsurdWeapons" (no period allowed there)

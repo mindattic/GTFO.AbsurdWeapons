@@ -53,4 +53,13 @@
     <Reference Include="$(BepInEx)\plugins\GTFO-API.dll" Private="false" />
   </ItemGroup>
 
+  <!-- Code every GTFO.* mod compiles in, from the GTFO.EZ.Shared submodule (external/GTFO.EZ.Shared;
+       the root README says how to fetch it). Only the files this mod uses are linked. -->
+  <ItemGroup>
+    <Compile Include="..\..\external\GTFO.EZ.Shared\SharedOwner.cs" Link="Shared\SharedOwner.cs" />
+    <Compile Include="..\..\external\GTFO.EZ.Shared\InfiniteToggles.cs" Link="Shared\InfiniteToggles.cs" />
+    <Compile Include="..\..\external\GTFO.EZ.Shared\MessageHelper.cs" Link="Shared\MessageHelper.cs" />
+    <Compile Include="..\..\external\GTFO.EZ.Shared\RemoteEvents.cs" Link="Shared\RemoteEvents.cs" />
+  </ItemGroup>
+
 </Project>
