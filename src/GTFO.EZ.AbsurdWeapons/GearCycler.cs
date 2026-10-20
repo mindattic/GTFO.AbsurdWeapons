@@ -194,7 +194,14 @@ internal sealed class GearCycler : MonoBehaviour
                 }
                 if (gun != null) gun.SetCurrentClip(gun.ClipSize);
             }
-            if (hasReserve) storage.SetClipAmmoInSlot(slot);
+            // Only the HUD is told: the game's SetClipAmmoInSlot loads the magazine from the reserve,
+            // which would make every swap a free reload (the same call InfiniteAmmo dropped, G.AWPN-T176).
+            if (hasReserve)
+            {
+                var slotAmmo = storage.GetInventorySlotAmmo(slot);
+                var equippable = item?.Instance?.TryCast<ItemEquippable>();
+                if (slotAmmo != null && equippable != null) storage.UpdateSlotAmmoUI(slotAmmo, equippable.GetCurrentClip());
+            }
         }
         storage.UpdateAllAmmoUI();
         storage.NeedsSync = true;
