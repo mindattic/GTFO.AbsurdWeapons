@@ -203,8 +203,10 @@ internal static class AreaDamage
             nearestLimb[enemy.Pointer] = (limb, point, distance);
         }
 
-        // Lifted slightly off the floor so a low wall edge doesn't block the whole burst.
-        var from = center + Vector3.up * 0.2f;
+        // Lifted slightly off the floor so a low wall edge doesn't block the whole burst - but never
+        // up into a ceiling just above (a blast under it would then see the floor above).
+        var lift = Physics.Raycast(center, Vector3.up, out var roof, 0.25f, LayerManager.MASK_WORLD) ? Mathf.Max(0f, roof.distance - 0.05f) : 0.2f;
+        var from = center + Vector3.up * lift;
         foreach (var (limb, point, distance) in nearestLimb.Values)
         {
             if (Physics.Linecast(from, point, LayerManager.MASK_WORLD)) continue;
