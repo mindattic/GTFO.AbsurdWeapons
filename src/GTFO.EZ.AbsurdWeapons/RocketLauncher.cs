@@ -283,8 +283,11 @@ internal sealed class RocketProjectile : MonoBehaviour
                 }
                 if (hitSomething)
                 {
-                    transform.position = hit.point;
-                    RocketLauncher.SendDetonate(id, hit.point);
+                    // The rocket's own centre at contact, just off the surface: a blast centred exactly
+                    // on a wall or door can see (and hurt) what's behind it.
+                    var at = hit.point + hit.normal * Radius;
+                    transform.position = at;
+                    RocketLauncher.SendDetonate(id, at);
                     Explode();
                     return;
                 }

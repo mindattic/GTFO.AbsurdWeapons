@@ -262,7 +262,8 @@ internal sealed class SeekerProjectile : MonoBehaviour
             }
             if (kind.BlastRadius > 0f)
             {
-                AreaDamage.Apply(hit.point, kind.BlastRadius, kind.BlastDamage, 0.4f, kind.BlastStagger,
+                // Just off the surface: a blast centred exactly on a wall or door can see through it.
+                AreaDamage.Apply(hit.point + hit.normal * HitRadius, kind.BlastRadius, kind.BlastDamage, 0.4f, kind.BlastStagger,
                     source, spared: enemy, gearCategoryId);
             }
         }
