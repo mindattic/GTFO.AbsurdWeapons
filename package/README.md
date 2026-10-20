@@ -51,7 +51,7 @@ to be fun first; balance comes later.
 | **Grenade Rifle** | Special | TechMan Veruta XII | The same grenades, from its own barrel with its own kick |
 | **Railgun** | Special | Köning PR 11 | A hitscan slug with infinite penetration, wrapped in a double helix |
 | **Chain Lightning Gun** | Special | Omneco exp1 | A continuous stream of lightning that leaps from enemy to enemy, up to five jumps |
-| **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: flies dead straight with no drop, trailing falling sparks and a light dust trail and glowing so you can track it, and blows up the first thing it touches - an enemy, a wall, a teammate or a bot, never you |
+| **Rocket Launcher** | Special | Buckland XDist2 | Quake 1's rocket: an orange fireball that flies dead straight with no drop, trailing falling sparks and a dust trail from the muzzle, glowing so you can track it, and blows up the first thing it touches - an enemy, a wall, a teammate or a bot, never you |
 | **Shrink Beam** | Special | Omneco exp1 | A continuous ray that shrinks whatever it's held on until it gibs; look down at a small one up close and you'll step on it |
 
 ### Tool

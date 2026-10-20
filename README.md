@@ -361,8 +361,11 @@ light.
 - **Firing:** the gun fires normally (sound, recoil, ammo). The `CastWeaponRay` prefix swallows its
   ray and calls `RocketLauncher.Launch`: a rocket from the muzzle, dead straight along the aim at
   `LaunchSpeed` 32.7 m/s, no drop, no bounce, gone after `Lifetime` 10 s if it never hits anything.
-- **Flight:** `RocketProjectile` flies it by hand, glowing, dropping a `FallingSpark` every 0.05 s and a
-  sparse puff of the game's concrete-impact dust well behind it. On the shooter's game it sphere-casts
+- **Flight:** `RocketProjectile` flies it by hand as an orange fireball (an unlit see-through flame
+  sphere around a white-hot core, flickering, with an orange `EffectLight`; no missile model), dropping a
+  `FallingSpark` every 0.05 s and a trail of the game's concrete-impact dust that starts at the muzzle:
+  a puff every 0.75 m for the first 6 m so it reads as one continuous trail, thinning out to the
+  sparse far look (a puff every 0.4 s of flight, 1.5 m behind it) by 20 m. On the shooter's game it sphere-casts
   for the first enemy, wall, teammate or bot in its way (never the shooter; `ProjectileHits`).
 - **Blast:** the Grenade Launcher's blast code (`AreaDamage`, `Explosion`) - `BlastDamage` 110 at the
   center, falling to `BlastEdgeFraction` (a third) at `BlastRadius` 5.2 m, `BlastStagger` x5 - plus the

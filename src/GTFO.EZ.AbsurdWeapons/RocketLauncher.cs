@@ -15,9 +15,9 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// The Rocket Launcher: Quake 1's own id Software code (<c>W_FireRocket</c> / <c>T_MissileTouch</c> /
 /// <c>T_RadiusDamage</c>), with Doom's rocket's straight, gravity-free flight (<c>MT_ROCKET</c>'s
 /// <c>MF_NOGRAVITY</c>) - neither game's rocket drops or bounces. Every shot (SeekerGuns' ray hook
-/// calls <see cref="Launch"/>) leaves the barrel and flies dead straight, kicking off falling sparks
-/// and a sparse trail of dust well behind it (the game's own concrete-impact puff) and glowing so it
-/// stays easy to track, to the first enemy, wall, teammate or bot (never the shooter)
+/// calls <see cref="Launch"/>) leaves the barrel as an orange fireball and flies dead straight, kicking
+/// off falling sparks and trailing dust from the muzzle on (the game's own concrete-impact puff, dense
+/// near the gun, sparse further out) and glowing so it stays easy to track, to the first enemy, wall, teammate or bot (never the shooter)
 /// in its way, then explodes there - same blast code as the Grenade Launcher (<see cref="AreaDamage"/>,
 /// <see cref="Explosion"/>), plus the game's own <c>DamageUtil.DoExplosionDamage</c> so the blast
 /// catches nearby players too - shooter, bots and teammates alike, Quake/Doom style. Quake's own
@@ -150,7 +150,7 @@ internal static class RocketLauncher
 }
 
 /// <summary>
-/// One rocket in flight: a small hand-built missile, flown by hand in a dead straight line (no
+/// One rocket in flight: an orange-glowing fireball (no visible missile), flown by hand in a dead straight line (no
 /// gravity, no bounce - unlike <see cref="LauncherGrenade"/>) until it touches an enemy or the
 /// world, kicking off a falling spark every few centimetres. Only the shooter's own copy decides when it
 /// hits something (through the same enemy/world sphere cast its blast then uses); a teammate's copy
@@ -162,19 +162,32 @@ internal sealed class RocketProjectile : MonoBehaviour
 {
     private const float Radius = 0.15f;
     private const float SparkInterval = 0.05f;
-    // Sparse and well behind it: thick dust hid the rocket, and you need to see it to time a
-    // right-click detonation.
+    // The dust trail starts at the muzzle: a puff every DustNearSpacing metres for the first
+    // DustDenseRange metres, so it reads as one continuous trail out of the gun, then thinning out
+    // until by DustRampEnd it's the old sparse look - a puff every DustInterval seconds of flight,
+    // DustBehind metres back. Sparse and well behind it out there: thick dust hid the rocket, and
+    // you need to see it to time a right-click detonation.
     private const float DustInterval = 0.4f;
     private const float DustBehind = 1.5f;
+    private const float DustNearSpacing = 0.75f;
+    private const float DustDenseRange = 6f;
+    private const float DustRampEnd = 20f;
+    private const int MaxDustPerFrame = 8;
     private static readonly Color GlowColor = new(1f, 0.45f, 0.15f);
+    private static readonly Color FlameColor = new(1f, 0.45f, 0.15f, 0.55f); // the fireball's outer flame, see-through
+    private static readonly Color CoreColor = new(1f, 0.85f, 0.45f);         // its white-hot heart
+    private const float FlameSize = 0.32f, CoreSize = 0.18f;
+    private static Material? flameMaterial, coreMaterial;
     private static int HitMask => LayerManager.MASK_ENEMY_DAMAGABLE | LayerManager.MASK_WORLD;
 
     private static readonly Dictionary<uint, RocketProjectile> live = new();
 
     private uint id, gearCategoryId;
     private PlayerAgent? owner; // null on a teammate's (visual-only) copy
-    private Vector3 direction;
-    private float age, nextSpark, nextDust, launchedAt;
+    private Vector3 direction, origin;
+    private float age, nextSpark, nextDustDistance, launchedAt, flickerSeed;
+    private Transform? flame, core;
+    private EffectLight? glow;
     private static int detonatedFrame = -1; // a right-click detonates one rocket, whichever runs first that frame
     private bool exploded;
 
@@ -185,21 +198,24 @@ internal sealed class RocketProjectile : MonoBehaviour
     {
         var go = new GameObject("GTFO.EZ.AbsurdWeapons Rocket");
         go.transform.SetPositionAndRotation(position, Quaternion.LookRotation(direction));
-        BuildModel(go.transform);
+        var rocket = go.AddComponent<RocketProjectile>();
+        rocket.BuildFireball(go.transform);
 
-        // A steady glow on the rocket itself, so it can be tracked in flight (and in the dark).
+        // The fireball lights its surroundings orange, so it can be tracked in flight (and in the dark).
         var glow = go.AddComponent<EffectLight>();
         glow.Color = GlowColor;
         glow.Range = 3f;
         glow.Intensity = 2.5f;
         glow.enabled = true;
 
-        var rocket = go.AddComponent<RocketProjectile>();
+        rocket.glow = glow;
         rocket.id = id;
         rocket.gearCategoryId = gearCategoryId;
         rocket.owner = owner;
         rocket.direction = direction.normalized;
+        rocket.origin = position;
         rocket.launchedAt = Time.time;
+        rocket.flickerSeed = UnityEngine.Random.Range(0f, 100f);
 
         live[id] = rocket;
     }
@@ -230,6 +246,7 @@ internal sealed class RocketProjectile : MonoBehaviour
 
             Spark();
             Dust();
+            Flicker();
 
             var position = transform.position;
 
@@ -310,21 +327,50 @@ internal sealed class RocketProjectile : MonoBehaviour
     }
 
     // Dust behind it - the game's own concrete-impact puff, no decal (there's nothing to mark, it's
-    // not hitting anything), just the cloud of debris that effect already throws up.
+    // not hitting anything), just the cloud of debris that effect already throws up. Spaced by
+    // distance flown, from the muzzle on (the first puff on launch): dense near the gun, the old
+    // sparse spacing further out. Puffs land at their own spot on the flight line, so a slow frame
+    // that covers several of them still leaves no gap, and never behind the muzzle.
     [HideFromIl2Cpp]
     private void Dust()
     {
-        if (age < nextDust) return;
-        nextDust = age + DustInterval;
-        try
+        var traveled = Vector3.Distance(origin, transform.position);
+        for (var i = 0; i < MaxDustPerFrame && traveled >= nextDustDistance; i++)
         {
-            FX_Manager.PlayEffect(false, FX_GroupName.Impact_Concrete, transform.position - direction * DustBehind,
-                Quaternion.LookRotation(-direction), false);
+            var at = nextDustDistance;
+            nextDustDistance = at + DustSpacing(at);
+            var back = Mathf.Min(DustBehind, at);
+            try
+            {
+                FX_Manager.PlayEffect(false, FX_GroupName.Impact_Concrete, origin + direction * (at - back),
+                    Quaternion.LookRotation(-direction), false);
+            }
+            catch (Exception)
+            {
+                return; // dust is a nicety; the sparks and the fireball still show
+            }
         }
-        catch (Exception)
-        {
-            // Dust is a nicety; the sparks still show.
-        }
+        if (traveled >= nextDustDistance) nextDustDistance = traveled; // fell behind: pick up from here, don't burst
+    }
+
+    // Metres to the next puff, from the dust trail's distance so far.
+    private static float DustSpacing(float traveled)
+    {
+        var far = RocketLauncher.Speed.Value * DustInterval;
+        if (traveled <= DustDenseRange || far <= DustNearSpacing) return DustNearSpacing;
+        return Mathf.Lerp(DustNearSpacing, far, (traveled - DustDenseRange) / (DustRampEnd - DustDenseRange));
+    }
+
+    // The fireball churns: both shells pulse and the light wavers, out of step from rocket to rocket.
+    [HideFromIl2Cpp]
+    private void Flicker()
+    {
+        var t = (age + flickerSeed) * 14f;
+        var a = Mathf.PerlinNoise(t, 0.3f);
+        var b = Mathf.PerlinNoise(0.7f, t * 1.3f);
+        if (flame != null) flame.localScale = Vector3.one * (FlameSize * (0.85f + 0.3f * a));
+        if (core != null) core.localScale = Vector3.one * (CoreSize * (0.85f + 0.3f * b));
+        if (glow != null) glow.Intensity = 2.5f * (0.8f + 0.4f * a);
     }
 
     [HideFromIl2Cpp]
@@ -363,28 +409,33 @@ internal sealed class RocketProjectile : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // A small hand-built missile: a dark, elongated body with a bright tip, long axis along local
-    // forward (the object's own rotation already points along the flight direction).
+    // A fireball, not a missile: a see-through orange flame shell around a white-hot core, both
+    // unlit (Sprites/Default, like the other mods' glowing bits) so they burn bright whatever the
+    // lighting, with no shadows - fire doesn't cast them.
     [HideFromIl2Cpp]
-    private static void BuildModel(Transform parent)
+    private void BuildFireball(Transform parent)
     {
-        var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        UnityEngine.Object.Destroy(body.GetComponent<Collider>());
-        body.transform.SetParent(parent, false);
-        // Scale is applied in the capsule's own unrotated space (long axis Y), then the rotation
-        // below turns that Y onto local forward (Z) - so the length goes on Y, not Z.
-        body.transform.localScale = new Vector3(0.1f, 0.22f, 0.1f);
-        body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // capsule's long axis (Y) onto forward (Z)
-        var bodyRenderer = body.GetComponent<Renderer>();
-        if (bodyRenderer != null) bodyRenderer.material.color = new Color(0.12f, 0.12f, 0.12f);
+        if (flameMaterial == null) flameMaterial = new Material(Shader.Find("Sprites/Default")) { color = FlameColor };
+        if (coreMaterial == null) coreMaterial = new Material(Shader.Find("Sprites/Default")) { color = CoreColor };
+        flame = FireballShell(parent, FlameSize, flameMaterial);
+        core = FireballShell(parent, CoreSize, coreMaterial);
+    }
 
-        var tip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        UnityEngine.Object.Destroy(tip.GetComponent<Collider>());
-        tip.transform.SetParent(parent, false);
-        tip.transform.localPosition = Vector3.forward * 0.22f;
-        tip.transform.localScale = new Vector3(0.09f, 0.09f, 0.09f);
-        var tipRenderer = tip.GetComponent<Renderer>();
-        if (tipRenderer != null) tipRenderer.material.color = new Color(0.6f, 0.08f, 0.05f);
+    [HideFromIl2Cpp]
+    private static Transform FireballShell(Transform parent, float size, Material material)
+    {
+        var shell = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        UnityEngine.Object.Destroy(shell.GetComponent<Collider>());
+        shell.transform.SetParent(parent, false);
+        shell.transform.localScale = Vector3.one * size;
+        var renderer = shell.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+        return shell.transform;
     }
 }
 

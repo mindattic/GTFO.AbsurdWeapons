@@ -7,6 +7,9 @@
   sustained fire (new `[Ammo] MagazineSeconds`, replacing `StreamPercentPerSecond`). The beam guns
   refill an empty magazine from the reserve instead of reloading; the Tentacle Cannon no longer
   charges a round per bite and reloads like any gun.
+- **Rocket Launcher:** the rocket is now an orange-glowing fireball instead of a little missile, and
+  its dust trail starts right at the muzzle - dense near the gun so it reads as one continuous trail,
+  thinning to the old sparse puffs further out - instead of only beginning some 20 m away.
 
 ## v13
 
