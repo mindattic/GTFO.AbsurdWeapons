@@ -398,7 +398,7 @@ internal static class SeekerGuns
             var (position, fromBarrel) = Barrel.Shot(owner, firingWeapon?.MuzzleAlign, originPos, direction);
             EnemyAgent? locked = null;
             if (kind.SmartLock) locked = NextLock(kind, originPos, direction); // picked from the crosshair; the curve does the rest
-            else direction = fromBarrel;
+            if (locked == null) direction = fromBarrel; // unlocked: straight at what the crosshair is on
 
             SeekerProjectile.Spawn(kind, position, direction, owner, weaponRayData.damage,
                 weaponRayData.staggerMulti, weaponRayData.precisionMulti, weaponRayData.gearCategoryId,
