@@ -543,7 +543,10 @@ internal static class Barrel
         // What the crosshair is on (an enemy in your face) is no further out than the barrel: from
         // the barrel the shot would start inside or past it, or fly back at you.
         var behindBarrel = aimed && Vector3.Dot(target - from, aim.normalized) <= ClearRadius;
-        if (behindBarrel
+        // Within half a metre of the barrel the shot isn't aimed at the crosshair's point (it runs
+        // parallel to the aim, the barrel's width off it, and can miss a head or a lock): from the eye.
+        var tooClose = toTarget.sqrMagnitude <= 0.25f;
+        if (behindBarrel || tooClose
             || Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
             || Physics.CheckSphere(from, ClearRadius, LayerManager.MASK_WORLD)
             || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD))
