@@ -514,6 +514,7 @@ internal static class SeekerGuns
 internal static class Barrel
 {
     private const float AimRange = 100f;
+    private const float ClearRadius = 0.16f; // just over the biggest projectile's (rocket, seeker: 0.15)
 
     // The muzzle on screen, or a point ahead of the eye when there's no muzzle to use.
     internal static Vector3 Start(PlayerAgent? owner, Transform? muzzle, Vector3 eye, Vector3 aim) =>
@@ -529,15 +530,19 @@ internal static class Barrel
         var toTarget = target - start;
         var direction = toTarget.sqrMagnitude > 0.25f ? toTarget.normalized : aim; // point-blank: just along the aim
         var from = start + direction * 0.1f;
-        // A world surface between the eye and the barrel (up against a wall or door, or beside a
-        // door jamb): the barrel's point is through it or too close to it for a projectile's sphere
-        // to see it. The shot goes from the crosshair's own line instead - known clear up to what it's
-        // on - starting short of that by more than any projectile's radius.
-        if (Physics.Linecast(eye, from + direction * 0.25f, LayerManager.MASK_WORLD))
+        // The barrel's own path has to be clear to what the crosshair is on: not through a wall to
+        // reach the barrel (up against a wall or door), not starting overlapping one (a projectile's
+        // sphere doesn't see what it starts inside), and not clipping a jamb, railing or crate edge
+        // the crosshair clears. Otherwise the shot goes from the eye along the crosshair itself, the
+        // one line known to be clear up to what it's on - so it never passes through a wall, and a
+        // rocket never bursts on a doorframe in the shooter's face.
+        var path = Vector3.Distance(from, target) - 0.3f; // stop short of the surface it's aimed at
+        if (Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
+            || Physics.CheckSphere(from, ClearRadius, LayerManager.MASK_WORLD)
+            || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD)))
         {
-            var clear = aimed ? hit.distance : AimRange;
+            from = eye;
             direction = aim.normalized;
-            from = eye + direction * Mathf.Clamp(clear - 0.25f, 0f, 0.5f);
         }
         return (from, direction);
     }
