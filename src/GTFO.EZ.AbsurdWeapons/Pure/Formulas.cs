@@ -71,7 +71,8 @@ internal static class Formulas
     // (dot of the direction with the surface's inward normal: 1 straight in, near 0 glancing). Head-on
     // the sphere meets the surface just before the point; at a glancing angle (the floor a few metres
     // ahead) it grazes it radius/approach before, so the sweep stops there, `margin` short, and the
-    // surface it's aimed at is never counted as something in the way. Negative: nothing to sweep.
+    // surface it's aimed at is never counted as something in the way. Zero or negative: the start is
+    // already within `radius` (plus margin) of that plane, so there's no path that can be checked.
     internal static float ClearPathLength(float distance, float height, float approach, float radius, float margin)
     {
         var path = distance - margin;

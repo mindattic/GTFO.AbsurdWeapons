@@ -553,6 +553,9 @@ internal static class Barrel
         if (behindBarrel || tooClose
             || Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
             || Physics.CheckSphere(from, ClearRadius, LayerManager.MASK_WORLD)
+            // No room to sweep: the barrel is already within a sphere's radius of the aimed surface's
+            // plane (a grazing hit on a limb's edge, a wall you're beside), so its path can't be checked.
+            || (aimed && path <= 0f)
             || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD))
             // A teammate or bot at your shoulder the crosshair clears: a rocket or grenade from the
             // barrel would go off on them (OtherPlayer skips the shooter, counts a starting overlap).

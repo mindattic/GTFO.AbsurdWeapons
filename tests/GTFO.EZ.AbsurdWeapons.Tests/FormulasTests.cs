@@ -162,6 +162,14 @@ public class FormulasTests
     }
 
     [Test]
+    public void ClearPathLength_StartWithinRadiusOfThePlaneLeavesNothingToSweep()
+    {
+        // Barrel 0.1 m off the aimed surface's plane, grazing it: no checkable path (Barrel.Shot
+        // then goes from the eye rather than trusting an unswept barrel line).
+        Assert.That(Formulas.ClearPathLength(10f, 0.1f, 0.01f, 0.16f, 0.3f), Is.LessThanOrEqualTo(0f));
+    }
+
+    [Test]
     public void ClearPathLength_ParallelOrAwayUsesTheDistance()
     {
         Assert.That(Formulas.ClearPathLength(5f, 1f, 0f, 0.16f, 0.3f), Is.EqualTo(4.7f).Within(1e-4));
