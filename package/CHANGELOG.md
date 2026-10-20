@@ -10,11 +10,28 @@
 - **Rocket Launcher:** the rocket is now an orange-glowing fireball instead of a little missile, and
   its dust trail starts right at the muzzle - dense near the gun so it reads as one continuous trail,
   thinning to the old sparse puffs further out - instead of only beginning some 20 m away.
-
 - **Bug fix:** the Plasma Pistol and Rifle no longer charge up before firing.
 - **Bug fix:** a Chain Lightning or Mjolnir bolt that strikes exactly one enemy flashes again.
 - **Bug fix:** the Shadow Dagger's purple glow no longer sticks to the weapon swapped in after it.
 - **Chain Lightning** glows a soft violet of its own.
+- **Bug fixes - walls and doors:** grenades no longer go off on an enemy or player just behind a
+  wall or door; rockets, grenades and plasma rounds fired up against a wall no longer start past it;
+  rocket and plasma blasts no longer reach through the wall or ceiling they hit; a point-blank
+  Mjolnir throw no longer starts on the far side of a wall, and its hit no longer reaches through
+  doors; the Warhammer slam no longer lands past a wall.
+- **Bug fixes - where shots start:** rocket, grenade, plasma and hive shots aimed at the floor ahead
+  (even far down a corridor) leave the barrel again instead of your eye, and a shot at an enemy
+  closer than the barrel no longer starts inside or past it.
+- **Bug fixes - bots:** on the host, a bot's shots no longer change your ammo display, play your
+  Railgun or Tentacle Cannon sounds, use up your tentacle spots or get infinite Tentacle Cannon ammo,
+  and your right-click no longer sets off a bot's rockets. The Victory Banner heals bots too.
+- **Bug fixes - multiplayer:** teammates hear the Railgun; a teammate's dropped Shrink Beam no longer
+  shrinks enemies on everyone else's game; a rocket or grenade fired point-blank into a teammate no
+  longer explodes at the map origin.
+- **Bug fixes - other:** swapping a weapon back in never refills its magazine; a slow swap can't move
+  the new weapon's ammo onto the old one; the Warhammer slam fires one shockwave, not two; the
+  Katana's charge-up keeps its normal pace during a dash; plasma rounds no longer leak a material
+  copy per shot; cached materials are rebuilt if the game unloads them.
 - Moves in step with the GTFO.EZ family's version number (GTFO.EZ, GTFO.EZ.AbsurdWeapons,
   GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems share one).
 
