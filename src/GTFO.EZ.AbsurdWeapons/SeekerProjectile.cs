@@ -48,7 +48,19 @@ internal sealed class SeekerProjectile : MonoBehaviour
     private float curveProgress; // 0..1 along the curve
     private EnemyAgent? curveTarget; // null on a teammate's copy: it curves to the sent point
 
+    // The per-renderer material copies Tint made. Unity doesn't free a renderer.material copy
+    // with its object, so they go in OnDestroy - else every tinted shot leaks one per renderer.
+    private List<Material>? tintedMaterials;
+
     public SeekerProjectile(IntPtr ptr) : base(ptr) { }
+
+    private void OnDestroy()
+    {
+        if (tintedMaterials == null) return;
+        foreach (var material in tintedMaterials)
+            if (material != null) Destroy(material);
+        tintedMaterials = null;
+    }
 
     // Bullet-ray layers too, so a round can land on a door lock (LockDamage), not only enemies and walls.
     private static int HitMask => LayerManager.MASK_ENEMY_DAMAGABLE | LayerManager.MASK_PROJECTILE_BLOCKERS | LayerManager.MASK_BULLETWEAPON_RAY;
@@ -79,9 +91,10 @@ internal sealed class SeekerProjectile : MonoBehaviour
             vanilla.enabled = false;
         }
 
-        if (kind.Tint.a > 0f) Tint(go, kind.Tint);
+        var tinted = kind.Tint.a > 0f ? Tint(go, kind.Tint) : null;
 
         var seeker = go.AddComponent<SeekerProjectile>();
+        seeker.tintedMaterials = tinted;
         seeker.kind = kind;
         seeker.owner = owner;
         seeker.damage = kind.OwnDamage > 0f ? kind.OwnDamage : damage;
@@ -295,8 +308,10 @@ internal sealed class SeekerProjectile : MonoBehaviour
     }
 
     // Glow, trail, particles and body in one color, so a borrowed yellow seeker reads as blue plasma.
-    private static void Tint(GameObject go, Color color)
+    // Returns the material copies it made, for the projectile to destroy with itself.
+    private static List<Material> Tint(GameObject go, Color color)
     {
+        var copies = new List<Material>();
         // Each step on its own, so one that fails (and says which) doesn't stop the rest.
         TintStep("light", () =>
         {
@@ -323,6 +338,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
                 if (renderer == null || renderer.TryCast<TrailRenderer>() != null) continue;
                 var material = renderer.material; // per-instance copy: other projectiles keep theirs
                 if (material == null) continue;
+                copies.Add(material);
                 var shader = material.shader;
                 dump?.Append($"[{renderer.name} shader '{(shader != null ? shader.name : "?")}':");
                 var count = shader != null ? shader.GetPropertyCount() : 0;
@@ -344,6 +360,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
                 Plugin.Logger.LogInfo(dump.ToString());
             }
         });
+        return copies;
     }
 
     private static readonly HashSet<string> tintFailuresLogged = new();
