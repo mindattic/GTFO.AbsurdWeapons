@@ -524,13 +524,15 @@ internal static class Barrel
     internal static (Vector3 Start, Vector3 Direction) Shot(PlayerAgent? owner, Transform? muzzle, Vector3 eye, Vector3 aim)
     {
         var start = Start(owner, muzzle, eye, aim);
-        // Up against a wall or door the barrel's point is already through it: the shot starts on
-        // this side, so it meets the wall rather than flying on in the room beyond.
-        if (Physics.Linecast(eye, start, out var blocked, LayerManager.MASK_WORLD))
-            start = blocked.point - (start - eye).normalized * 0.2f;
         var target = Physics.Raycast(eye, aim, out var hit, AimRange, LayerManager.MASK_BULLETWEAPON_RAY) ? hit.point : eye + aim * AimRange;
         var toTarget = target - start;
         var direction = toTarget.sqrMagnitude > 0.25f ? toTarget.normalized : aim; // point-blank: just along the aim
-        return (start + direction * 0.1f, direction);
+        var from = start + direction * 0.1f;
+        // Up against a wall or door the barrel's point is already through it (or too close: a
+        // projectile's sphere that starts overlapping the wall doesn't see it). Start clear of it on
+        // this side, further off than any projectile's radius, so the shot meets the wall.
+        if (Physics.Linecast(eye, from + direction * 0.25f, out var blocked, LayerManager.MASK_WORLD))
+            from = blocked.point + blocked.normal * 0.25f;
+        return (from, direction);
     }
 }
