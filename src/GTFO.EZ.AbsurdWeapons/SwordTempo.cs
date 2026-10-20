@@ -32,8 +32,11 @@ internal static class SwordTempo
 
     [HarmonyPatch(typeof(MeleeWeaponFirstPerson), nameof(MeleeWeaponFirstPerson.ChangeState))]
     [HarmonyPostfix]
-    private static void AfterChangeState(MeleeWeaponFirstPerson __instance, eMeleeWeaponState newState)
+    private static void AfterChangeState(MeleeWeaponFirstPerson __instance, eMeleeWeaponState newState, bool __runOriginal)
     {
+        // A state change held back by a prefix (KatanaDash holds the release during its dash)
+        // never happened: the weapon is still in its old state, so its pace stays.
+        if (!__runOriginal) return;
         try
         {
             var id = __instance.MeleeArchetypeData?.persistentID ?? 0;
