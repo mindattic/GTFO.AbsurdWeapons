@@ -241,8 +241,10 @@ internal static class SeekerGuns
     private static void BeginFire(BulletWeapon weapon, out uint previous)
     {
         previous = firingArchetype;
+        // The Tentacle Cannon's refund is only for the local player, whose TentacleAmmoDriver drains
+        // it by time instead; a host's bot (locally owned too) has no driver, so its shots cost rounds.
         if (previous == 0 && weapon.Owner != null && weapon.Owner.IsLocallyOwned
-            && (InfiniteAmmo.On || TentacleCannon.IsTentacleGun(weapon.ArchetypeData?.persistentID ?? 0)))
+            && (InfiniteAmmo.On || (TentacleCannon.IsTentacleGun(weapon.ArchetypeData?.persistentID ?? 0) && IsLocalPlayer(weapon.Owner))))
             clipBefore = weapon.GetCurrentClip();
         firingArchetype = weapon.ArchetypeData?.persistentID ?? 0;
         firingWeapon = weapon;
@@ -251,6 +253,9 @@ internal static class SeekerGuns
         if (TentacleCannon.IsTentacleGun(firingArchetype) && TentacleCannon.DiagnosticShots > 0)
             Plugin.Logger.LogInfo("GTFO.EZ.AbsurdWeapons Tentacle Cannon: Fire() called.");
     }
+
+    private static bool IsLocalPlayer(PlayerAgent player) =>
+        PlayerManager.GetLocalPlayerAgent() is { } local && local.Pointer == player.Pointer;
 
     private static void EndFire(BulletWeapon weapon, uint previous)
     {
