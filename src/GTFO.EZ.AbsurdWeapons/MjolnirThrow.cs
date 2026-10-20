@@ -235,8 +235,13 @@ internal sealed class ThrownHammer : MonoBehaviour
             {
                 var limb = hit.collider.GetComponent<Dam_EnemyDamageLimb>();
                 var enemy = limb?.m_base?.Owner;
-                if (limb == null || enemy == null || !enemy.Alive || !hitSet.Add(enemy.Pointer)) continue;
+                if (limb == null || enemy == null || !enemy.Alive || hitSet.Contains(enemy.Pointer)) continue;
                 var point = hit.point == Vector3.zero ? limb.transform.position : hit.point;
+                // The hit sphere is wide: an enemy it brushes on the far side of a door or thin wall
+                // isn't struck (seen from the nearest point of the hammer's path).
+                var along = Mathf.Clamp(Vector3.Dot(point - from, line / length), 0f, length);
+                if (Physics.Linecast(from + line / length * along, point, LayerManager.MASK_WORLD)) continue;
+                if (!hitSet.Add(enemy.Pointer)) continue;
                 limb.BulletDamage(MjolnirThrow.HitDamage.Value, owner!.Cast<Agent>(), point, line / length, -line / length,
                     allowDirectionalBonus: false, MjolnirThrow.HitStagger.Value, 1f, MeleeInjector.MjolnirId);
             }
