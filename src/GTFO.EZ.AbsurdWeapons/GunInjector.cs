@@ -300,8 +300,6 @@ internal static class GunInjector
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f; // a beam, not bullets: no brass ejected
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         var category = CategoryOf(gear);
         if (forceSpecialSlot)
@@ -353,8 +351,6 @@ internal static class GunInjector
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
             "A continuous stream of lightning while you hold the trigger, leaping from enemy to enemy, up to five jumps, weaker with each.");
@@ -375,8 +371,6 @@ internal static class GunInjector
         archetype.HipFireSpread = 0f;
         archetype.AimSpread = 0f;
         archetype.ShellCasingSize = 0f;
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, category, gear,
             "A continuous ray while you hold the trigger: whatever it's held on shrinks - smaller and slower by the same share - until there's nothing left of it.");
@@ -422,8 +416,6 @@ internal static class GunInjector
         archetype.ShotDelay = TentacleShotDelay.Value; // ~4.3 tentacles a second by default, so each has time to live
         archetype.ShellCasingSize = 0f; // tentacles, not bullets: no brass ejected
         SetClipSize(archetype, TentacleClipSize.Value);
-        archetype.SpecialChargetupTime = 0f;
-        archetype.SpecialCooldownTime = 0f;
         archetype.RecoilDataID = AddKicklessRecoil(name, id, archetype.RecoilDataID);
         Register(name, id, archetype, CategoryOf(gear), gear, description);
     }
@@ -589,6 +581,10 @@ internal static class GunInjector
         archetype.persistentID = id;
         archetype.name = blockName;
         archetype.PublicName = new LocalizedText { Id = 0, UntranslatedText = DisplayName(name) };
+        // No gun of ours charges up before firing or cools down after: a stat source like the Omneco
+        // LRG HEL (the Plasma Pistol/Rifle's) carries a charge-up that would otherwise come along.
+        archetype.SpecialChargetupTime = 0f;
+        archetype.SpecialCooldownTime = 0f;
 
         var category = Clone(sourceCategory);
         category.persistentID = id;

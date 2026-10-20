@@ -31,6 +31,8 @@
 - Loot: where it clashes with GTFO.EZ, this mod's loot wins - GTFO.EZ's kit-only tables (its
   *Consumables Are Kits*) get this mod's mix too, Hand Grenades and Stim Packs alongside kits at
   this mod's own kit odds and size.
+- Every added gun fires the moment you pull the trigger: none charges up first or cools down
+  after. The Plasma Pistol/Rifle had picked up a charge-up from their stat source, the Omneco LRG HEL.
 - Initial release with nineteen weapons, each marked **(!)**:
   - **Melee:** Katana (the Mastaba blade at twice a real katana's length; a full charge dashes up to
     10 m with the swing held, cutting the moment you reach an enemy or a wall), Mjolnir (a thunderclap on
