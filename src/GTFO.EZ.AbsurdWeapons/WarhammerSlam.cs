@@ -99,7 +99,7 @@ internal sealed class WarhammerSlam : MonoBehaviour
             var ahead = from + forward * Reach.Value;
             // Short of a wall in the way, then down to the floor.
             if (Physics.Raycast(from, forward, out var wall, Reach.Value, LayerManager.MASK_WORLD)) ahead = wall.point - forward * 0.3f;
-            var ground = Physics.Raycast(ahead, Vector3.down, out var floor, 4f, LayerManager.MASK_WORLD) ? floor.point : player.Position + forward * Reach.Value;
+            var ground = Physics.Raycast(ahead, Vector3.down, out var floor, 4f, LayerManager.MASK_WORLD) ? floor.point : ahead + Vector3.down * 1.2f; // no floor (a drop): still this side of any wall
 
             ImpactBursts.Release(ImpactBurst.Shockwave, player, ground, gearCategoryId);
             SpawnDebris(ground);
