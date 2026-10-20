@@ -64,4 +64,18 @@ internal static class Formulas
 
     // A light attack's timing (seconds or frames) at `speed` times the pace.
     internal static float ScaledTiming(float value, float speed) => speed > 0f ? value / speed : value;
+
+    // How far a sphere of `radius` heading at an aimed surface can be swept to check its path is
+    // clear without touching that surface itself. `distance` is to the aimed point, `height` the
+    // start's height above the surface's plane, and `approach` how squarely it heads into the surface
+    // (dot of the direction with the surface's inward normal: 1 straight in, near 0 glancing). Head-on
+    // the sphere meets the surface just before the point; at a glancing angle (the floor a few metres
+    // ahead) it grazes it radius/approach before, so the sweep stops there, `margin` short, and the
+    // surface it's aimed at is never counted as something in the way. Negative: nothing to sweep.
+    internal static float ClearPathLength(float distance, float height, float approach, float radius, float margin)
+    {
+        var path = distance - margin;
+        if (approach > 1e-4f) path = Math.Min(path, (height - radius) / approach - margin);
+        return path;
+    }
 }

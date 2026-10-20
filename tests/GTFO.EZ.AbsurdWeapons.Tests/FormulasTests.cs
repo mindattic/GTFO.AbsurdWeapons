@@ -124,4 +124,47 @@ public class FormulasTests
     {
         Assert.That(Formulas.ScaledTiming(value, speed), Is.EqualTo(expected).Within(1e-5));
     }
+
+    [Test]
+    public void ClearPathLength_HeadOnStopsJustShortOfTheAimedPoint()
+    {
+        // Straight at a wall 5 m away: the plain stop-short applies.
+        Assert.That(Formulas.ClearPathLength(5f, 5f, 1f, 0.16f, 0.3f), Is.EqualTo(4.54f).Within(1e-4));
+    }
+
+    [Test]
+    public void ClearPathLength_GlancingFloorStopsBeforeTheSphereGrazesIt()
+    {
+        // Barrel 1.4 m up, aimed at the floor 8 m ahead (~10 degrees): the sweep ends before the
+        // sphere's underside reaches the floor, so the floor it's aimed at never blocks the shot.
+        var distance = 8f;
+        var height = 1.4f;
+        var approach = height / distance;
+        var path = Formulas.ClearPathLength(distance, height, approach, 0.16f, 0.3f);
+        Assert.That(path, Is.GreaterThan(0f));
+        Assert.That(height - path * approach, Is.GreaterThan(0.16f)); // sphere still above the floor
+        Assert.That(path, Is.LessThan(distance - 0.3f));
+    }
+
+    [Test]
+    public void ClearPathLength_ShallowCorridorFloorStopsWellBeforeTheSphereGrazesIt()
+    {
+        // Barrel 1.4 m up, aimed at the floor ~27 m down a flat corridor (~3 degrees): the sphere's
+        // underside meets the floor over 3 m before the aimed point, further back than any fixed
+        // angle cap allowed, and the sweep still ends before it.
+        var distance = 27f;
+        var height = 1.4f;
+        var approach = height / distance;
+        var path = Formulas.ClearPathLength(distance, height, approach, 0.16f, 0.3f);
+        Assert.That(path, Is.GreaterThan(20f));
+        Assert.That(height - path * approach, Is.GreaterThan(0.16f));
+        Assert.That(distance - path, Is.GreaterThan(3f));
+    }
+
+    [Test]
+    public void ClearPathLength_ParallelOrAwayUsesTheDistance()
+    {
+        Assert.That(Formulas.ClearPathLength(5f, 1f, 0f, 0.16f, 0.3f), Is.EqualTo(4.7f).Within(1e-4));
+        Assert.That(Formulas.ClearPathLength(5f, 1f, -0.5f, 0.16f, 0.3f), Is.EqualTo(4.7f).Within(1e-4));
+    }
 }

@@ -536,10 +536,14 @@ internal static class Barrel
         // the crosshair clears. Otherwise the shot goes from the eye along the crosshair itself, the
         // one line known to be clear up to what it's on - so it never passes through a wall, and a
         // rocket never bursts on a doorframe in the shooter's face.
-        // Stop short of the surface it's aimed at - by more at a glancing angle (the floor a few metres
-        // ahead), where the sphere would touch that surface well before the crosshair's point.
-        var shortBy = aimed ? Mathf.Max(0.3f, ClearRadius / Mathf.Max(0.1f, Mathf.Abs(Vector3.Dot(direction, hit.normal))) + 0.05f) : 0.3f;
-        var path = Vector3.Distance(from, target) - shortBy;
+        // Stop short of the surface it's aimed at, measured against that surface's own plane: the
+        // sphere's underside reaches the floor ahead well before the crosshair's point when it's met
+        // at a glancing angle (a long flat corridor shot), so the sweep ends before then and the floor
+        // it's aimed at is never counted as something in the way, however shallow the angle.
+        var path = aimed
+            ? Formulas.ClearPathLength(Vector3.Distance(from, target), Vector3.Dot(from - target, hit.normal),
+                -Vector3.Dot(direction, hit.normal), ClearRadius, 0.3f)
+            : Vector3.Distance(from, target) - 0.3f;
         // What the crosshair is on (an enemy in your face) is no further out than the barrel: from
         // the barrel the shot would start inside or past it, or fly back at you.
         var behindBarrel = aimed && Vector3.Dot(target - from, aim.normalized) <= ClearRadius;
