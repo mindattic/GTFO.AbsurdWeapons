@@ -11,6 +11,13 @@
   its dust trail starts right at the muzzle - dense near the gun so it reads as one continuous trail,
   thinning to the old sparse puffs further out - instead of only beginning some 20 m away.
 
+- **Bug fix:** the Plasma Pistol and Rifle no longer charge up before firing.
+- **Bug fix:** a Chain Lightning or Mjolnir bolt that strikes exactly one enemy flashes again.
+- **Bug fix:** the Shadow Dagger's purple glow no longer sticks to the weapon swapped in after it.
+- **Chain Lightning** glows a soft violet of its own.
+- Moves in step with the GTFO.EZ family's version number (GTFO.EZ, GTFO.EZ.AbsurdWeapons,
+  GTFO.EZ.AbsurdMoves and GTFO.EZ.AbsurdItems share one).
+
 ## v13
 
 - **Versioning:** the GTFO.EZ family - GTFO.EZ, GTFO.EZ.AbsurdWeapons, GTFO.EZ.AbsurdMoves and
