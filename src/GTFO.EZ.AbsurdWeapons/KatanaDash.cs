@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Agents;
 using BepInEx.Configuration;
-using Enemies;
 using GameData;
 using Gear;
 using HarmonyLib;

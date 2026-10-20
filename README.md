@@ -634,7 +634,7 @@ package/                exactly what ships to Thunderstore / gets zipped for sha
   CHANGELOG.md
   icon.png
 tests/GTFO.EZ.AbsurdWeapons.Tests/  NUnit tests for Pure/ - plain dotnet test, no game needed
-docs/                   user stories, weapon design references, spikes
+docs/                   user stories, weapon design references
 build.ps1               builds the plugin and packages dist/GTFO.EZ.AbsurdWeapons-<version>.zip
 logo.png                cover art
 ```
@@ -692,7 +692,6 @@ Current: v14 (`14.0.0` in `package/manifest.json` and `Plugin.VERSION`).
   shared workflow database (change it with the workflow CLI, not by hand).
 - [docs/design/weapon-references.md](docs/design/weapon-references.md) - the game each weapon is
   modelled on and the numbers taken from it.
-- [docs/spikes/weapon-mods.md](docs/spikes/weapon-mods.md) - proposed spike: one mod per weapon.
 - [AGENTS.md](AGENTS.md) - entrypoint for LLM agents working in this repo.
 
 GTFO.EZ.AbsurdWeapons is a GTFO.EZ companion mod, built on

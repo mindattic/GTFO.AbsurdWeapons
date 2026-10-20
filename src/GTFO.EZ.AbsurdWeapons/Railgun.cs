@@ -14,9 +14,9 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// <summary>
 /// The Railgun: one hitscan slug with infinite penetration. It goes through every enemy and every
 /// wall along its line, out to 1000 m, hitting each enemy once (through the limb it meets first,
-/// so a head is still a head) via the normal bullet path, so it syncs. It's drawn as a white-hot
-/// beam wrapped in a double helix that spins, widens and fades, with sparks wherever it punches
-/// through a wall. Teammates are sent each shot and see the same beam.
+/// so a head is still a head) via the normal bullet path, so it syncs. It's drawn as a green-tinted
+/// double helix that fades where it was fired, with sparks wherever it punches through a wall.
+/// Teammates are sent each shot and see the same beam.
 /// </summary>
 internal static class Railgun
 {

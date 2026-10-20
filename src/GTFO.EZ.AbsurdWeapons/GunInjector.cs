@@ -19,7 +19,7 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// <item>Hive Pistol (main) - Shelling S49, a Titanfall-style smart pistol.</item>
 /// <item>Hive Rifle (special) - Malatack HXC, a smart rifle.</item>
 /// <item>Laser Pistol (main) - Raptus Treffen 2, a continuous trip-mine laser beam.</item>
-/// <item>Laser Rifle (special) - Drekker DEL P1, a heavier, longer beam.</item>
+/// <item>Laser Rifle (special) - Accrat ND6 (forced into the special slot), the same beam.</item>
 /// <item>Tentacle Cannon (special) - Buckland XDist2 (iron sights); every round is a striker tentacle.</item>
 /// <item>Railgun (special) - Koning PR 11; a hitscan slug with infinite penetration (<see cref="Railgun"/>).</item>
 /// <item>Chain Lightning Gun (special) - Omneco exp1; lightning that jumps enemy to enemy (<see cref="ChainLightning"/>).</item>
@@ -52,9 +52,9 @@ internal static class GunInjector
     internal const uint RocketLauncherId = 1118;
     internal const uint ShrinkBeamId = 1119;
     // 1201 was the Grenade Launcher tool (now the Grenade Pistol/Rifle); left unused.
-    internal const uint VictoryBannerId = 1202;   // a tool: same reason
+    internal const uint VictoryBannerId = 1202;   // a tool
 
-    // The ten original guns' own stats (written straight into each gun's archetype, so 0 really is 0;
+    // The original guns' own stats (written straight into each gun's archetype, so 0 really is 0;
     // takes effect on restart - baked in at GameDataInit.Initialize, same as every other datablock here).
     internal static ConfigEntry<float> PlasmaDamage = null!, PlasmaShotDelay = null!;
     internal static ConfigEntry<int> PlasmaClipSize = null!;
@@ -158,8 +158,8 @@ internal static class GunInjector
         TryAdd("Victory Banner", VictoryBannerId, VictoryBannerEnabled, AddVictoryBanner);
     }
 
-    // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id,
-    // same as the Grenade Launcher - the glob becomes a plantable banner (VictoryBanner) instead.
+    // A tool: the C-Foam launcher's category and gear (Stalwart Flow G2) cloned under a new id -
+    // the glob becomes a plantable banner (VictoryBanner) instead.
     private static void AddVictoryBanner(string name, uint id) => AddGlueTool(name, id,
         "Sets a banner down in front of you like a sentry; walk up to it and press Use to pick it back up. Pulses healing to every teammate standing in its ring.");
 

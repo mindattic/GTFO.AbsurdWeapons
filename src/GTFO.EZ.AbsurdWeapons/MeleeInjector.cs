@@ -13,7 +13,7 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// animation/sound set to use), a gear category pointing at it, and an offline-gear entry (what
 /// appears in the loadout screen, and which model it carries). Nothing vanilla is modified.
 /// <list type="bullet">
-/// <item>Katana - the Mastaba Fixed Blade at a real katana's size (~70 cm blade), wielded like the bat; full-charge dash.</item>
+/// <item>Katana - the Mastaba Fixed Blade with a ~1.85 m blade, wielded like the bat; full-charge dash.</item>
 /// <item>Mjolnir - the Santonian Mallet hammer model wielded exactly like the bat.</item>
 /// <item>Warhammer - the Kovac Sledgehammer with a giant head: enormous hits and knockback.</item>
 /// <item>Shadow Dagger - the Mastaba Fixed Blade as a knife; a fully charged hit makes you unseen for 3 s (StealthSeconds).</item>

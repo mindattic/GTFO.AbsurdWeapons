@@ -145,7 +145,6 @@ internal static class SeekerGuns
     private static uint firingArchetype;
     private static BulletWeapon? firingWeapon;
 
-
     internal static void Init()
     {
         RemoteEvents.Register<SeekerShot>(ShotEvent, OnRemoteShot);
@@ -161,9 +160,10 @@ internal static class SeekerGuns
     [HarmonyFinalizer]
     private static void AfterBulletFire(BulletWeapon __instance, uint __state) => EndFire(__instance, __state);
 
-    // The laser guns and the Chain Lightning Gun never fire at all - no shot, muzzle flash, brass or
-    // kick. Their beam / lightning stream is driven straight from the trigger (LaserDriver,
-    // ChainLightningDriver); the lasers' steady hold keeps them raised at hip height.
+    // The laser guns, the Chain Lightning Gun and the Shrink Beam never fire at all - no shot, muzzle
+    // flash, brass or kick. Their beam / lightning stream is driven straight from the trigger
+    // (LaserDriver, ChainLightningDriver, ShrinkBeamDriver); the lasers' steady hold keeps them
+    // raised at hip height.
     [HarmonyPatch(typeof(BulletWeapon), nameof(BulletWeapon.Fire))]
     [HarmonyPrefix]
     private static bool SkipStreamFire(BulletWeapon __instance) => !FiresAStream(__instance.ArchetypeData?.persistentID ?? 0);
@@ -174,9 +174,9 @@ internal static class SeekerGuns
 
     internal static bool FiresAStream(uint id) => LaserGuns.ForGun(id) != null || id == GunInjector.ChainLightningId || id == GunInjector.ShrinkBeamId;
 
-    // For the lasers and the Chain Lightning Gun even the archetype's trigger logic is skipped - it
-    // runs the gun's firing, fire animation and recoil before Fire is ever reached - so a held
-    // trigger does nothing to the gun itself; the stream is LaserDriver's / ChainLightningDriver's.
+    // For these stream guns even the archetype's trigger logic is skipped - it runs the gun's
+    // firing, fire animation and recoil before Fire is ever reached - so a held trigger does
+    // nothing to the gun itself; the stream is the gun's own driver's.
     // Left only to the lasers before, Chain Lightning's hip fire never reached OnStartFiring, so the
     // driver (which gates on the gun actually being wielded and firing) never saw its trigger held.
     [HarmonyPatch(typeof(BulletWeaponArchetype), nameof(BulletWeaponArchetype.Update))]

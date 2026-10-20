@@ -9,7 +9,6 @@ using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
-using SNetwork;
 using UnityEngine;
 
 namespace GTFO.EZ.AbsurdWeapons;
@@ -62,7 +61,8 @@ internal static class MjolnirThrow
     internal static void Init()
     {
         RemoteEvents.Register<ThrowMessage>(ThrowEvent, (sender, message) =>
-            ThrownHammer.Spawn(null, PlayerFor(sender), new Vector3(message.X, message.Y, message.Z),
+            // The sender's own agent, so their hammer flies back to them.
+            ThrownHammer.Spawn(null, Knockback.PlayerFor(sender), new Vector3(message.X, message.Y, message.Z),
                 new Vector3(message.DirX, message.DirY, message.DirZ), null));
     }
 
@@ -102,14 +102,6 @@ internal static class MjolnirThrow
         {
             Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons Mjolnir throw failed: {e}");
         }
-    }
-
-    // The player agent of the teammate who sent a message, so their hammer flies back to them.
-    private static PlayerAgent? PlayerFor(ulong lookup)
-    {
-        foreach (var player in PlayerManager.PlayerAgentsInLevel)
-            if (player != null && player.Owner != null && player.Owner.Lookup == lookup) return player;
-        return null;
     }
 
     // Plain fields so GTFO-API can copy it as raw bytes.

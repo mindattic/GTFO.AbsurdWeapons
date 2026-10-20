@@ -14,8 +14,8 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// every frame of fire costs that frame's time (<see cref="Drain"/>), so a full magazine lasts
 /// <see cref="MagazineSeconds"/> of sustained fire. The stream guns never reload - an empty
 /// magazine is refilled from the reserve - while the Tentacle Cannon reloads like any gun.
-/// With infinite ammo on (Insert - the shared toggle every GTFO.* mod has, Shared/InfiniteToggles.cs,
-/// published from GTFO.EZ), firing costs nothing: SeekerGuns puts the magazine back after every shot
+/// With infinite ammo on (Insert - the shared toggle every GTFO.* mod has, InfiniteToggles.cs from the
+/// GTFO.EZ.Shared submodule at external/GTFO.EZ.Shared), firing costs nothing: SeekerGuns puts the magazine back after every shot
 /// of any gun (vanilla ones too) and the held-trigger guns skip their drain.
 /// </summary>
 internal static class InfiniteAmmo

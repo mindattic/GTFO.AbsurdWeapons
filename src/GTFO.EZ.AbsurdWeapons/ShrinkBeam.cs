@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Agents;
 using BepInEx.Configuration;
 using Enemies;
-using FX_EffectSystem;
 using GTFO.API;
 using MindAttic.GTFO.Shared;
 using Il2CppInterop.Runtime.Attributes;
@@ -116,7 +115,8 @@ internal static class ShrinkBeam
     // ticks) - no shrink math, no network message (same split as the laser beam's).
     internal static void Tick(PlayerAgent owner, Vector3 eye, Vector3 aim, Transform? muzzle, float dt, uint gearCategoryId, bool applyShrink = true)
     {
-        var start = muzzle != null ? Barrel.Start(owner, muzzle, eye, aim) : eye + aim * 0.5f;
+        var start = Barrel.Start(owner, muzzle, eye, aim);
+        var source = owner.Owner != null ? owner.Owner.Lookup : 0UL;
         var end = eye + aim * Range.Value;
         EnemyAgent? hitEnemy = null;
         LG_WeakLockDamage? hitLock = null;
@@ -129,7 +129,7 @@ internal static class ShrinkBeam
 
         if (!applyShrink)
         {
-            ShrinkStream.Spawn(start, end, owner.Owner != null ? owner.Owner.Lookup : 0UL);
+            ShrinkStream.Spawn(start, end, source);
             return;
         }
 
@@ -144,7 +144,7 @@ internal static class ShrinkBeam
             if (state.Scale <= LockBreakScale.Value) PopLock(owner, state, hit.point, aim);
         }
 
-        ShrinkStream.Spawn(start, end, owner.Owner != null ? owner.Owner.Lookup : 0UL);
+        ShrinkStream.Spawn(start, end, source);
         NetworkAPI.InvokeEvent(BeamEvent, new BeamMessage(start, end));
     }
 
@@ -210,8 +210,7 @@ internal static class ShrinkBeam
         try
         {
             var point = enemy.AimTarget.position;
-            BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
-            Sounds.Play(Sounds.ShrinkPop.Value, point);
+            PopEffect(point);
             var limb = ChainLightning.NearestLimb(enemy, point);
             limb?.BulletDamage(PopDamage.Value, owner.Cast<Agent>(), point, Vector3.up, Vector3.down,
                 allowDirectionalBonus: false, 10f, 1f, gearCategoryId);
@@ -220,6 +219,13 @@ internal static class ShrinkBeam
         {
             Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons shrink beam pop failed: {e.Message}");
         }
+    }
+
+    // The green pop's flash and sound - for a shrunk enemy or padlock.
+    private static void PopEffect(Vector3 point)
+    {
+        BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
+        Sounds.Play(Sounds.ShrinkPop.Value, point);
     }
 
     [HideFromIl2Cpp]
@@ -266,8 +272,7 @@ internal static class ShrinkBeam
         try
         {
             state.Body.localScale = state.BaseScale;
-            BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
-            Sounds.Play(Sounds.ShrinkPop.Value, point);
+            PopEffect(point);
             LockDamage.Hit(state.Lock, PopDamage.Value, owner.Cast<Agent>(), point, direction, -direction);
         }
         catch (Exception e)
@@ -331,9 +336,7 @@ internal static class ShrinkBeam
                 try
                 {
                     state.Body.localScale = state.BaseScale;
-                    var point = state.Body.position;
-                    BurstFlash.Spawn(point, PopColor, 5f, 8f, 0.3f);
-                    Sounds.Play(Sounds.ShrinkPop.Value, point);
+                    PopEffect(state.Body.position);
                 }
                 catch (Exception e)
                 {
@@ -491,9 +494,9 @@ internal sealed class ShrinkStream : MonoBehaviour
         if (streams.TryGetValue(source, out var current) && current == this) streams.Remove(source);
     }
 
-    [HideFromIl2Cpp]
     // Three thin strands corkscrewing around the beam's line, spinning around the barrel and
     // drawn together at the target, each jittering on its own.
+    [HideFromIl2Cpp]
     private void Draw()
     {
         var axis = end - start;
@@ -562,7 +565,7 @@ internal sealed class ShrinkBeamDriver : MonoBehaviour
 }
 
 /// <summary>
-/// Always-on: regrows every tracked shrunk enemy that's fallen off the beam, and pops any that are
+/// Always-on: regrows every tracked shrunk enemy and padlock that's fallen off the beam, and pops any enemies
 /// small enough for the local player to have just stepped on.
 /// </summary>
 internal sealed class ShrinkRegrowth : MonoBehaviour

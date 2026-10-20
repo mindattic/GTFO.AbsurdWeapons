@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Agents;
 using BepInEx.Configuration;
 using Enemies;
-using FX_EffectSystem;
 using Gear;
 using GTFO.API;
 using MindAttic.GTFO.Shared;
@@ -23,7 +22,7 @@ namespace GTFO.EZ.AbsurdWeapons;
 /// <see cref="MaxSeconds"/> once it does. While hidden, enemies can't detect
 /// them by sight or noise, can't lock on or be alerted to them, and drop them as a target if they
 /// already had them. Enemy AI runs on the host, so the hit is sent to everyone over GTFO-API and
-/// every game keeps the same list of who is hidden. Hidden players fade to 90% transparent, coming
+/// every game keeps the same list of who is hidden. Hidden players fade to <see cref="Transparency"/>, coming
 /// back in as their time runs out (see <see cref="StealthVisuals"/>). Putting the dagger away - wielding anything else - ends
 /// it at once.
 /// </summary>
@@ -438,7 +437,7 @@ internal sealed class StealthVisuals : MonoBehaviour
         }
     }
 
-    // Transparency follows the stealth time left (MostTransparent at a full stealth or more, back
+    // Transparency follows the stealth time left (Stealth.Transparency at a full stealth or more, back
     // to solid as it runs out), eased so it doesn't snap when time is added; the tint is the
     // dagger's own purple glow, not white.
     [HideFromIl2Cpp]

@@ -39,7 +39,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
     private EnemyAgent? target;
     private IntPtr ignoredEnemy; // a shard won't chase the enemy its parent just hit
     private bool dead;
-    private bool homing; // off for a plain (unlocked) smart round: it flies straight
+    private bool homing; // off for a kind that flies dead straight (SeekerKind.Homing false)
 
     // Smart-lock curve (Titanfall's Smart Pistol): a quadratic Bezier from the muzzle, pulled
     // out along the aim, onto the locked enemy's chest - re-aimed at it every frame as it moves.
@@ -56,7 +56,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
     [HideFromIl2Cpp]
     internal static void Spawn(SeekerKind kind, Vector3 position, Vector3 direction, PlayerAgent? owner,
         float damage, float staggerMulti, float precisionMulti, uint gearCategoryId, IntPtr ignoredEnemy = default,
-        EnemyAgent? lockTarget = null, Vector3? lockPoint = null, bool homing = true)
+        EnemyAgent? lockTarget = null, Vector3? lockPoint = null)
     {
         direction = Spread(direction.normalized, kind.SpreadDegrees);
         var go = ProjectileManager.SpawnProjectileType(kind.Projectile, position, Quaternion.LookRotation(direction));
@@ -93,7 +93,7 @@ internal sealed class SeekerProjectile : MonoBehaviour
         seeker.wobbleAxis = Vector3.Cross(direction, UnityEngine.Random.onUnitSphere).normalized;
         seeker.wobblePhase = UnityEngine.Random.value * Mathf.PI * 2f;
         seeker.retargetIn = kind.LaunchSeconds;
-        seeker.homing = homing && kind.Homing;
+        seeker.homing = kind.Homing;
 
         var end = lockTarget != null ? lockTarget.AimTarget.position : lockPoint;
         if (end.HasValue)
@@ -240,14 +240,12 @@ internal sealed class SeekerProjectile : MonoBehaviour
             var source = owner.Cast<Agent>();
             if (limb != null && enemy != null && enemy.Alive)
             {
-                var dealt = kind.DamageDie > 0 ? kind.DamageScale * UnityEngine.Random.Range(1, kind.DamageDie + 1) : damage;
-                limb.BulletDamage(dealt, source, hit.point, heading, hit.normal,
+                limb.BulletDamage(RollDamage(), source, hit.point, heading, hit.normal,
                     allowDirectionalBonus: true, staggerMulti, precisionMulti, gearCategoryId);
             }
             else if (limb == null)
             {
-                var dealt = kind.DamageDie > 0 ? kind.DamageScale * UnityEngine.Random.Range(1, kind.DamageDie + 1) : damage;
-                LockDamage.TryHit(hit.collider, dealt, source, hit.point, heading, hit.normal);
+                LockDamage.TryHit(hit.collider, RollDamage(), source, hit.point, heading, hit.normal);
             }
             if (kind.BlastRadius > 0f)
             {
@@ -266,6 +264,11 @@ internal sealed class SeekerProjectile : MonoBehaviour
             }
         }
     }
+
+    // One hit's damage: Doom-style DamageScale x 1d(DamageDie) when the kind rolls, else the fixed amount.
+    [HideFromIl2Cpp]
+    private float RollDamage() =>
+        kind.DamageDie > 0 ? kind.DamageScale * UnityEngine.Random.Range(1, kind.DamageDie + 1) : damage;
 
     // The living enemy closest to the line of flight, within range and cone, that it can see.
     [HideFromIl2Cpp]

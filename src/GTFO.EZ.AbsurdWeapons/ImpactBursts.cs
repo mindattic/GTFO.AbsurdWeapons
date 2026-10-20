@@ -149,7 +149,7 @@ internal static class ImpactBursts
         }
     }
 
-    // A burst set off by the weapon itself (the Gravity Hammer's release) rather than by a hit:
+    // A burst set off by the weapon itself (the Warhammer's slam, WarhammerSlam) rather than by a hit:
     // damage and stagger around `center`, everyone caught thrown out from it, and the flash.
     internal static void Release(ImpactBurst burst, PlayerAgent owner, Vector3 center, uint gearCategoryId)
     {

@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Agents;
-using AK;
 using BepInEx.Configuration;
-using Enemies;
 using Gear;
 using GTFO.API;
 using MindAttic.GTFO.Shared;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
-using SNetwork;
 using UnityEngine;
 
 namespace GTFO.EZ.AbsurdWeapons;
@@ -37,8 +34,7 @@ internal static class VictoryBanner
     private const string PlantEvent = "MindAttic.GTFO.EZ.AbsurdWeapons.BannerPlant";
     private const string PickUpEvent = "MindAttic.GTFO.EZ.AbsurdWeapons.BannerPickUp";
 
-    // Set while the launcher itself is firing, so glue from anything else stays glue (see
-    // GrenadeLauncher, which guards the same way for the same reason).
+    // Set while the launcher itself is firing, so glue from anything else stays glue.
     private static int launcherFiring;
 
     internal static void Bind(ConfigFile config)
@@ -80,7 +76,7 @@ internal static class VictoryBanner
     internal static void BroadcastPickUp() => NetworkAPI.InvokeEvent(PickUpEvent, new PickUpMessage());
 
     // Every glob the C-Foam launcher would fire goes through here (the local player's only). Ours
-    // toggles: plant if you don't have one up, pick up if you do.
+    // plants the banner instead (if you don't have one up already).
     [HarmonyPatch(typeof(ProjectileManager), nameof(ProjectileManager.WantToFireGlue))]
     [HarmonyPrefix]
     private static bool BeforeFireGlue(PlayerAgent owner, Vector3 pos, Vector3 velocity)
@@ -484,22 +480,11 @@ internal sealed class BannerPylon : MonoBehaviour
             return;
         }
 
-        var radius = VictoryBanner.Radius.Value * ringProgress;
         var fade = 1f - ringProgress;
-        var center = transform.position;
-        var up = transform.up;
-        var right = Vector3.Cross(up, Vector3.forward).sqrMagnitude > 0.001f ? Vector3.Cross(up, Vector3.forward).normalized : Vector3.right;
-        var forward = Vector3.Cross(right, up).normalized;
-
         ring.startWidth = ring.endWidth = 0.08f;
         ring.startColor = ring.endColor = new Color(BannerColor.r, BannerColor.g, BannerColor.b, fade);
         ring.enabled = true;
-        for (var i = 0; i < ring.positionCount; i++)
-        {
-            var angle = i / (float)ring.positionCount * Mathf.PI * 2f;
-            var point = center + up * 0.05f + (right * Mathf.Cos(angle) + forward * Mathf.Sin(angle)) * radius;
-            ring.SetPosition(i, point);
-        }
+        Circle(ring, VictoryBanner.Radius.Value * ringProgress, 0.05f);
     }
 
     // The aura ring stays at the healing radius, breathing, and flares on each heal; the flag waves.

@@ -132,7 +132,7 @@ internal static class TentacleCannon
         return spot;
     }
 
-    // Diagnostics while the cannon is being brought up: the first few lashes log what happened.
+    // Diagnostics: the first few lashes log what happened.
     internal static int DiagnosticShots = 8;
 
     internal static void Init()
@@ -399,14 +399,13 @@ internal sealed class TentacleLash : MonoBehaviour
         side = Quaternion.AngleAxis(planeAngle, forward) * side.normalized;
         var up = Vector3.Cross(forward, side);
         var pulse = 0.65f + 0.35f * Mathf.Sin(age * pulseHz * Mathf.PI * 2f + seed);
-        // Small enough to stay inside the spew cone: at most ~4% of the length either side.
-        // Reaching for an enemy: a gentle sway that keeps it on course. Idle: a tight, lively wriggle.
-        // Lively but never extreme: the bend stays under ~10% of the length either side.
+        // Reaching for an enemy: a gentle sway that keeps it on course (~5% of the length either
+        // side). Idle: a tight, lively wriggle (~7%).
         var amplitude = (idle ? Mathf.Min(0.3f, length * 0.07f) : Mathf.Min(0.45f, length * 0.05f)) * sizeScale * pulse;
 
         // The spline runs through the inner control points only - the first and last just steer its
         // ends (the head was measured landing at 75% of the line with 5 points). So the second point
-        // sits on the barrel and the second-to-last on the target, and the outer two lie beyond.
+        // sits on the spawn spot and the second-to-last on the target, and the outer two lie beyond.
         var count = points.Length;
         var inner = count >= 4 ? count - 3 : 0;
         for (var i = 0; i < count; i++)
@@ -462,13 +461,7 @@ internal sealed class TentacleLash : MonoBehaviour
         }
         if (!enemy.Alive) return;
 
-        Dam_EnemyDamageLimb? nearest = null;
-        var best = float.MaxValue;
-        foreach (var limb in enemy.GetComponentsInChildren<Dam_EnemyDamageLimb>())
-        {
-            var distance = (limb.transform.position - end).sqrMagnitude;
-            if (distance < best) { best = distance; nearest = limb; }
-        }
+        var nearest = ChainLightning.NearestLimb(enemy, end);
         if (nearest == null) return;
 
         var healthBefore = nearest.m_health;

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BepInEx.Configuration;
 using GameData;
 using Gear;
 using MindAttic.GTFO.Shared;
@@ -116,7 +115,7 @@ internal sealed class GearCycler : MonoBehaviour
         var chosenCategory = chosen.GetCompID(eGearComponent.Category);
 
         if (!pending.ContainsKey(slot)) SaveAmmo(slot);
-        Equip(slot, chosen, slot);
+        Equip(slot, chosen);
         var name = GameDataBlockBase<GearCategoryDataBlock>.GetBlock(chosenCategory)?.PublicName?.UntranslatedText;
         Show($"{name ?? "weapon"}  [{next + 1}/{cycle.Count}]");
     }
@@ -130,11 +129,11 @@ internal sealed class GearCycler : MonoBehaviour
         return false;
     }
 
-    private void Equip(InventorySlot slot, GearIDRange gear, InventorySlot wieldAfter)
+    private void Equip(InventorySlot slot, GearIDRange gear)
     {
         PlayerBackpackManager.EquipLocalGear(gear);
         pending[slot] = gear.GetCompID(eGearComponent.Category);
-        wieldSlot = wieldAfter;
+        wieldSlot = slot;
         pendingFrom = Time.time + 0.4f; // the new item is built asynchronously
         pendingGiveUpAt = Time.time + 5f;
     }

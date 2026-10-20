@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using GameData;
 
 namespace GTFO.EZ.AbsurdWeapons;
@@ -16,16 +15,7 @@ internal static class DataBlocks
 
     // Copies every writable instance property onto a new block, so fields this mod doesn't
     // explicitly set (stamina costs, hit timing, etc.) start from the source weapon's values.
-    internal static T Clone<T>(T source) where T : GameDataBlockBase<T>, new()
-    {
-        var copy = new T();
-        foreach (var property in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (!property.CanRead || !property.CanWrite || property.GetIndexParameters().Length > 0) continue;
-            property.SetValue(copy, property.GetValue(source));
-        }
-        return copy;
-    }
+    internal static T Clone<T>(T source) where T : GameDataBlockBase<T>, new() => CopyObject(source);
 
     // Copies every writable instance property onto a fresh object - for the plain data objects
     // inside datablocks (shared with vanilla, so never edited in place).

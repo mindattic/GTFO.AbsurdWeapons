@@ -68,7 +68,7 @@ internal static class Knockback
     }
 
     // The player agent of the player with this Steam id (SNet_Player.Lookup).
-    private static PlayerAgent? PlayerFor(ulong lookup)
+    internal static PlayerAgent? PlayerFor(ulong lookup)
     {
         foreach (var player in PlayerManager.PlayerAgentsInLevel)
             if (player != null && player.Owner != null && player.Owner.Lookup == lookup) return player;
@@ -201,13 +201,7 @@ internal sealed class KnockbackSlides : MonoBehaviour
         // Credited to whoever knocked it back (the host's own player if they've left).
         var source = attacker != null ? attacker : PlayerManager.GetLocalPlayerAgent();
         if (source == null) return;
-        Dam_EnemyDamageLimb? nearest = null;
-        var best = float.MaxValue;
-        foreach (var limb in enemy.GetComponentsInChildren<Dam_EnemyDamageLimb>())
-        {
-            var distance = (limb.transform.position - wallPoint).sqrMagnitude;
-            if (distance < best) { best = distance; nearest = limb; }
-        }
+        var nearest = ChainLightning.NearestLimb(enemy, wallPoint);
         if (nearest == null) return;
         var point = nearest.transform.position;
         nearest.BulletDamage(damage, source.Cast<Agents.Agent>(), point, direction, -direction,
