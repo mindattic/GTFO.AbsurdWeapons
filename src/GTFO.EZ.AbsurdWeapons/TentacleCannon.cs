@@ -151,11 +151,17 @@ internal static class TentacleCannon
         var nearby = SeekerGuns.FindLocks(eye, aim, EngageConeDegrees.Value, range);
         var target = nearby.Count > 0 ? nearby[0] : null;
 
+        // The spot ring is the local player's own: a host's bot (locally owned too) starts its
+        // tentacles from a random spot around its eye without taking any, so it can't use up the
+        // player's.
+        var local = PlayerManager.GetLocalPlayerAgent();
+        var ownsRing = local != null && local.Pointer == owner.Pointer;
+
         for (var n = 0; n < Mathf.Max(1, TentaclesPerShot.Value); n++)
         {
-            var spot = TakeSpot();
-            if (spot < 0) return; // every spot still has a tentacle on it
-            var start = SpotPosition(spot, eye, aim);
+            var spot = ownsRing ? TakeSpot() : -1;
+            if (ownsRing && spot < 0) return; // every spot still has a tentacle on it
+            var start = SpotPosition(spot >= 0 ? spot : UnityEngine.Random.Range(0, SpotCount), eye, aim);
 
             // On an enemy: its own spot on the body, so they don't all land on one point. Otherwise:
             // its own random line, out to whatever it meets.
