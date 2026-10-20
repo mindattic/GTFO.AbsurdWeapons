@@ -330,7 +330,10 @@ strike is `BulletDamage` (x2 stagger); the next target is the nearest unstruck l
 barrel through the strike points for 0.16 s, with a `BurstFlash` and `Impact_Electronics` sparks at
 each strike, so successive ticks overlap into one continuous arc. The path goes to teammates as
 `MindAttic.GTFO.EZ.AbsurdWeapons.ChainLightning`. `ChainLightning.Pulse` is shared with the thrown
-Mjolnir.
+Mjolnir. `ChainLightningGlow` hangs a soft violet `EffectLight` (0.6, 0.3, 1; range 1.2 m, intensity
+about 0.2 with a flicker) on the gun while it's out in any player's hand - the Shadow Dagger's purple,
+which used to carry over onto it by accident, now the gun's own fixed color, separate from the dagger's
+light.
 
 ### Grenade Pistol and Rifle
 

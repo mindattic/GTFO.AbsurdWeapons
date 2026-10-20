@@ -79,3 +79,5 @@
 - Fix: the Shadow Dagger's purple no longer sticks to the weapon you swap to. Its glow goes out the
   moment the dagger leaves your hand, and the stealth tint gives each weapon back its own look
   when it ends, even if one part fails to restore.
+- The Chain Lightning Gun now glows a soft violet while it's in your hand - the purple the Shadow
+  Dagger used to leave on it by mistake, kept on purpose as the gun's own glow.

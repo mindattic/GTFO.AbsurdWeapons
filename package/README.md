@@ -178,7 +178,7 @@ The Omneco exp1, a continuous stream of lightning while you hold the trigger: 12
 Each strike hits the enemy under your crosshair (or the nearest within 6° if you just miss), then
 **jumps** to the nearest enemy within 8 m it hasn't hit, up to 5 jumps. The first enemy takes about
 2.7 a strike (33 a second: `Damage` 5 every `ShotDelay` 0.15 s), then 75% of the last on each jump. Jumps need
-a clear line. No recoil, no brass.
+a clear line. It glows a soft violet while it's in your hand. No recoil, no brass.
 
 ### Rocket Launcher (special)
 

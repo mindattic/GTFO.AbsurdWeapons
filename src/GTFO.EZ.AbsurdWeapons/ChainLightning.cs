@@ -354,3 +354,94 @@ internal sealed class ChainLightningDriver : MonoBehaviour
         }
     }
 }
+
+/// <summary>
+/// The Chain Lightning Gun's soft purple glow while it's out in anyone's hand: the same violet
+/// (0.6, 0.3, 1) the Shadow Dagger once left lit on it by accident, kept on purpose. Its own color
+/// and its own light, nothing shared with the dagger, so the dagger's glow going out on a swap
+/// (StealthVisuals) leaves this one be.
+/// </summary>
+internal sealed class ChainLightningGlow : MonoBehaviour
+{
+    internal static readonly Color GlowColor = new(0.6f, 0.3f, 1f);
+
+    // Per player holding the gun: the item it was lit for, and the light.
+    private readonly Dictionary<IntPtr, (IntPtr Item, EffectLight Light)> lit = new();
+
+    public ChainLightningGlow(IntPtr ptr) : base(ptr) { }
+
+    private void Update()
+    {
+        try
+        {
+            HashSet<IntPtr>? present = lit.Count > 0 ? new() : null;
+            var players = PlayerManager.PlayerAgentsInLevel;
+            if (players != null) foreach (var player in players)
+            {
+                if (player == null) continue;
+                present?.Add(player.Pointer);
+                try
+                {
+                    Light(player);
+                }
+                catch (Exception e)
+                {
+                    Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons Chain Lightning glow failed: {e.Message}");
+                    PutOut(player.Pointer);
+                }
+            }
+
+            // A player gone (or a level ended) is never visited above: their light goes out here.
+            if (present == null) return;
+            List<IntPtr>? gone = null;
+            foreach (var pointer in lit.Keys)
+                if (!present.Contains(pointer)) (gone ??= new List<IntPtr>()).Add(pointer);
+            if (gone != null) foreach (var pointer in gone) PutOut(pointer);
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogError($"GTFO.EZ.AbsurdWeapons Chain Lightning glow failed: {e.Message}");
+        }
+    }
+
+    [HideFromIl2Cpp]
+    private void Light(PlayerAgent player)
+    {
+        var item = player.Inventory?.WieldedItem;
+        var isGun = item != null && item.gameObject.activeInHierarchy
+            && item.TryCast<Gear.BulletWeapon>()?.ArchetypeData?.persistentID == GunInjector.ChainLightningId;
+        var has = lit.TryGetValue(player.Pointer, out var state);
+        if (has && (!isGun || state.Item != item!.Pointer || state.Light == null))
+        {
+            PutOut(player.Pointer);
+            has = false;
+        }
+        if (!isGun) return;
+
+        if (!has)
+        {
+            var go = new GameObject("GTFO.EZ.AbsurdWeapons Chain Lightning Glow");
+            var light = go.AddComponent<EffectLight>();
+            light.Color = GlowColor;
+            light.Range = 1.2f;
+            light.enabled = true;
+            state = (item!.Pointer, light);
+            lit[player.Pointer] = state;
+        }
+
+        state.Light!.transform.position = item!.transform.position;
+        // The soft flicker the dagger's light had when it carried over.
+        state.Light.Intensity = 0.2f * (0.75f + 0.25f * Mathf.Sin(Time.time * 12f));
+    }
+
+    [HideFromIl2Cpp]
+    private void PutOut(IntPtr player)
+    {
+        if (!lit.TryGetValue(player, out var state)) return;
+        lit.Remove(player);
+        if (state.Light == null) return;
+        state.Light.Intensity = 0f;
+        state.Light.enabled = false;
+        Destroy(state.Light.gameObject);
+    }
+}

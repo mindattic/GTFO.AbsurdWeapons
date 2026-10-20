@@ -94,6 +94,7 @@ public class Plugin : BasePlugin
         AddComponent<LoopSounds>();
         AddComponent<HiveLocks>();
         AddComponent<ChainLightningDriver>();
+        AddComponent<ChainLightningGlow>();
         AddComponent<ShrinkBeamDriver>();
         AddComponent<ShrinkRegrowth>();
         AddComponent<TentacleAmmoDriver>();
