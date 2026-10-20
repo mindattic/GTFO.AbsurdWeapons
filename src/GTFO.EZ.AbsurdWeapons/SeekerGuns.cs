@@ -536,7 +536,10 @@ internal static class Barrel
         // the crosshair clears. Otherwise the shot goes from the eye along the crosshair itself, the
         // one line known to be clear up to what it's on - so it never passes through a wall, and a
         // rocket never bursts on a doorframe in the shooter's face.
-        var path = Vector3.Distance(from, target) - 0.3f; // stop short of the surface it's aimed at
+        // Stop short of the surface it's aimed at - by more at a glancing angle (the floor a few metres
+        // ahead), where the sphere would touch that surface well before the crosshair's point.
+        var shortBy = aimed ? Mathf.Max(0.3f, ClearRadius / Mathf.Max(0.1f, Mathf.Abs(Vector3.Dot(direction, hit.normal))) + 0.05f) : 0.3f;
+        var path = Vector3.Distance(from, target) - shortBy;
         if (Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
             || Physics.CheckSphere(from, ClearRadius, LayerManager.MASK_WORLD)
             || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD)))
