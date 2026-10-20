@@ -52,7 +52,7 @@ internal static class ChainLightning
 
     internal static void Init()
     {
-        RemoteEvents.Register<BoltMessage>(BoltEvent, (sender, message) => LightningBolt.Spawn(message.Points(), message.Count > 2, sender));
+        RemoteEvents.Register<BoltMessage>(BoltEvent, (sender, message) => LightningBolt.Spawn(message.Points(), message.Struck != 0, sender));
     }
 
     // How often the stream strikes while the trigger is held. Each strike's damage is scaled from
@@ -79,7 +79,7 @@ internal static class ChainLightning
             if (current == null && LockDamage.TryHit(hit.collider, damage, owner.Cast<Agent>(), hit.point, aim, hit.normal))
             {
                 path.Add(point);
-                Send(path, owner);
+                Send(path, owner, struckEnemies: false);
                 return;
             }
         }
@@ -98,7 +98,7 @@ internal static class ChainLightning
         {
             // A plain miss: the bolt crackles out to whatever it hit, harmlessly.
             path.Add(point);
-            Send(path, owner);
+            Send(path, owner, struckEnemies: false);
             return;
         }
 
@@ -119,7 +119,7 @@ internal static class ChainLightning
             point = current.AimTarget.position;
             limb = NearestLimb(current, point);
         }
-        Send(path, owner);
+        Send(path, owner, struckEnemies: true);
     }
 
     // A lightning pulse from a point (thrown Mjolnir): it strikes the nearest enemy within `range`
@@ -145,14 +145,17 @@ internal static class ChainLightning
             strike *= JumpFalloff.Value;
             current = NextTarget(point, struck);
         }
-        Send(path, owner);
+        // Struck unless the first target had no limb to hit (the path is then just the start).
+        Send(path, owner, struckEnemies: path.Count > 1);
         return true;
     }
 
-    private static void Send(List<Vector3> path, PlayerAgent owner)
+    // `struckEnemies` is said outright rather than read off the path's length: a bolt that strikes
+    // exactly one enemy has the same two points (gun, strike) as a plain miss.
+    private static void Send(List<Vector3> path, PlayerAgent owner, bool struckEnemies)
     {
-        LightningBolt.Spawn(path.ToArray(), path.Count > 2, owner.Owner != null ? owner.Owner.Lookup : 0UL);
-        NetworkAPI.InvokeEvent(BoltEvent, new BoltMessage(path));
+        LightningBolt.Spawn(path.ToArray(), struckEnemies, owner.Owner != null ? owner.Owner.Lookup : 0UL);
+        NetworkAPI.InvokeEvent(BoltEvent, new BoltMessage(path, struckEnemies));
     }
 
     // The nearest living enemy within jump range of `from` that hasn't been struck, in sight.
@@ -188,15 +191,18 @@ internal static class ChainLightning
         return nearest;
     }
 
-    // Plain fields so GTFO-API can copy it as raw bytes: the gun plus up to six strikes.
+    // Plain fields so GTFO-API can copy it as raw bytes: the gun plus up to six strikes, and
+    // whether those points are enemies struck (flash) or a miss / lock hit (sparks only).
     private readonly struct BoltMessage
     {
         public readonly byte Count;
+        public readonly byte Struck;
         public readonly float X0, Y0, Z0, X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3, X4, Y4, Z4, X5, Y5, Z5, X6, Y6, Z6;
 
-        public BoltMessage(List<Vector3> path)
+        public BoltMessage(List<Vector3> path, bool struckEnemies)
         {
             Count = (byte)Math.Min(path.Count, MaxJumps + 2);
+            Struck = struckEnemies ? (byte)1 : (byte)0;
             Vector3 P(int i) => i < path.Count ? path[i] : Vector3.zero;
             (X0, Y0, Z0) = (P(0).x, P(0).y, P(0).z);
             (X1, Y1, Z1) = (P(1).x, P(1).y, P(1).z);
