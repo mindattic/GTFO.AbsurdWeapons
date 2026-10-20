@@ -546,7 +546,10 @@ internal static class Barrel
         if (behindBarrel
             || Physics.Linecast(eye, from, LayerManager.MASK_WORLD)
             || Physics.CheckSphere(from, ClearRadius, LayerManager.MASK_WORLD)
-            || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD)))
+            || (path > 0f && Physics.SphereCast(from, ClearRadius, direction, out _, path, LayerManager.MASK_WORLD))
+            // A teammate or bot at your shoulder the crosshair clears: a rocket or grenade from the
+            // barrel would go off on them (OtherPlayer skips the shooter, counts a starting overlap).
+            || (owner != null && ProjectileHits.OtherPlayer(from, ClearRadius, direction, Mathf.Max(path, 0.01f), owner, out _)))
         {
             from = eye;
             direction = aim.normalized;
