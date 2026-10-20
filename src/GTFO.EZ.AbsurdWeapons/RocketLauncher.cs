@@ -100,8 +100,11 @@ internal static class RocketLauncher
     }
 
     // Right-click this frame while the local player holds the Rocket Launcher.
+    // Only the local player's own rockets: the host's bots are locally owned too, and the host's
+    // right-click mustn't set theirs off.
     internal static bool DetonatePressed(PlayerAgent owner) =>
-        owner.IsLocallyOwned && FocusStateManager.CurrentState == eFocusState.FPS
+        owner.IsLocallyOwned && PlayerManager.GetLocalPlayerAgent() is { } local && local.Pointer == owner.Pointer
+        && FocusStateManager.CurrentState == eFocusState.FPS
         && IsRocketLauncher(owner.Inventory?.WieldedItem)
         && InputMapper.GetButtonDownKeyMouse(InputAction.Aim, eFocusState.FPS);
 
