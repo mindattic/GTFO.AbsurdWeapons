@@ -6,7 +6,7 @@ layer: stories
 status: living
 updated: 2026-10-15
 ---
-<!-- GENERATED from MindAttic.Workflow/data/workflow.db by `workflow db render`. Do not edit: this file is rewritten from the database; change stories and tickets with the workflow CLI. -->
+<!-- GENERATED from MindAttic.Tickets/data/Tickets.db by `tickets db render`. Do not edit: this file is rewritten from the database; change stories and tickets with the tickets CLI. -->
 
 # GTFO.EZ.AbsurdWeapons — User Stories
 > ✅ done (shipped & tested) · 🟡 partial · ⬜ planned. Every ✅ cites the test.
@@ -241,3 +241,4 @@ _Nothing recorded yet._
 | G.AWPN-T214 | 2026-10-20 | fix | closed | Barrel.Shot treated a non-positive plane-based clear length (barrel within a sphere radius of the aimed surface's plane, e.g. a grazing hit on a limb edge) as clear, so the barrel path was never swept and a rocket/grenade could go off on a jamb or railing the crosshair clears | ClearPathLength_StartWithinRadiusOfThePlaneLeavesNothingToSweep, 2951f66 |
 | G.AWPN-T215 | 2026-10-20 | docs | closed | v14 changelog lists the G.AWPN-T8 bug hunt's fixes (walls/doors, shot origin, bots, multiplayer, swap refill, double slam, katana dash, plasma leak) for the release (user request) | e42d5d6 |
 | G.AWPN-T216 | 2026-10-20 | feature | open | Bots can use the Laser Pistol, Laser Rifle and Shrink Beam: today those weapons only work for the human player (their beam drivers run off local input), so a bot given one fires nothing - drive the beam from the bot's own firing on the host and sync it like a player's (found by the G.AWPN-T8 bug hunt; user request) | — |
+| G.AWPN-T217 | 2026-10-20 | docs | open | Publish GTFO.EZ.AbsurdWeapons docs to GitHub Pages via the shared Toolkit DocFX pipeline: run adopt-docs-site.ps1 (README.md as home page, docs/*.md as articles, API reference only where the code builds in CI), enable Pages with build_type=workflow, set the repo homepage URL, retire tools/build-readme.ps1 and README.htm, confirm the docs Actions run is green and https://mindattic.github.io/GTFO.EZ.AbsurdWeapons/ returns 200. Depends on MAT-T8. | — |
